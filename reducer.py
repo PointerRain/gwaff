@@ -53,8 +53,10 @@ class Reducer:
             
             diff = dates[index+1] - dates[index-1]
             age = now - column
-
-            if age > timedelta(days=2) and diff/2 < timedelta(hours=2):
+            if age > timedelta(hours=0) and diff/2 < timedelta(hours=2):
+                del_count += 1
+                dates.remove(column)
+            elif age > timedelta(days=2) and diff/2 < timedelta(hours=2):
                 del_count += 1
                 dates.remove(column)
             elif age > timedelta(days=7) and diff/2 < timedelta(hours=4):

@@ -37,7 +37,7 @@ class Plotter:
         self.dates = data.columns
         self.dates = list(self.dates)[4:]
 
-        self.annotations = {}
+        self.annotations = []
 
         self.start_date = start_date
 
@@ -71,6 +71,7 @@ class Plotter:
         # Counts out how many users have been displayed.
         count = 0
         for index, row in list(self.data.iterrows())[start:]:
+            # print(row)
             if self.exclude_missing and pd.isna(row['Name']):
                 continue
             if include is not None and row['ID'] not in include:
@@ -79,8 +80,8 @@ class Plotter:
 
             xs, values = self.read_row(row)
             
-            if values[-1]-values[0] <= self.active_threshold:
-                continue
+            # if values[-1]-values[0] < self.active_threshold:
+            #     continue
 
             if pd.isna(row['Name']):
                 name = ''
@@ -91,7 +92,7 @@ class Plotter:
                 colour = row['Colour']
                 avatar = row['Avatar']
 
-            self.annotations[values[-1]] = (name, colour, avatar, values[0])
+            self.annotations.append((values[-1], name, colour, avatar, values[0]))
             plt.plot(xs, values, color=colour)
 
             count += 1
@@ -106,8 +107,8 @@ class Plotter:
         '''
         # Determine how to convert from xp to axes fraction.
         print(self.annotations)
-        self.maxxp = sorted(self.annotations)[-1]
-        self.minxp = sorted(self.annotations)[0]
+        self.maxxp = sorted(self.annotations, key=lambda x: x[0])[-1][0]
+        self.minxp = sorted(self.annotations, key=lambda x: x[4])[0][-1]
         if len(self.annotations) > 1:
             def xp_to_axes(xp): return (xp-self.minxp)/(self.maxxp-self.minxp)
             def axes_to_data(h): return h*(self.maxxp-self.minxp)+self.minxp
@@ -115,19 +116,19 @@ class Plotter:
         # Each point defaults to next to line.
         # Moves up to avoid lower labels.
         heights = [-seperator]
-        for index, key in enumerate(sorted(self.annotations)):
-            height = key
+        for index, item in enumerate(sorted(self.annotations, key=lambda x: x[0])):
+            height = item[0]
             if len(self.annotations) > 1:
-                height = xp_to_axes(key)
+                height = xp_to_axes(height)
                 if height - heights[-1] < seperator:
                     height = heights[-1] + seperator
                 heights.append(height)
                 height = axes_to_data(height)
             # print(self.annotations[key][0])
-            plt.annotate(self.annotations[key][0], (1.005, height), (1.005, height),
+            plt.annotate(item[1], (1.005, height), (1.005, height),
                          xycoords=('axes fraction', 'data'),
-                         color=self.annotations[key][1], va='center')
-            self.annotate_image(self.annotations[key][2], height)
+                         color=item[2], va='center')
+            self.annotate_image(item[3], height)
 
     def annotate_image(self, avatar, height):
         image = getimg(avatar)
@@ -163,12 +164,12 @@ if __name__ == '__main__':
 
     plot = Plotter(data)
     plot.sort()
-    plot.draw(max_count=10, include=[344731282095472641,974288645047599164])
+    plot.draw(max_count=15)
     plot.annotate(seperator=0.03)
     plot.configure()
 
     # im = plt.imread(get_sample_data())
     
 
-    plt.show()
+    plot.show()
 

@@ -41,15 +41,15 @@ class Growth(Plotter):
         self.ax.set_ylabel("XP Growth")
         self.ax.set_xlabel("Date (MM-DD hh AEST)", color="white")
         self.ax.set_xlim([self.start_date, datetime.now()])
-        # self.ax.set_ylim([0, self.maxxp*1.05])
+        self.ax.set_ylim([0, self.maxxp*1.05])
 
 
 if __name__ == '__main__':
     data = pd.read_csv("gwaff.csv", index_col=0)
 
-    plot = Growth(data, start_date=datetime.now()-timedelta(days=7))
+    plot = Growth(data, start_date=datetime.now()-timedelta(days=12))
     plot.draw(max_count=15)
-    plot.annotate(seperator=0.04)
+    plot.annotate(seperator=0.03)
     plot.configure()
 
     plot.show()
