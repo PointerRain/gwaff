@@ -21,7 +21,6 @@ class Reducer:
         data = [self.read_row(row)[1] for index, row in self.data.iterrows()]
         self.data['Final'] = [row[-1] for row in data]
         self.data.sort_values(by='Final', inplace=True, ascending=False)
-        print(self.data.head())
 
     def read_row(self, row, start_date=None):
         xs = []

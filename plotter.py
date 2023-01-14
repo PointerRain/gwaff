@@ -46,7 +46,6 @@ class Plotter:
         data = [self.read_row(row)[1] for index, row in self.data.iterrows()]
         self.data['Final'] = [row[-1] for row in data]
         self.data.sort_values(by='Final', inplace=True, ascending=False)
-        print(self.data.head())
 
     def read_row(self, row, start_date=None):
         xs = []
@@ -71,7 +70,6 @@ class Plotter:
         # Counts out how many users have been displayed.
         count = 0
         for index, row in list(self.data.iterrows())[start:]:
-            # print(row)
             if self.exclude_missing and pd.isna(row['Name']):
                 continue
             if include is not None and row['ID'] not in include:
@@ -106,7 +104,6 @@ class Plotter:
 
         '''
         # Determine how to convert from xp to axes fraction.
-        print(self.annotations)
         self.maxxp = sorted(self.annotations, key=lambda x: x[0])[-1][0]
         self.minxp = sorted(self.annotations, key=lambda x: x[4])[0][-1]
         if len(self.annotations) > 1:
@@ -124,7 +121,6 @@ class Plotter:
                     height = heights[-1] + seperator
                 heights.append(height)
                 height = axes_to_data(height)
-            # print(self.annotations[key][0])
             plt.annotate(item[1], (1.005, height), (1.005, height),
                          xycoords=('axes fraction', 'data'),
                          color=item[2], va='center')

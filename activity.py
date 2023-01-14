@@ -66,7 +66,7 @@ class Activity(Plotter):
 
 
 if __name__ == '__main__':
-    data = pd.read_csv("gwaff.csv", index_col=0)
+    data = pd.read_csv("gwaff2.csv", index_col=0)
 
     plot = Activity(data, start_date=datetime.now()-timedelta(days=7))
     plot.draw()
