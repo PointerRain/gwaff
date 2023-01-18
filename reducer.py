@@ -52,10 +52,8 @@ class Reducer:
             
             diff = dates[index+1] - dates[index-1]
             age = now - column
-            if age > timedelta(hours=0) and diff/2 < timedelta(hours=2):
-                del_count += 1
-                dates.remove(column)
-            elif age > timedelta(days=2) and diff/2 < timedelta(hours=2):
+
+            if age > timedelta(days=2) and diff/2 < timedelta(hours=2):
                 del_count += 1
                 dates.remove(column)
             elif age > timedelta(days=7) and diff/2 < timedelta(hours=4):
@@ -73,7 +71,7 @@ class Reducer:
 
     def save(self):
         # self.data.drop(['Final'], axis=1, inplace=True)
-        self.data.to_csv('gwaff2.csv', encoding='utf-8')
+        self.data.to_csv('gwaff.csv', encoding='utf-8')
         print('saved')
 
 

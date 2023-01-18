@@ -6,10 +6,6 @@ from plotter import Plotter
 
 
 class Growth(Plotter):
-    def __init__(self, data, start_date, active_threshold=True, exclude_missing=True):
-        super().__init__(data, active_threshold, exclude_missing)
-        self.start_date = start_date
-
     def sort(self):
         data = [self.read_row(row)[1] for index, row in self.data.iterrows()]
         self.data['Change'] = [row[-1] - row[0] for row in data]
@@ -47,7 +43,7 @@ class Growth(Plotter):
 if __name__ == '__main__':
     data = pd.read_csv("gwaff.csv", index_col=0)
 
-    plot = Growth(data, start_date=datetime.now()-timedelta(days=12))
+    plot = Growth(data, start_date=datetime.now()-timedelta(days=7))
     plot.draw(max_count=15)
     plot.annotate(seperator=0.03)
     plot.configure()

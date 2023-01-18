@@ -5,10 +5,6 @@ import matplotlib.pyplot as plt
 from plotter import Plotter
 
 class Activity(Plotter):
-    def __init__(self, data, start_date, active_threshold=False, exclude_missing=True):
-        super().__init__(data, active_threshold, exclude_missing)
-        self.start_date = start_date
-
     def sort(self):
         data = [self.read_row(row)[1] for index, row in self.data.iterrows()]
         self.data['Change'] = [row[-1] - row[0] for row in data]
@@ -70,7 +66,7 @@ if __name__ == '__main__':
 
     plot = Activity(data, start_date=datetime.now()-timedelta(days=7))
     plot.draw()
-    plot.annotate(seperator=0.06)
+    plot.annotate(seperator=0.04)
     plot.configure()
 
     plot.show()

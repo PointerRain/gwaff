@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import matplotlib.pyplot as plt
 
@@ -48,6 +48,9 @@ class Plotter:
         self.data.sort_values(by='Final', inplace=True, ascending=False)
 
     def read_row(self, row, start_date=None):
+        '''
+        Read dates and values that have xp data.
+        '''
         xs = []
         values = []
         for i in self.dates:
@@ -78,8 +81,8 @@ class Plotter:
 
             xs, values = self.read_row(row)
             
-            # if values[-1]-values[0] < self.active_threshold:
-            #     continue
+            if values[-1]-values[0] <= self.active_threshold:
+                continue
 
             if pd.isna(row['Name']):
                 name = ''
