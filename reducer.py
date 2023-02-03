@@ -1,9 +1,10 @@
 # Reduces unnecessary entries and columns based on the following rules:
-# TODO: If a member has left the server, delete their row
-#       UNLESS they are in the top 100
 # If a column is over 48h old, only store every 2nd hour
 # If a column is over a week old, only store every 4th hour
 # If a column is over a month old, only store every 24th hour
+# TODO:
+# If a datum is the same as before and after, remove it
+# If a datum is the same as before and last, remove it
 
 
 import pandas as pd
@@ -53,7 +54,7 @@ class Reducer:
             diff = dates[index+1] - dates[index-1]
             age = now - column
 
-            if age > timedelta(days=2) and diff/2 < timedelta(hours=2):
+            if age > timedelta(days=2) and diff/2 < timedelta(hours=1):
                 del_count += 1
                 dates.remove(column)
             elif age > timedelta(days=7) and diff/2 < timedelta(hours=4):

@@ -35,7 +35,7 @@ class Growth(Plotter):
         super().configure()
         plt.title("Top chatters XP growth", color='#FFFFFF')
         self.ax.set_ylabel("XP Growth")
-        self.ax.set_xlabel("Date (MM-DD hh AEST)", color="white")
+        self.ax.set_xlabel("Date (YYYY-MM-DD AEST)", color="white")
         self.ax.set_xlim([self.start_date, datetime.now()])
         self.ax.set_ylim([0, self.maxxp*1.05])
 

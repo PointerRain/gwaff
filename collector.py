@@ -127,7 +127,15 @@ def record_data(pages=range(1, 6), min_time=2):
 if __name__ == '__main__':
     # Checks every hour while running
     while True:
-        record_data(min_time=2)
+        record_data(min_time=1, pages=range(1,4))
+
+        print()
+        for i in range(6):
+            print("slept", i*10)
+            time.sleep(10*60)
+        print()
+
+        record_data(min_time=1, pages=range(1,6))
 
         print()
         for i in range(6):

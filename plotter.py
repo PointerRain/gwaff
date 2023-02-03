@@ -30,6 +30,7 @@ class Plotter:
         self.data = data
 
         self.fig, self.ax = plt.subplots()
+        self.fig.set_size_inches(15, 7)
 
         self.active_threshold = active_threshold
         self.exclude_missing = exclude_missing
@@ -118,23 +119,24 @@ class Plotter:
         heights = [-seperator]
         for index, item in enumerate(sorted(self.annotations, key=lambda x: x[0])):
             height = item[0]
+            new_height = height
             if len(self.annotations) > 1:
-                height = xp_to_axes(height)
-                if height - heights[-1] < seperator:
-                    height = heights[-1] + seperator
-                heights.append(height)
-                height = axes_to_data(height)
-            plt.annotate(item[1], (1.005, height), (1.005, height),
+                new_height = xp_to_axes(height)
+                if new_height - heights[-1] < seperator:
+                    new_height = heights[-1] + seperator
+                heights.append(new_height)
+                new_height = axes_to_data(new_height)
+            plt.annotate(item[1], (1.019, height), (1.019, new_height),
                          xycoords=('axes fraction', 'data'),
                          color=item[2], va='center')
-            self.annotate_image(item[3], height)
+            self.annotate_image(item[3], new_height)
 
     def annotate_image(self, avatar, height):
         image = getimg(avatar)
         if image is None:
             return
         image = plt.imread(image, format='jpeg')
-        self.ax.add_artist(AnnotationBbox(OffsetImage(image, zoom=0.1), (0.993, height),
+        self.ax.add_artist(AnnotationBbox(OffsetImage(image, zoom=0.1), (1.008, height),
                            xycoords=('axes fraction', 'data'), frameon=False))
 
 
@@ -153,22 +155,22 @@ class Plotter:
         for spine in self.ax.spines.values():
             spine.set_edgecolor('#36393F')
 
-        self.fig.subplots_adjust(left=0.05, bottom=0.08, top=0.94, right=0.84)
+        self.fig.subplots_adjust(left=0.05, bottom=0.08, top=0.94, right=0.82)
 
     def show(self): plt.show()
+    def save(self): plt.savefig('out.png')
 
 
 if __name__ == '__main__':
     data = pd.read_csv("gwaff.csv", index_col=0)
 
     plot = Plotter(data)
-    plot.sort()
     plot.draw(max_count=15)
     plot.annotate(seperator=0.03)
     plot.configure()
 
     # im = plt.imread(get_sample_data())
     
-
     plot.show()
+    plot.save()
 
