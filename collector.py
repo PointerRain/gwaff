@@ -7,6 +7,7 @@ import pandas as pd
 
 from datetime import datetime
 
+from threading import Thread
 
 def request_api(url):
     count = 0
@@ -23,8 +24,8 @@ def request_api(url):
                 count += 1
                 time.sleep(1)
             else:
-                raise e
-                return
+                print("Skipping")
+                return False
 
 
 def url_constructor(base, **kwargs):
@@ -45,6 +46,9 @@ def record_data(pages=range(1, 6), min_time=2):
     Record the current xp data to gwaff.csv.
     Ensures records are seperated by at least min_time.
     '''
+    
+    print()
+    print("Collecting!")
 
     ids = []
     names = []
@@ -58,13 +62,14 @@ def record_data(pages=range(1, 6), min_time=2):
 
     for page in pages:
         url = url_constructor(base_url, page=page)
-        print(url)
 
         data = request_api(url)
+        if not data:
+            return False
         leaderboard = data['leaderboard']
 
         for member in leaderboard:
-            if not 'missing' in member:
+            if not ('missing' in member or member['color']=='#000000'):
                 # Save xp and ids
                 id = int(member['id'])
                 ids.append(id)
@@ -81,7 +86,6 @@ def record_data(pages=range(1, 6), min_time=2):
                 names.append(name)
                 colours.append(colour)
                 avatars.append(avatar)
-    print()
 
 
     # Below saves the data
@@ -99,7 +103,6 @@ def record_data(pages=range(1, 6), min_time=2):
     print(" Now:", now)
     difference = now - lasttime
     print("Diff:", difference)
-    print()
 
     # Checks before saving. Could be improved
     if difference.total_seconds() > min_time*60*60:
@@ -115,30 +118,50 @@ def record_data(pages=range(1, 6), min_time=2):
                 newxp.append(None)
         df[now] = newxp
 
-        print(df)
-        df.to_csv('gwaff.csv', encoding='utf-8')
-        print('saved')
+        while True:
+            try:
+                df.to_csv('gwaff.csv', encoding='utf-8')
+            except Exception as e:
+                pass
+            else:
+                print('saved')
+                break
+        
+        return True
 
     else:
         print('Too soon')
         print(difference.total_seconds()//60, min_time*60)
+        return False
+
+    print()
+
+def run():
+    while True:
+        success = record_data(min_time=1, pages=range(1,8))
+        print()
+        wait = 6 if success else 3
+        for i in range(wait):
+            print("slept "+str(i*10)+"/"+str(wait*10))
+            time.sleep(10*60)
+        print()
+
+        success = record_data(min_time=1, pages=range(1,3))
+        print()
+        wait = 6 if success else 3
+        for i in range(wait):
+            print("slept "+str(i*10)+"/"+str(wait*10))
+            time.sleep(10*60)
+        print()
+
+
+def collect():
+    t = Thread(target=run)
+    t.start()
 
 
 if __name__ == '__main__':
-    # Checks every hour while running
-    while True:
-        record_data(min_time=1, pages=range(1,4))
+    collect()
 
-        print()
-        for i in range(6):
-            print("slept", i*10)
-            time.sleep(10*60)
-        print()
-
-        record_data(min_time=1, pages=range(1,6))
-
-        print()
-        for i in range(6):
-            print("slept", i*10)
-            time.sleep(10*60)
-        print()
+    print("Collecting!")
+    

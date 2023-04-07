@@ -10,7 +10,6 @@ class Growth(Plotter):
         data = [self.read_row(row)[1] for index, row in self.data.iterrows()]
         self.data['Change'] = [row[-1] - row[0] for row in data]
         self.data.sort_values(by='Change', inplace=True, ascending=False)
-        print(self.data.head())
 
     def read_row(self, row):
         xs = []
@@ -24,7 +23,10 @@ class Growth(Plotter):
                 continue
 
             startval = startval or row[i]
-            values.append(row[i]-startval)
+            if row['ID'] in [] and self.special:
+                values.append(0*(row[i]-startval))
+            else:
+                values.append(row[i]-startval)
             xs.append(date)
         if len(values) <= 1:
             return None, [0,0]
@@ -35,8 +37,6 @@ class Growth(Plotter):
         super().configure()
         plt.title("Top chatters XP growth", color='#FFFFFF')
         self.ax.set_ylabel("XP Growth")
-        self.ax.set_xlabel("Date (YYYY-MM-DD AEST)", color="white")
-        self.ax.set_xlim([self.start_date, datetime.now()])
         self.ax.set_ylim([0, self.maxxp*1.05])
 
 
@@ -45,7 +45,8 @@ if __name__ == '__main__':
 
     plot = Growth(data, start_date=datetime.now()-timedelta(days=7))
     plot.draw(max_count=15)
-    plot.annotate(seperator=0.03)
+    plot.annotate()
     plot.configure()
 
+    plot.save()
     plot.show()

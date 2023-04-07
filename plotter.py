@@ -26,7 +26,7 @@ def getimg(url):
                 return None
 
 class Plotter:
-    def __init__(self, data, start_date=None, active_threshold=True, exclude_missing=True):
+    def __init__(self, data, start_date=None, active_threshold=True, exclude_missing=True, special=False):
         self.data = data
 
         self.fig, self.ax = plt.subplots()
@@ -41,6 +41,8 @@ class Plotter:
         self.annotations = []
 
         self.start_date = start_date
+
+        self.special = special
 
     def sort(self):
         # Find final value for xp using the read_row function
@@ -100,6 +102,8 @@ class Plotter:
             count += 1
             if count >= max_count:
                 break
+        if count < max_count:
+            print(str(count)+" shown")
 
     def annotate(self, seperator=0.03):
         '''
@@ -141,8 +145,10 @@ class Plotter:
 
 
     def configure(self):
-        self.ax.set_xlabel("Date (YYYY-MM-DD)", color="white")
+        self.ax.set_xlabel("Date (YYYY-MM-DD AEST)", color="white")
         self.ax.set_ylabel("Total XP", color="white")
+
+        self.ax.set_xlim([self.start_date, datetime.now()])
 
         # date_form = DateFormatter("%d-%m")
         # self.ax.xaxis.set_major_formatter(date_form)
@@ -158,19 +164,18 @@ class Plotter:
         self.fig.subplots_adjust(left=0.05, bottom=0.08, top=0.94, right=0.82)
 
     def show(self): plt.show()
-    def save(self): plt.savefig('out.png')
+    def save(self, name="out.png"): plt.savefig(name)
+    def close(self): plt.close()
 
 
 if __name__ == '__main__':
     data = pd.read_csv("gwaff.csv", index_col=0)
 
-    plot = Plotter(data)
+    plot = Plotter(data, start_date=datetime.now()-timedelta(days=30), active_threshold=True)
     plot.draw(max_count=15)
-    plot.annotate(seperator=0.03)
+    plot.annotate()
     plot.configure()
-
-    # im = plt.imread(get_sample_data())
     
-    plot.show()
     plot.save()
+    plot.show()
 
