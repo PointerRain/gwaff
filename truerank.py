@@ -2,6 +2,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import discord
 
+
 class Truerank:
     def __init__(self, data, period=30, threshold=1):
         self.data = data
@@ -9,7 +10,7 @@ class Truerank:
         self.period = period
         if period <= 0:
             raise ZeroDivisionError
-        self.start_date = datetime.now()-timedelta(days=period)
+        self.start_date = datetime.now() - timedelta(days=period)
 
         self.threshold = threshold
 
@@ -42,7 +43,7 @@ class Truerank:
                 finalxp = max(row[i], finalxp)
             if startxp is None:
                 continue
-            finalgrowth = finalxp-startxp
+            finalgrowth = finalxp - startxp
             if finalgrowth > self.threshold:
                 item = (row['ID'], row['Name'], finalxp)
                 values.append(item)
@@ -56,5 +57,6 @@ class Truerank:
             if item[0] == member:
                 if index <= 0:
                     return index, item[2], 0, item[2]
-                return index, item[2], self.values[index-1][0], self.values[index-1][2]
+                return index, item[2], self.values[index - 1][0], self.values[
+                    index - 1][2], self.values[index - 1][1]
         raise IndexError

@@ -3,12 +3,10 @@ from datetime import datetime, timedelta
 
 import matplotlib.pyplot as plt
 
-from matplotlib.cbook import get_sample_data
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from matplotlib.dates import DateFormatter
-from PIL import Image
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+
 
 def getimg(url):
     count = 0
@@ -25,8 +23,14 @@ def getimg(url):
             else:
                 return None
 
+
 class Plotter:
-    def __init__(self, data, start_date=None, active_threshold=True, exclude_missing=True, special=False):
+    def __init__(self,
+                 data,
+                 start_date=None,
+                 active_threshold=True,
+                 exclude_missing=True,
+                 special=False,
         self.data = data
 
         self.fig, self.ax = plt.subplots()
@@ -50,7 +54,7 @@ class Plotter:
         self.data['Final'] = [row[-1] for row in data]
         self.data.sort_values(by='Final', inplace=True, ascending=False)
 
-    def read_row(self, row, start_date=None):
+    def read_row(self, row):
         '''
         Read dates and values that have xp data.
         '''
@@ -66,7 +70,7 @@ class Plotter:
             values.append(row[i])
             xs.append(date)
         if len(values) <= 1:
-            return None, [0,0]
+            return None, [0, 0]
 
         return xs, values
 
@@ -81,10 +85,9 @@ class Plotter:
             if include is not None and row['ID'] not in include:
                 continue
 
-
             xs, values = self.read_row(row)
-            
-            if values[-1]-values[0] <= self.active_threshold:
+
+            if values[-1] - values[0] <= self.active_threshold:
                 continue
 
             if pd.isna(row['Name']):
@@ -96,14 +99,15 @@ class Plotter:
                 colour = row['Colour']
                 avatar = row['Avatar']
 
-            self.annotations.append((values[-1], name, colour, avatar, values[0]))
+            self.annotations.append(
+                (values[-1], name, colour, avatar, values[0]))
             plt.plot(xs, values, color=colour)
 
             count += 1
             if count >= max_count:
                 break
         if count < max_count:
-            print(str(count)+" shown")
+            print(str(count) + " shown")
 
     def annotate(self, seperator=0.03):
         '''
@@ -115,13 +119,18 @@ class Plotter:
         self.maxxp = sorted(self.annotations, key=lambda x: x[0])[-1][0]
         self.minxp = sorted(self.annotations, key=lambda x: x[4])[0][-1]
         if len(self.annotations) > 1:
-            def xp_to_axes(xp): return (xp-self.minxp)/(self.maxxp-self.minxp)
-            def axes_to_data(h): return h*(self.maxxp-self.minxp)+self.minxp
+
+            def xp_to_axes(xp):
+                return (xp - self.minxp) / (self.maxxp - self.minxp)
+
+            def axes_to_data(h):
+                return h * (self.maxxp - self.minxp) + self.minxp
 
         # Each point defaults to next to line.
         # Moves up to avoid lower labels.
         heights = [-seperator]
-        for index, item in enumerate(sorted(self.annotations, key=lambda x: x[0])):
+        for index, item in enumerate(
+                sorted(self.annotations, key=lambda x: x[0])):
             height = item[0]
             new_height = height
             if len(self.annotations) > 1:
@@ -138,11 +147,13 @@ class Plotter:
     def annotate_image(self, avatar, height):
         image = getimg(avatar)
         if image is None:
-            return
+            return False
         image = plt.imread(image, format='jpeg')
-        self.ax.add_artist(AnnotationBbox(OffsetImage(image, zoom=0.1), (1.008, height),
-                           xycoords=('axes fraction', 'data'), frameon=False))
-
+        self.ax.add_artist(
+            AnnotationBbox(OffsetImage(image, zoom=0.1), (1.008, height),
+                           xycoords=('axes fraction', 'data'),
+                           frameon=False))
+        return True
 
     def configure(self):
         self.ax.set_xlabel("Date (YYYY-MM-DD AEST)", color="white")
@@ -163,19 +174,27 @@ class Plotter:
 
         self.fig.subplots_adjust(left=0.05, bottom=0.08, top=0.94, right=0.82)
 
-    def show(self): plt.show()
-    def save(self, name="out.png"): plt.savefig(name)
-    def close(self): plt.close()
+
+    def show(self):
+        plt.show()
+
+    def save(self, name="out.png"):
+        plt.savefig(name)
+
+    def close(self):
+        plt.close()
 
 
 if __name__ == '__main__':
     data = pd.read_csv("gwaff.csv", index_col=0)
 
-    plot = Plotter(data, start_date=datetime.now()-timedelta(days=30), active_threshold=True)
+    plot = Plotter(data,
+                   start_date=datetime.now() - timedelta(days=30),
+                   active_threshold=True)
     plot.draw(max_count=15)
     plot.annotate()
     plot.configure()
-    
+
     plot.save()
     plot.show()
-
+    plot.close()

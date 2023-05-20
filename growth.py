@@ -23,27 +23,27 @@ class Growth(Plotter):
                 continue
 
             startval = startval or row[i]
-            if row['ID'] in [] and self.special:
-                values.append(0*(row[i]-startval))
+            if row['ID'] in [232123888073572354] and self.special:
+                values.append(0 * (row[i] - startval))
             else:
-                values.append(row[i]-startval)
+                values.append(row[i] - startval)
             xs.append(date)
         if len(values) <= 1:
-            return None, [0,0]
-        
+            return None, [0, 0]
+
         return xs, values
 
     def configure(self):
         super().configure()
         plt.title("Top chatters XP growth", color='#FFFFFF')
         self.ax.set_ylabel("XP Growth")
-        self.ax.set_ylim([0, self.maxxp*1.05])
+        self.ax.set_ylim([0, self.maxxp * 1.05])
 
 
 if __name__ == '__main__':
     data = pd.read_csv("gwaff.csv", index_col=0)
 
-    plot = Growth(data, start_date=datetime.now()-timedelta(days=7))
+    plot = Growth(data, start_date=datetime.now() - timedelta(days=7))
     plot.draw(max_count=15)
     plot.annotate()
     plot.configure()
