@@ -132,6 +132,7 @@ class Plotter:
         for index, item in enumerate(
                 sorted(self.annotations, key=lambda x: x[0])):
             height = item[0]
+            position = 1.019
             new_height = height
             if len(self.annotations) > 1:
                 new_height = xp_to_axes(height)
@@ -139,10 +140,13 @@ class Plotter:
                     new_height = heights[-1] + seperator
                 heights.append(new_height)
                 new_height = axes_to_data(new_height)
-            plt.annotate(item[1], (1.019, height), (1.019, new_height),
+            did_img = self.annotate_image(item[3], new_height)
+            if not did_img:
+                position -= 0.015
+            plt.annotate(item[1], (position, height), (position, new_height),
                          xycoords=('axes fraction', 'data'),
-                         color=item[2], va='center')
-            self.annotate_image(item[3], new_height)
+                         color=item[2],
+                         va='center')
 
     def annotate_image(self, avatar, height):
         image = getimg(avatar)
