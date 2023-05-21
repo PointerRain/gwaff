@@ -28,6 +28,7 @@ class Plotter:
     def __init__(self,
                  data,
                  start_date=None,
+                 end_date=None,
                  active_threshold=True,
                  exclude_missing=True,
                  special=False,
@@ -45,6 +46,7 @@ class Plotter:
         self.annotations = []
 
         self.start_date = start_date
+        self.end_date = end_date
 
         self.special = special
 
@@ -63,6 +65,8 @@ class Plotter:
         for i in self.dates:
             date = datetime.fromisoformat(i)
             if self.start_date and date < self.start_date:
+                continue
+            if self.end_date and date > self.end_date:
                 continue
             if row[i] is None or pd.isna(row[i]):
                 continue
@@ -163,7 +167,11 @@ class Plotter:
         self.ax.set_xlabel("Date (YYYY-MM-DD AEST)", color="white")
         self.ax.set_ylabel("Total XP", color="white")
 
-        self.ax.set_xlim([self.start_date, datetime.now()])
+        if self.end_date:
+            end = min(datetime.now(), self.end_date)
+        else:
+            end = datetime.now()
+        self.ax.set_xlim([self.start_date, end])
 
         # date_form = DateFormatter("%d-%m")
         # self.ax.xaxis.set_major_formatter(date_form)
