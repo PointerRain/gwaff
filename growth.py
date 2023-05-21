@@ -35,7 +35,7 @@ class Growth(Plotter):
 
     def configure(self):
         super().configure()
-        plt.title("Top chatters XP growth", color='#FFFFFF')
+        
         self.ax.set_ylabel("XP Growth")
         self.ax.set_ylim([0, self.maxxp * 1.05])
 

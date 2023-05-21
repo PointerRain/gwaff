@@ -36,7 +36,7 @@ class Gwaff(discord.Client):
         print("")
 
 
-def growth(days = 7, count: int = 15, member=None, special=False):
+def growth(days=7, count: int = 15, member=None, title="Top chatters XP growth", special=False):
     '''
     Plots and saves a growth plot (aka gwaff)
 
@@ -47,7 +47,10 @@ def growth(days = 7, count: int = 15, member=None, special=False):
         days = 0
     data = pd.read_csv("gwaff.csv", index_col=0)
 
-    plot = Growth(data, start_date=datetime.now()-timedelta(days=days), special=special)
+    plot = Growth(data,
+                  start_date=datetime.now() - timedelta(days=days),
+                  special=special,
+                  title=title)
     include = None if member is None else [member.id]
     plot.draw(max_count=count, include=include)
     plot.annotate()
@@ -261,7 +264,7 @@ async def plot_growth(interaction: discord.Interaction,
             "That person in not in the server or hasn't reached level 15")
         return
     try:
-        growth(days=days, member=member, count=1)
+        growth(days=days, member=member, count=1, title=member.name+"'s growth over the last "+str(days)+" days")
     except IndexError:
         await interaction.followup.send(
             "That person has not been online recently enough")

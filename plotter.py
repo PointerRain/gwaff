@@ -32,6 +32,7 @@ class Plotter:
                  active_threshold=True,
                  exclude_missing=True,
                  special=False,
+                 title="XP Over Time"):
         self.data = data
 
         self.fig, self.ax = plt.subplots()
@@ -49,6 +50,7 @@ class Plotter:
         self.end_date = end_date
 
         self.special = special
+        self.title = title
 
     def sort(self):
         # Find final value for xp using the read_row function
@@ -186,6 +188,8 @@ class Plotter:
 
         self.fig.subplots_adjust(left=0.05, bottom=0.08, top=0.94, right=0.82)
 
+        if self.title:
+            plt.title(self.title, color='#FFFFFF')
 
     def show(self):
         plt.show()
