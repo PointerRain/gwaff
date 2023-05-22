@@ -9,6 +9,9 @@ from datetime import datetime
 
 from threading import Thread
 
+from database import saveToDB
+
+
 def request_api(url):
     count = 0
     while True:
@@ -31,9 +34,9 @@ def request_api(url):
 def url_constructor(base, **kwargs):
     if kwargs:
         keys = list(kwargs.keys())
-        url = base+'?'+keys[0]+'='+str(kwargs[keys[0]])
+        url = base + '?' + keys[0] + '=' + str(kwargs[keys[0]])
         for kw in keys[1:]:
-            url += '&'+kw+'='+str(kwargs[kw])
+            url += '&' + kw + '=' + str(kwargs[kw])
     return url
 
 
@@ -46,7 +49,7 @@ def record_data(pages=range(1, 6), min_time=2):
     Record the current xp data to gwaff.csv.
     Ensures records are seperated by at least min_time.
     '''
-    
+
     print()
     print("Collecting!")
 
@@ -69,7 +72,7 @@ def record_data(pages=range(1, 6), min_time=2):
         leaderboard = data['leaderboard']
 
         for member in leaderboard:
-            if not ('missing' in member or member['color']=='#000000'):
+            if not ('missing' in member or member['color'] == '#000000'):
                 # Save xp and ids
                 id = int(member['id'])
                 ids.append(id)
@@ -87,14 +90,8 @@ def record_data(pages=range(1, 6), min_time=2):
                 colours.append(colour)
                 avatars.append(avatar)
 
-
     # Below saves the data
-    struct = {
-        'ID': ids,
-        'Name': names,
-        'Colour': colours,
-        'Avatar': avatars
-    }
+    struct = {'ID': ids, 'Name': names, 'Colour': colours, 'Avatar': avatars}
 
     lasttime = last.columns[-1]
     lasttime = datetime.fromisoformat(lasttime)
@@ -105,7 +102,7 @@ def record_data(pages=range(1, 6), min_time=2):
     print("Diff:", difference)
 
     # Checks before saving. Could be improved
-    if difference.total_seconds() > min_time*60*60:
+    if difference.total_seconds() > min_time * 60 * 60:
         other = pd.DataFrame(struct)
         df = pd.concat([last, other])
         df = df.drop_duplicates('ID', keep='first')
@@ -118,40 +115,47 @@ def record_data(pages=range(1, 6), min_time=2):
                 newxp.append(None)
         df[now] = newxp
 
+        count = 0
         while True:
             try:
                 df.to_csv('gwaff.csv', encoding='utf-8')
+                saveToDB()
             except Exception as e:
-                pass
+                if count < 10:
+                    count += 1
+                else:
+                    print("Skipping")
+                    return False
             else:
                 print('saved')
                 break
-        
+
         return True
 
     else:
         print('Too soon')
-        print(difference.total_seconds()//60, min_time*60)
+        print(difference.total_seconds() // 60, min_time * 60)
         return False
 
     print()
 
+
 def run():
     while True:
-        success = record_data(min_time=1, pages=range(1,8))
+        success = record_data(min_time=0.5, pages=range(1, 8))
         print()
         wait = 6 if success else 3
         for i in range(wait):
-            print("slept "+str(i*10)+"/"+str(wait*10))
-            time.sleep(10*60)
+            print("slept " + str(i * 10) + "/" + str(wait * 10))
+            time.sleep(10 * 60)
         print()
 
-        success = record_data(min_time=1, pages=range(1,3))
+        success = record_data(min_time=0.5, pages=range(1, 3))
         print()
         wait = 6 if success else 3
         for i in range(wait):
-            print("slept "+str(i*10)+"/"+str(wait*10))
-            time.sleep(10*60)
+            print("slept " + str(i * 10) + "/" + str(wait * 10))
+            time.sleep(10 * 60)
         print()
 
 
@@ -164,4 +168,3 @@ if __name__ == '__main__':
     collect()
 
     print("Collecting!")
-    
