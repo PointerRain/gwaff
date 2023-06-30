@@ -144,7 +144,7 @@ def run():
     while True:
         success = record_data(min_time=0.5, pages=range(1, 8))
         print()
-        wait = 6 if success else 3
+        wait = 12 if success else 3
         for i in range(wait):
             print("slept " + str(i * 10) + "/" + str(wait * 10))
             time.sleep(10 * 60)
@@ -152,7 +152,7 @@ def run():
 
         success = record_data(min_time=0.5, pages=range(1, 3))
         print()
-        wait = 6 if success else 3
+        wait = 12 if success else 3
         for i in range(wait):
             print("slept " + str(i * 10) + "/" + str(wait * 10))
             time.sleep(10 * 60)
