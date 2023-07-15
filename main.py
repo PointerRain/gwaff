@@ -25,16 +25,15 @@ loadFromDB()
 print("Loaded")
 
 
-from automate import runTheBot
 from keep_alive import keep_alive
-from collector import collect
-
 keep_alive()
 print("Staying alive")
 
+from collector import collect
 collect()
 print("Collecting")
 
+from automate import runTheBot
 TOKEN = os.environ['BOT_TOKEN']
 runTheBot(TOKEN)
 

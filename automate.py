@@ -188,11 +188,11 @@ async def predict(interaction: discord.Interaction,
     member = validate_member(interaction, member)
     if member is False:
         await interaction.followup.send(
-            "That person in not in the server or hasn't reached level 15")
+            ":bust_in_silhouette: That person in not in the server or hasn't reached level 15")
         return
     elif target == member:
         await interaction.followup.send(
-            "The target cannot be the same as the member")
+            ":mirror: The target cannot be the same as the member")
         return
 
     try:
@@ -204,21 +204,23 @@ async def predict(interaction: discord.Interaction,
         days = prediction.evaluate()
 
     except ValueError:
-        await interaction.followup.send("Level or xp must be a whole number")
+        await interaction.followup.send(":1234: Level or xp must be a whole number")
         return
     except ZeroDivisionError:
         await interaction.followup.send(
-            "The target cannot be the same as the member")
+            ":mirror: The target cannot be the same as the member")
         return
     except IndexError:
-        await interaction.followup.send(":question: That target does not exist"
-                                        )
+        await interaction.followup.send(":bust_in_silhouette: That target does not exist")
         return
     if days == 'target':
-        await interaction.followup.send("Invalid target " + target)
+        await interaction.followup.send(":x: Invalid target " + target)
         return
     if days >= 100 * 365:
-        await interaction.followup.send("That target is too far away")
+        await interaction.followup.send(":telescope: That target is too far away")
+        return
+    if days != days:
+        await interaction.followup.send(":question: An unknown error occured")
         return
 
     date = time.mktime((datetime.now() + timedelta(days=days)).timetuple())
@@ -264,7 +266,7 @@ async def plot_growth(interaction: discord.Interaction,
             "That person in not in the server or hasn't reached level 15")
         return
     try:
-        growth(days=days, member=member, count=1, title=member.name+"'s growth over the last "+str(days)+" days")
+        growth(days=days, member=member, count=1, title=member.name+"'s growth over the last "+str(round(days))+" days")
     except IndexError:
         await interaction.followup.send(
             "That person has not been online recently enough")
@@ -317,6 +319,7 @@ async def rank_true(interaction: discord.Interaction,
               description="Shows the leaderboard of active members",
               guilds=guilds)
 @app_commands.describe(page='The page to display (default 1)',
+                       threshold='The monthly xp needed to be listed (default 30)',
                        hidden='Hide from others in this server (default False)'
                        )
 async def leaderboard(interaction: discord.Interaction,
@@ -382,7 +385,7 @@ async def react(interaction: discord.Interaction, user: discord.Member):
             "That person in not in the server or hasn't reached level 15")
         return
     try:
-        growth(days=7, member=member, count=1, title=member.name+"'s growth over the last "+str(days)+" days")
+        growth(days=7, member=member, count=1, title=member.name+"'s growth over the last "+str(round(days))+" days")
     except IndexError:
         await interaction.followup.send(
             "That person has not been online recently enough")
