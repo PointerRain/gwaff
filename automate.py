@@ -86,8 +86,7 @@ tree = app_commands.CommandTree(client)
 
 
 @tree.command(name="gwaff",
-              description="Plots top users growth",
-              guilds=guilds)
+              description="Plots top users growth")
 @app_commands.describe(days='How many days to plot (default 7)',
                        count='How many users to plot (default 15)',
                        hidden='Hide from others in this server (default True)')
@@ -107,8 +106,7 @@ async def plot_gwaff(interaction: discord.Interaction,
 
 
 @tree.command(name="daily",
-              description="Plots the last 24 hours of growth",
-              guilds=guilds)
+              description="Plots the last 24 hours of growth")
 @app_commands.describe(hidden='Hide from others in this server (default False)'
                        )
 async def plot_daily(interaction: discord.Interaction, hidden: bool = False):
@@ -117,7 +115,7 @@ async def plot_daily(interaction: discord.Interaction, hidden: bool = False):
     await interaction.followup.send(file=discord.File('out.png'))
 
 
-@tree.command(name="data", guilds=guilds)
+@tree.command(name="data")
 async def send_data(interaction: discord.Interaction, hidden: bool = True):
     await interaction.response.defer(ephemeral=hidden)
     if interaction.user.id == 344731282095472641:
@@ -127,8 +125,7 @@ async def send_data(interaction: discord.Interaction, hidden: bool = True):
 
 
 @tree.command(name="isalive",
-              description="When did I last collect data",
-              guilds=guilds)
+              description="When did I last collect data")
 @app_commands.describe(hidden='Hide from others in this server (default True)')
 async def last_record(interaction: discord.Interaction, hidden: bool = True):
     await interaction.response.defer(ephemeral=hidden)
@@ -154,8 +151,7 @@ async def last_record(interaction: discord.Interaction, hidden: bool = True):
 
 
 '''
-@tree.command(name="reduce",
-              guilds=guilds)
+@tree.command(name="reduce")
 async def send_data(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=True)
     if interaction.user.id == 344731282095472641:
@@ -169,8 +165,7 @@ async def send_data(interaction: discord.Interaction):
 
 
 @tree.command(name="predict",
-              description="Predict when you will pass a given level, xp, or member",
-              guilds=guilds)
+              description="Predict when you will pass a given level, xp, or member")
 @app_commands.describe(target='Either a level, xp, or member to aim for',
                        member='The member to do the prediction for (default you)',
                        period='The period to average your growth over (default 30 days)',
@@ -249,8 +244,7 @@ async def predict(interaction: discord.Interaction,
 
 
 @tree.command(name="growth",
-              description="Plots a specific member's growth",
-              guilds=guilds)
+              description="Plots a specific member's growth")
 @app_commands.describe(member='The member plot (default you)',
                        days='How many days to plot (default 7)',
                        hidden='Hide from others in this server (default False)'
@@ -275,8 +269,7 @@ async def plot_growth(interaction: discord.Interaction,
 
 
 @tree.command(name="truerank",
-              description="Tells you your position out of only active members",
-              guilds=guilds)
+              description="Tells you your position out of only active members")
 @app_commands.describe(member='The member to check (default you)',
                        hidden='Hide from others in this server (default False)'
                        )
@@ -316,8 +309,7 @@ async def rank_true(interaction: discord.Interaction,
 
 
 @tree.command(name="leaderboard",
-              description="Shows the leaderboard of active members",
-              guilds=guilds)
+              description="Shows the leaderboard of active members")
 @app_commands.describe(page='The page to display (default 1)',
                        threshold='The monthly xp needed to be listed (default 30)',
                        hidden='Hide from others in this server (default False)'
@@ -365,7 +357,7 @@ async def leaderboard(interaction: discord.Interaction,
 #         str(offset))
 
 
-@tree.command(name="ping", description="Pong!", guilds=guilds)
+@tree.command(name="ping", description="Pong!")
 async def set_time_offset(interaction: discord.Interaction):
     now = datetime.now(timezone.utc)
     msgtime = interaction.created_at
@@ -376,7 +368,7 @@ async def set_time_offset(interaction: discord.Interaction):
                                             ephemeral=True)
 
 
-@tree.context_menu(name='Growth', guilds=guilds)
+@tree.context_menu(name='Growth')
 async def react(interaction: discord.Interaction, user: discord.Member):
     await interaction.response.defer(ephemeral=True)
     member = validate_member(interaction, user)
@@ -394,8 +386,7 @@ async def react(interaction: discord.Interaction, user: discord.Member):
 
 
 '''
-@tree.context_menu(name="predict",
-              guilds=guilds)
+@tree.context_menu(name="predict")
 async def predict(interaction: discord.Interaction,
                   target: str,
                   member: discord.User = None,
@@ -457,7 +448,7 @@ async def predict(interaction: discord.Interaction,
 '''
 
 
-@tree.context_menu(name='True Rank', guilds=guilds)
+@tree.context_menu(name='True Rank')
 async def react(interaction: discord.Interaction, user: discord.Member):
     await interaction.response.defer(ephemeral=True)
 
