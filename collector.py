@@ -21,13 +21,13 @@ def request_api(url):
             data = urlopen(request).read()
             return json.loads(data)
         except Exception as e:
-            print("Could not retrieve", str(count))
+            print("[WARN][COLLECT] Could not retrieve", str(count))
             print(e)
             if count < 10:
                 count += 1
                 time.sleep(1)
             else:
-                print("Skipping")
+                print("[ERROR][COLLECT] Skipping")
                 return False
 
 
@@ -50,8 +50,7 @@ def record_data(pages=range(1, 6), min_time=2):
     Ensures records are seperated by at least min_time.
     '''
 
-    print()
-    print("Collecting!")
+    print("[COLLECT] Collecting!")
 
     ids = []
     names = []
@@ -95,11 +94,11 @@ def record_data(pages=range(1, 6), min_time=2):
 
     lasttime = last.columns[-1]
     lasttime = datetime.fromisoformat(lasttime)
-    print("Last:", lasttime)
+    print("[COLLECT] Last:", lasttime)
     now = datetime.now()
-    print(" Now:", now)
+    print("[COLLECT]  Now:", now)
     difference = now - lasttime
-    print("Diff:", difference)
+    print("[COLLECT] Diff:", difference)
 
     # Checks before saving. Could be improved
     if difference.total_seconds() > min_time * 60 * 60:
@@ -121,19 +120,21 @@ def record_data(pages=range(1, 6), min_time=2):
                 df.to_csv('gwaff.csv', encoding='utf-8')
                 saveToDB()
             except Exception as e:
+                print("[WARN][COLLECT] Could not save", str(count))
+                print(e)
                 if count < 10:
                     count += 1
                 else:
-                    print("Skipping")
+                    print("[ERROR][COLLECT] Skipping")
                     return False
             else:
-                print('saved')
+                print('[COLLECT] Saved')
                 break
 
         return True
 
     else:
-        print('Too soon')
+        print('[COLLECT] Too soon')
         print(difference.total_seconds() // 60, min_time * 60)
         return False
 
@@ -143,20 +144,16 @@ def record_data(pages=range(1, 6), min_time=2):
 def run():
     while True:
         success = record_data(min_time=1, pages=range(1, 8))
-        print()
         wait = 12 if success else 6
         for i in range(wait):
-            print("slept " + str(i * 10) + "/" + str(wait * 10))
+            print("[COLLECT] slept " + str(i * 10) + "/" + str(wait * 10))
             time.sleep(10 * 60)
-        print()
 
         success = record_data(min_time=1, pages=range(1, 3))
-        print()
         wait = 12 if success else 6
         for i in range(wait):
-            print("slept " + str(i * 10) + "/" + str(wait * 10))
+            print("[COLLECT] slept " + str(i * 10) + "/" + str(wait * 10))
             time.sleep(10 * 60)
-        print()
 
 
 def collect():
@@ -167,4 +164,4 @@ def collect():
 if __name__ == '__main__':
     collect()
 
-    print("Collecting!")
+    print("[COLLECT] Collection Started")

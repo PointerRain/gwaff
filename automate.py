@@ -29,11 +29,9 @@ class Gwaff(discord.Client):
             await tree.sync()
             for server in client.guilds:
                 await tree.sync(guild=discord.Object(id=server.id))
-                print(server.name)
+                print("[BOT] - "server.name)
             self.synced = True
-        print("Ready!")
-
-        print("")
+        print("[BOT] Ready!")
 
 
 def growth(days=7, count: int = 15, member=None, title="Top chatters XP growth", special=False):
@@ -362,7 +360,7 @@ async def set_time_offset(interaction: discord.Interaction):
     now = datetime.now(timezone.utc)
     msgtime = interaction.created_at
     ping = (now - msgtime).total_seconds() * 2000.0
-    print("Ping:", ping)
+    print("[BOT] Ping:", ping)
     await interaction.response.send_message("Pong!\n" + str(round(ping)) +
                                             "ms",
                                             ephemeral=True)
@@ -481,4 +479,4 @@ def runTheBot(token):
 
 
 if __name__ == '__main__':
-    print("Need to run through runTheBot with the token!")
+    print("[ERROR][BOT] Need to run through runTheBot with the token!")

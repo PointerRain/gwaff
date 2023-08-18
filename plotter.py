@@ -15,7 +15,7 @@ def getimg(url):
             request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
             return urlopen(request)
         except HTTPError as e:
-            print("Could not retrieve", str(count))
+            print("[WARN][PLOTTER] Could not retrieve", str(count))
             print(url)
             print(e)
             if count < 10:
@@ -113,7 +113,7 @@ class Plotter:
             if count >= max_count:
                 break
         if count < max_count:
-            print(str(count) + " shown")
+            print("[PLOTTER] " + str(count) + " shown")
 
     def annotate(self, seperator=0.03):
         '''

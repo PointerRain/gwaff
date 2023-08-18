@@ -4,12 +4,12 @@ import time
 os.environ['TZ'] = 'Australia/Brisbane'
 time.tzset()
 
-print("Set the timezone")
+print("[MAIN] Set the timezone")
 
 from warnings import filterwarnings
 filterwarnings("ignore", category=RuntimeWarning, module="matplotlib\..*", lineno=0)
 
-print("Filtering warnings")
+print("[MAIN] Filtering warnings")
 
 from database import saveToDB, loadFromDB
 # from replit import db
@@ -22,19 +22,19 @@ from database import saveToDB, loadFromDB
 # print("saved")
 
 loadFromDB()
-print("Loaded")
+print("[MAIN] Loaded")
 
 
 from keep_alive import keep_alive
 keep_alive()
-print("Staying alive")
+print("[MAIN] Staying alive")
 
 from collector import collect
 collect()
-print("Collecting")
+print("[MAIN] Collecting")
 
 from automate import runTheBot
 TOKEN = os.environ['BOT_TOKEN']
 runTheBot(TOKEN)
 
-print("Ended!")
+print("[MAIN] Fin!")
