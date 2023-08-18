@@ -63,6 +63,9 @@ class Reducer:
             elif age > timedelta(days=30) and diff/2 < timedelta(hours=12):
                 del_count += 1
                 dates.remove(column)
+            elif age > timedelta(days=100) and diff/2 < timedelta(hours=24):
+                del_count += 1
+                dates.remove(column)
             else:
                 index += 1
         new_columns = new_columns + [str(date) for date in dates]
