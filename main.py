@@ -16,10 +16,10 @@ from database import saveToDB, loadFromDB
 
 # for i in db.keys():
 #     del db[i]
-# print('Deleted')
+# print('[MAIN] Deleted')
 
 # saveToDB()
-# print("saved")
+# print("[MAIN] Saved")
 
 loadFromDB()
 print("[MAIN] Loaded")

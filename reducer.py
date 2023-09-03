@@ -3,8 +3,8 @@
 # If a column is over a week old, only store every 4th hour
 # If a column is over a month old, only store every 24th hour
 # TODO:
-# If a datum is the same as before and after, remove it
-# If a datum is the same as before and last, remove it
+# If a value is the same as before and after, remove it
+# If a value is the same as before and last, remove it
 
 
 import pandas as pd

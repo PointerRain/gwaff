@@ -135,7 +135,7 @@ def record_data(pages=range(1, 6), min_time=2):
 
     else:
         print('[COLLECT] Too soon')
-        print(difference.total_seconds() // 60, min_time * 60)
+        print('[COLLECT] ' + str(difference.total_seconds() / 60) + '/' + str(min_time * 60))
         return False
 
     print()

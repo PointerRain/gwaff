@@ -29,7 +29,7 @@ class Gwaff(discord.Client):
             await tree.sync()
             for server in client.guilds:
                 await tree.sync(guild=discord.Object(id=server.id))
-                print("[BOT] - "server.name)
+                print("[BOT] - " + server.name)
             self.synced = True
         print("[BOT] Ready!")
 
