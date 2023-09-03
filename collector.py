@@ -78,7 +78,7 @@ def record_data(pages=range(1, 6), min_time=2):
                 xp = member['xp']
                 xps[id] = xp
                 # Update names, colours, and avatars
-                name = member['nickname'] or member['username']
+                name = member['nickname'] or member['displayName'] or member['username']
                 last.loc[last['ID'] == id, 'Name'] = name
                 colour = member['color']
                 last.loc[last['ID'] == id, 'Colour'] = colour
