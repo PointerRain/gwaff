@@ -38,7 +38,7 @@ class Prediction:
         elif remove_suffix(target) <= 100000000:
             self.target_type = 'xp'
             self.target = remove_suffix(target)
-        elif int(target) >= 10000000000:
+        elif remove_suffix(target) >= 10000000000:
             self.target_type = 'user'
             self.target = int(target)
         else:
@@ -55,15 +55,18 @@ class Prediction:
         self.dates.sort()
 
         self.value, self.growth = self.get_data(member)
-        self.growth = growth or self.growth
+        if growth != None:
+            self.growth = growth
 
         if self.value is None or self.growth is None:
             raise ValueError
 
     def get_data(self, user):
 
-        startxp = None
-        finalxp = 0
+        start_xp = None
+        start_date = None
+        final_xp = None
+        final_date = None
 
         for index, row in list(self.data.iterrows()):
             if row['ID'] == int(user):
@@ -74,12 +77,20 @@ class Prediction:
                     if row[i] is None or pd.isna(row[i]):
                         continue
 
-                    startxp = startxp or row[i]
-                    startxp = min(row[i], startxp)
-                    finalxp = max(row[i], finalxp)
+                    start_xp = start_xp or row[i]
+                    start_date = start_date or date
+                    final_xp = final_xp or row[i]
+                    final_date = final_date or date
                     
-                finalgrowth = row[i]-startxp
-                return finalxp, finalgrowth/self.period
+                    start_xp = min(row[i], start_xp)
+                    start_date = min(date, start_date)
+                    final_xp = max(row[i], final_xp)
+                    final_date = max(date, final_date)
+                    
+                final_growth = final_xp-start_xp
+                actual_period = (final_date - start_date) / timedelta(days=1)
+                
+                return final_xp, final_growth/actual_period
         raise IndexError
 
     def simple_target(self, target):
