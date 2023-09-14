@@ -49,6 +49,7 @@ def growth(days=7, count: int = 15, member=None, title="Top chatters XP growth",
                   start_date=datetime.now() - timedelta(days=days),
                   special=special,
                   title=title)
+    
     include = None if member is None else [member.id]
     plot.draw(max_count=count, include=include)
     plot.annotate()
@@ -100,7 +101,7 @@ async def plot_gwaff(interaction: discord.Interaction,
         growth(days=days, count=count, special=True)
         await interaction.followup.send(file=discord.File('out.png'))
     else:
-        await interaction.followup.send("You can't use this command")
+        await interaction.followup.send(":no_entry: You can't use this command")
 
 
 @tree.command(name="daily",
@@ -116,10 +117,10 @@ async def plot_daily(interaction: discord.Interaction, hidden: bool = False):
 @tree.command(name="data")
 async def send_data(interaction: discord.Interaction, hidden: bool = True):
     await interaction.response.defer(ephemeral=hidden)
-    if interaction.user.id == 344731282095472641:
+    if interaction.user.id in [344731282095472641]:
         await interaction.followup.send(file=discord.File('gwaff.csv'))
     else:
-        await interaction.followup.send("You can't use this command")
+        await interaction.followup.send(":no_entry: You can't use this command")
 
 
 @tree.command(name="isalive",
@@ -152,13 +153,13 @@ async def last_record(interaction: discord.Interaction, hidden: bool = True):
 @tree.command(name="reduce")
 async def send_data(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=True)
-    if interaction.user.id == 344731282095472641:
+    if interaction.user.id in [344731282095472641]:
         startsize = 0
         reduce()
         endsize = 0
         await interaction.followup.send("Reduced filesize by "+str(endsize-startsize)+"!")
     else:
-        await interaction.followup.send("You can't use this command")
+        await interaction.followup.send(":no_entry: You can't use this command")
 '''
 
 
@@ -204,7 +205,10 @@ async def predict(interaction: discord.Interaction,
             ":mirror: The target cannot be the same as the member")
         return
     except IndexError:
-        await interaction.followup.send(":bust_in_silhouette: That target does not exist")
+        await interaction.followup.send(":mag: That target does not exist")
+        return
+    except Exception as e:
+        await interaction.followup.send(":question: An unknown error occured")
         return
     if days == 'target':
         await interaction.followup.send(":x: Invalid target " + target)
@@ -255,13 +259,13 @@ async def plot_growth(interaction: discord.Interaction,
     member = validate_member(interaction, member)
     if member is False:
         await interaction.followup.send(
-            "That person in not in the server or hasn't reached level 15")
+            ":bust_in_silhouette: That person in not in the server or hasn't reached level 15")
         return
     try:
         growth(days=days, member=member, count=1, title=member.name+"'s growth over the last "+str(round(days))+" days")
     except IndexError:
         await interaction.followup.send(
-            "That person has not been online recently enough")
+            ":bust_in_silhouette: That person has not been online recently enough")
         return
     await interaction.followup.send(file=discord.File('out.png'))
 
@@ -281,14 +285,14 @@ async def rank_true(interaction: discord.Interaction,
     member = validate_member(interaction, member)
     if member is False:
         await interaction.followup.send(
-            "That person in not in the server or hasn't reached level 15")
+            ":bust_in_silhouette: That person in not in the server or hasn't reached level 15")
         return
     try:
         rank = Truerank(data, threshold=threshold)
         index, xp, other, other_xp, other_name = rank.find_index(member.id)
     except IndexError:
         await interaction.followup.send(
-            "That person in not in the server or hasn't reached level 15")
+            ":bust_in_silhouette: That person has not been online recently enough")
         return
 
     member_name = "You are" if member == interaction.user else "<@" + \
@@ -326,7 +330,7 @@ async def leaderboard(interaction: discord.Interaction,
             ")** <@"+str(item[0])+">" + \
             " ("+str(round(item[2]))+" XP)"
     if len(description) <= 0:
-        await interaction.followup.send("This page does not exist")
+        await interaction.followup.send(":1234: This page does not exist")
         return
     description += "\nPage: " + str(page) + "/" + str(
         ceil(len(rank.values) / 25))
@@ -372,78 +376,15 @@ async def react(interaction: discord.Interaction, user: discord.Member):
     member = validate_member(interaction, user)
     if member is False:
         await interaction.followup.send(
-            "That person in not in the server or hasn't reached level 15")
+            ":bust_in_silhouette: That person in not in the server or hasn't reached level 15")
         return
     try:
         growth(days=7, member=member, count=1, title=member.name+"'s growth over the last "+str(round(days))+" days")
     except IndexError:
         await interaction.followup.send(
-            "That person has not been online recently enough")
+            ":bust_in_silhouette: That person has not been online recently enough")
         return
     await interaction.followup.send(file=discord.File('out.png'))
-
-
-'''
-@tree.context_menu(name="predict")
-async def predict(interaction: discord.Interaction,
-                  target: str,
-                  member: discord.User = None,
-                  period: int = 30,
-                  growth: int = None,
-                  hidden: bool = False):
-    await interaction.response.defer(ephemeral=True)
-
-    data = pd.read_csv("gwaff.csv", index_col=0)
-    member = validate_member(interaction, member)
-    if member is False:
-        await interaction.followup.send("That person in not in the server or hasn't reached level 15")
-        return
-    elif target == member:
-        await interaction.followup.send("The target cannot be the same as the member")
-        return
-
-    try:
-        prediction = Prediction(data, member=member.id,
-                                target=target, period=period, growth=growth)
-        days = prediction.evaluate()
-        
-    except ValueError:
-        await interaction.followup.send("Level or xp must be a whole number")
-        return
-    except ZeroDivisionError:
-        await interaction.followup.send("The target cannot be the same as the member")
-        return
-    except IndexError:
-        await interaction.followup.send(":question: That target does not exist")
-        return
-    if days == 'target':
-        await interaction.followup.send("Invalid target "+target)
-        return
-    if days >= 100*365:
-        await interaction.followup.send("That target is too far away")
-        return
-
-    date = time.mktime((datetime.now()+timedelta(days=days)).timetuple())
-    member_name = "You" if member == interaction.user else "<@" + \
-        str(member.id)+">"
-
-    if prediction.target_type == 'xp':
-        target = str(prediction.target) + ' xp'
-    elif prediction.target_type == 'level':
-        target = 'level '+str(prediction.target)
-    elif prediction.target_type == 'user':
-        target = str(target)
-        if days <= 0:
-            await interaction.followup.send(member_name+" will never reach "+target+" at this rate")
-            return
-    else:
-        target = str(target)
-
-    await interaction.followup.send(
-        member_name+" will reach "+target
-        + " on <t:"+str(round(date))+":D> <t:"+str(round(date))+":R>"
-        + (" at a rate of "+str(round(prediction.growth))+" xp per day")*True)
-'''
 
 
 @tree.context_menu(name='True Rank')
@@ -454,7 +395,7 @@ async def react(interaction: discord.Interaction, user: discord.Member):
     member = validate_member(interaction, user)
     if member is False:
         await interaction.followup.send(
-            "That person in not in the server or hasn't reached level 15")
+            ":bust_in_silhouette: That person in not in the server or hasn't reached level 15")
         return
     rank = Truerank(data, threshold=30)
     index, xp, other, other_xp, other_name = rank.find_index(member.id)
