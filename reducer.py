@@ -1,10 +1,7 @@
 # Reduces unnecessary entries and columns based on the following rules:
-# If a column is over 48h old, only store every 2nd hour
+# If a column is over 24h old, only store every 2nd hour
 # If a column is over a week old, only store every 4th hour
 # If a column is over a month old, only store every 24th hour
-# TODO:
-# If a value is the same as before and after, remove it
-# If a value is the same as before and last, remove it
 
 
 import pandas as pd
@@ -54,7 +51,7 @@ class Reducer:
             diff = dates[index+1] - dates[index-1]
             age = now - column
 
-            if age > timedelta(days=2) and diff/2 < timedelta(hours=1):
+            if age > timedelta(days=2) and diff/2 < timedelta(hours=2):
                 del_count += 1
                 dates.remove(column)
             elif age > timedelta(days=7) and diff/2 < timedelta(hours=4):
@@ -78,8 +75,12 @@ class Reducer:
         self.data.to_csv('gwaff.csv', encoding='utf-8')
         print('saved')
 
-
-df = pd.read_csv("gwaff.csv", index_col=0)
-reducer = Reducer(df)
-reducer.reduce_cols()
-reducer.save()
+if __name__ == '__main__':
+    df = pd.read_csv("gwaff.csv", index_col=0)
+    reducer = Reducer(df)
+    confirm = input('Do you want to run the reducer? (Y or n)\n')
+    if confirm == 'Y':
+        reducer.reduce_cols()
+        reducer.save()
+    else:
+        print('Aborted')
