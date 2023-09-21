@@ -1,9 +1,18 @@
 import pandas as pd
 from datetime import datetime, timedelta
 import discord
+from math import floor, ceil
 
 def lvl_to_xp(lvl):
     return (1.667*lvl**3)+(22.5*lvl**2)+(75.833*lvl)
+
+def xp_to_lvl(xp):
+    A = 3.582
+    B = 2.861
+    C = 6859
+    if xp <= C:
+        return 0
+    return floor(((xp-C)/A)**(1/B))
 
 def remove_suffix(value):
     if value.endswith('k'):
@@ -18,6 +27,13 @@ class Prediction:
     def __init__(self, data, member, target, period=30, growth=None):
         self.data = data
         self.member = int(member)
+
+        if type(target) is str and target.startswith('+'):
+            self.relative = True
+            target = target[1:]
+        else:
+            self.relative = False
+
         if type(target) is str and target.endswith('xp'):
             self.target_type = 'xp'
             self.target = remove_suffix(target[:-2])
@@ -60,6 +76,14 @@ class Prediction:
 
         if self.value is None or self.growth is None:
             raise ValueError
+
+        if self.relative:
+            if self.target_type == 'xp':
+                self.target = self.value + self.target
+                print(self.target)
+            if self.target_type == 'level':
+                self.target = xp_to_lvl(self.value) + self.target
+                print(self.target)
 
     def get_data(self, user):
 
@@ -109,3 +133,10 @@ class Prediction:
             return self.complex_target()
         else:
             return 'target'
+
+
+if __name__ == '__main__':
+    print(xp_to_lvl(183734))
+    print(lvl_to_xp(43))
+    print(xp_to_lvl(177375))
+    print(xp_to_lvl(188870))
