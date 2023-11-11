@@ -51,7 +51,7 @@ class Reducer:
             diff = dates[index+1] - dates[index-1]
             age = now - column
 
-            if age > timedelta(days=2) and diff/2 < timedelta(hours=2):
+            if age > timedelta(days=1) and diff/2 < timedelta(hours=2):
                 del_count += 1
                 dates.remove(column)
             elif age > timedelta(days=7) and diff/2 < timedelta(hours=4):
@@ -81,6 +81,11 @@ if __name__ == '__main__':
     confirm = input('Do you want to run the reducer? (Y or n)\n')
     if confirm == 'Y':
         reducer.reduce_cols()
+    else:
+        print('Aborted')
+    confirm = input('Are you really sure? (Y or n)\n')
+    if confirm == 'Y':
         reducer.save()
     else:
         print('Aborted')
+    
