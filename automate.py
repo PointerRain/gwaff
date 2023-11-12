@@ -49,8 +49,12 @@ def growth(days=7, count: int = 15, member=None, title="Top chatters XP growth",
                   start_date=datetime.now() - timedelta(days=days),
                   special=special,
                   title=title)
-    
-    include = None if member is None else [member.id]
+    if member is None:
+        include = None
+        count = 15
+    else:
+        include = [member.id]
+        count = 1
     plot.draw(max_count=count, include=include)
     plot.annotate()
     plot.configure()
@@ -63,8 +67,8 @@ def lvl_to_xp(lvl):
     return (1.667 * lvl**3) + (22.5 * lvl**2) + (75.833 * lvl)
 
 
-def validate_member(interaction, user):
-    if user is None:
+def resolve_member(interaction, user):
+    if user is None and interaction is not None:
         return interaction.user
     data = pd.read_csv("gwaff.csv", index_col=0)
     if int(user.id) in data['ID'].unique():
@@ -179,7 +183,7 @@ async def predict(interaction: discord.Interaction,
     await interaction.response.defer(ephemeral=hidden)
 
     data = pd.read_csv("gwaff.csv", index_col=0)
-    member = validate_member(interaction, member)
+    member = resolve_member(interaction, member)
     if member is False:
         await interaction.followup.send(
             ":bust_in_silhouette: That person in not in the server or hasn't reached level 15")
@@ -209,6 +213,7 @@ async def predict(interaction: discord.Interaction,
         return
     except Exception as e:
         await interaction.followup.send(":question: An unknown error occured")
+        raise e
         return
     if days == 'target':
         await interaction.followup.send(":x: Invalid target " + target)
@@ -230,6 +235,8 @@ async def predict(interaction: discord.Interaction,
         target = 'level ' + str(prediction.target)
     elif prediction.target_type == 'user':
         target = str(target)
+        if not target.startswith("<@"):
+            target = "<@" + target + ">"
         if days <= 0:
             await interaction.followup.send(member_name +
                                             " will never reach " + target +
@@ -282,7 +289,7 @@ async def rank_true(interaction: discord.Interaction,
     await interaction.response.defer(ephemeral=hidden)
 
     data = pd.read_csv("gwaff.csv", index_col=0)
-    member = validate_member(interaction, member)
+    member = resolve_member(interaction, member)
     if member is False:
         await interaction.followup.send(
             ":bust_in_silhouette: That person in not in the server or hasn't reached level 15")
@@ -373,7 +380,7 @@ async def set_time_offset(interaction: discord.Interaction):
 @tree.context_menu(name='Growth')
 async def react(interaction: discord.Interaction, user: discord.Member):
     await interaction.response.defer(ephemeral=True)
-    member = validate_member(interaction, user)
+    member = resolve_member(interaction, user)
     if member is False:
         await interaction.followup.send(
             ":bust_in_silhouette: That person in not in the server or hasn't reached level 15")
@@ -392,7 +399,7 @@ async def react(interaction: discord.Interaction, user: discord.Member):
     await interaction.response.defer(ephemeral=True)
 
     data = pd.read_csv("gwaff.csv", index_col=0)
-    member = validate_member(interaction, user)
+    member = resolve_member(interaction, user)
     if member is False:
         await interaction.followup.send(
             ":bust_in_silhouette: That person in not in the server or hasn't reached level 15")
