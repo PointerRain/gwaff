@@ -347,25 +347,6 @@ async def leaderboard(interaction: discord.Interaction,
     await interaction.followup.send(embed=board)
 
 
-# @tree.command(name="settimeoffset",
-#               description="Sets your timezone for graphing",
-#               guilds=guilds)
-# @app_commands.describe(offset='The timezone offset from UTC in hours')
-# async def set_time_offset(interaction: discord.Interaction,
-#                           offset: app_commands.Range[float, -12, 12]):
-#     await interaction.response.defer(ephemeral=False)
-#     member = interaction.user
-#     data = {}
-#     with open('offsets.json', 'r') as f:
-#         data = json.load(f)
-#     data[str(member.id)] = offset
-#     with open('offsets.json', 'w') as f:
-#         json.dump(data, f)
-#     await interaction.followup.send(
-#         "Successfully set your timezone to be UTC" + "+" * (offset >= 0) +
-#         str(offset))
-
-
 @tree.command(name="ping", description="Pong!")
 async def set_time_offset(interaction: discord.Interaction):
     now = datetime.now(timezone.utc)
