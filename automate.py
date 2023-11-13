@@ -153,9 +153,8 @@ async def last_record(interaction: discord.Interaction, hidden: bool = True):
 
     alive = "" if (now - last).total_seconds() < 1.1 * \
         120*60 else "Collection has halted!"
-    await interaction.followup.send('Data was last collected ' + laststr +
-                                    '\n' + '(Before that ' + prevlaststr +
-                                    ')\n' + alive)
+    await interaction.followup.send(f"Data was last collected {laststr}\n"
+                                    f"(Before that {prevlaststr})\n{alive}")
 
 
 '''
@@ -221,7 +220,7 @@ async def predict(interaction: discord.Interaction,
         raise e
         return
     if days == 'target':
-        await interaction.followup.send(":x: Invalid target " + target)
+        await interaction.followup.send(f":x: Invalid target {target}")
         return
     if days >= 100 * 365:
         await interaction.followup.send(":telescope: That target is too far away")
@@ -243,18 +242,16 @@ async def predict(interaction: discord.Interaction,
         if not target.startswith("<@"):
             target = "<@" + target + ">"
         if days <= 0:
-            await interaction.followup.send(member_name +
-                                            " will never reach " + target +
-                                            " at this rate")
+            await interaction.followup.send(f"{member_name} will never reach "
+                                            f"{target} at this rate")
             return
     else:
         target = str(target)
 
-    await interaction.followup.send(
-        member_name + " will reach " + target + " on <t:" + str(round(date)) +
-        ":D> <t:" + str(round(date)) + ":R>" +
-        (" at a rate of " + str(round(prediction.growth)) + " xp per day") *
-        True)
+    await interaction.followup.send(f"{member_name} will reach {target} on "
+                                    f"<t:{round(date)}:D> <t:{round(date)}:R> "
+                                    f"at a rate of {round(prediction.growth)} "
+                                    f"xp per day")
 
 
 @tree.command(name="growth",
@@ -266,6 +263,7 @@ async def predict(interaction: discord.Interaction,
 async def plot_growth(interaction: discord.Interaction,
                       member: discord.User = None,
                       days: app_commands.Range[float, 0, 365] = 7,
+                      compare: discord.User = None,
                       hidden: bool = False):
     await interaction.response.defer(ephemeral=hidden)
     member = resolve_member(interaction, member)
@@ -319,19 +317,17 @@ async def rank_true(interaction: discord.Interaction,
             ":bust_in_silhouette: That person has not been online recently enough")
         return
 
-    member_name = "You are" if member == interaction.user else "<@" + \
-        str(member.id)+"> is"
+    member_name = "You are" if member == interaction.user \
+                  else f"<@{member.id}> is"
 
     if other_xp - xp <= 0:
-        await interaction.followup.send(member_name + " ranked " +
-                                        ordinal(index + 1) + " in the server")
+        await interaction.followup.send(f"{member_name} ranked "
+                                        f"{ordinal(index+1)} in the server")
     else:
-        await interaction.followup.send(member_name + " ranked " +
-                                        ordinal(index + 1) +
-                                        " in the server, " +
-                                        str(round(other_xp - xp)) +
-                                        " xp behind <@" + str(other) + ">" +
-                                        " (" + other_name + ")")
+        await interaction.followup.send(f"{member_name} ranked "
+                                        f"{ordinal(index+1)} in the server "
+                                        f"({round(other_xp - xp)} behind "
+                                        f"<@{str(other)}>)")
 
 
 @tree.command(name="leaderboard",
@@ -356,8 +352,7 @@ async def leaderboard(interaction: discord.Interaction,
     if len(description) <= 0:
         await interaction.followup.send(":1234: This page does not exist")
         return
-    description += "\nPage: " + str(page) + "/" + str(
-        ceil(len(rank.values) / 25))
+    description += f"\nPage: {page}/{ceil(len(rank.values) / 25)}"
     board = discord.Embed(title='Leaderboard',
                           description=description,
                           colour=discord.Colour.from_str('#ea625e'))
@@ -370,8 +365,7 @@ async def set_time_offset(interaction: discord.Interaction):
     msgtime = interaction.created_at
     ping = (now - msgtime).total_seconds() * 2000.0
     print("[BOT] Ping:", ping)
-    await interaction.response.send_message("Pong!\n" + str(round(ping)) +
-                                            "ms",
+    await interaction.response.send_message(f"Pong!\n {round(ping)} ms",
                                             ephemeral=True)
 
 
@@ -409,15 +403,13 @@ async def react(interaction: discord.Interaction, user: discord.Member):
         str(member.id)+"> is"
 
     if other_xp - xp <= 0:
-        await interaction.followup.send(member_name + " ranked " +
-                                        ordinal(index + 1) + " in the server")
+        await interaction.followup.send(f"{member_name} ranked "
+                                        f"{ordinal(index+1)} in the server")
     else:
-        await interaction.followup.send(member_name + " ranked " +
-                                        ordinal(index + 1) +
-                                        " in the server, " +
-                                        str(round(other_xp - xp)) +
-                                        " xp behind <@" + str(other) + ">" +
-                                        " (" + other_name + ")")
+        await interaction.followup.send(f"{member_name} ranked "
+                                        f"{ordinal(index+1)} in the server "
+                                        f"({round(other_xp - xp)} behind "
+                                        f"<@{str(other)}>)")
 
 
 def runTheBot(token):

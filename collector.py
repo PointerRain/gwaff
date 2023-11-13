@@ -34,14 +34,14 @@ def request_api(url):
 def url_constructor(base, **kwargs):
     if kwargs:
         keys = list(kwargs.keys())
-        url = base + '?' + keys[0] + '=' + str(kwargs[keys[0]])
+        url = f"{base}?{keys[0]}={kwargs[keys[0]]}"
         for kw in keys[1:]:
-            url += '&' + kw + '=' + str(kwargs[kw])
+            url += f"&{kw}={kwargs[kw]}"
     return url
 
 
 server = "377946908783673344"
-base_url = "https://gdcolon.com/polaris/api/leaderboard/" + server
+base_url = f"https://gdcolon.com/polaris/api/leaderboard/{server}"
 
 
 def record_data(pages=range(1, 6), min_time=2):
@@ -134,8 +134,8 @@ def record_data(pages=range(1, 6), min_time=2):
         return True
 
     else:
-        print('[COLLECT] Too soon')
-        print('[COLLECT] ' + str(difference.total_seconds() / 60) + '/' + str(min_time * 60))
+        print("[COLLECT] Too soon")
+        print(f"[COLLECT] {difference.total_seconds() / 60}/{min_time * 60}")
         return False
 
     print()
@@ -146,13 +146,13 @@ def run():
         success = record_data(min_time=1, pages=range(1, 8))
         wait = 12 if success else 6
         for i in range(wait):
-            print("[COLLECT] slept " + str(i * 10) + "/" + str(wait * 10))
+            print(f"[COLLECT] slept {i * 10}/{wait * 10}")
             time.sleep(10 * 60)
 
         success = record_data(min_time=1, pages=range(1, 3))
         wait = 12 if success else 6
         for i in range(wait):
-            print("[COLLECT] slept " + str(i * 10) + "/" + str(wait * 10))
+            print(f"[COLLECT] slept {i * 10}/{wait * 10}")
             time.sleep(10 * 60)
 
 
