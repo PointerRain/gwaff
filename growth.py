@@ -23,10 +23,7 @@ class Growth(Plotter):
                 continue
 
             startval = startval or row[i]
-            if row['ID'] in [232123888073572354] and self.special:
-                values.append(0 * (row[i] - startval))
-            else:
-                values.append(row[i] - startval)
+            values.append(row[i] - startval)
             xs.append(date)
         if len(values) <= 1:
             return None, [0, 0]
