@@ -34,7 +34,8 @@ class Gwaff(discord.Client):
         print("[BOT] Ready!")
 
 
-def growth(days=7, count: int = 15, member=None, title="Top chatters XP growth", special=False):
+def growth(days=7, count: int = 15, member=None, title="Top chatters XP growth",
+           special=False, compare=None):
     '''
     Plots and saves a growth plot (aka gwaff)
 
@@ -55,6 +56,10 @@ def growth(days=7, count: int = 15, member=None, title="Top chatters XP growth",
     else:
         include = [member.id]
         count = 1
+    if compare is not None:
+        include = [member.id, compare.id]
+        count = 2
+        plot.title = "Comparing growth over the last "+str(round(days))+" days"
     plot.draw(max_count=count, include=include)
     plot.annotate()
     plot.configure()
@@ -256,20 +261,32 @@ async def predict(interaction: discord.Interaction,
               description="Plots a specific member's growth")
 @app_commands.describe(member='The member plot (default you)',
                        days='How many days to plot (default 7)',
-                       hidden='Hide from others in this server (default False)'
-                       )
+                       compare='A second user to show',
+                       hidden='Hide from others in this server (default False)')
 async def plot_growth(interaction: discord.Interaction,
                       member: discord.User = None,
                       days: app_commands.Range[float, 0, 365] = 7,
                       hidden: bool = False):
     await interaction.response.defer(ephemeral=hidden)
-    member = validate_member(interaction, member)
+    member = resolve_member(interaction, member)
     if member is False:
         await interaction.followup.send(
             ":bust_in_silhouette: That person in not in the server or hasn't reached level 15")
         return
+    if compare:
+        co_member = resolve_member(None, compare)
+        if co_member is False:
+            await interaction.followup.send(":bust_in_silhouette: "
+                                            "That person in not in the server "
+                                            "or hasn't reached level 15")
+            return
+    else:
+        co_member = None
+
     try:
-        growth(days=days, member=member, count=1, title=member.name+"'s growth over the last "+str(round(days))+" days")
+        growth(days=days, member=member, count=1,
+               title=f"{member_name}'s growth over the last {round(days)} days",
+               compare=co_member)
     except IndexError:
         await interaction.followup.send(
             ":bust_in_silhouette: That person has not been online recently enough")
