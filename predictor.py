@@ -31,6 +31,9 @@ class Prediction:
         if type(target) is str and target.startswith('+'):
             self.relative = True
             target = target[1:]
+        elif type(target) is str and target.startswith('-'):
+            self.relative = True
+            target = target
         else:
             self.relative = False
 
