@@ -3,8 +3,10 @@ from datetime import datetime, timedelta
 import discord
 from math import floor, ceil
 
+
 def lvl_to_xp(lvl):
     return (1.667*lvl**3)+(22.5*lvl**2)+(75.833*lvl)
+
 
 def xp_to_lvl(xp):
     A = 3.582
@@ -14,6 +16,7 @@ def xp_to_lvl(xp):
         return 0
     return floor(((xp-C)/A)**(1/B))
 
+
 def remove_suffix(value):
     if value.endswith('k'):
         return int(value[:-1])*1000
@@ -22,6 +25,7 @@ def remove_suffix(value):
     if value.endswith('B'):
         return int(value[:-1])*1000000000
     return int(value)
+
 
 class Prediction:
     def __init__(self, data, member, target, period=30, growth=None):
@@ -108,15 +112,15 @@ class Prediction:
                     start_date = start_date or date
                     final_xp = final_xp or row[i]
                     final_date = final_date or date
-                    
+
                     start_xp = min(row[i], start_xp)
                     start_date = min(date, start_date)
                     final_xp = max(row[i], final_xp)
                     final_date = max(date, final_date)
-                    
+
                 final_growth = final_xp-start_xp
                 actual_period = (final_date - start_date) / timedelta(days=1)
-                
+
                 return final_xp, final_growth/actual_period
         raise IndexError
 

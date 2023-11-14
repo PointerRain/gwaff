@@ -1,6 +1,5 @@
 import pandas as pd
 from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
 
 from plotter import Plotter
 
@@ -32,7 +31,7 @@ class Growth(Plotter):
 
     def configure(self):
         super().configure()
-        
+
         self.ax.set_ylabel("XP Growth")
         self.ax.set_ylim([0, self.maxxp * 1.05])
 

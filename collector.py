@@ -2,11 +2,8 @@ from urllib.request import Request, urlopen
 import requests
 import json
 import time
-
 import pandas as pd
-
 from datetime import datetime
-
 from threading import Thread
 
 from database import saveToDB
@@ -78,7 +75,9 @@ def record_data(pages=range(1, 6), min_time=2):
                 xp = member['xp']
                 xps[id] = xp
                 # Update names, colours, and avatars
-                name = member['nickname'] or member['displayName'] or member['username']
+                name = member['nickname'] \
+                    or member['displayName'] \
+                    or member['username']
                 last.loc[last['ID'] == id, 'Name'] = name
                 colour = member['color']
                 last.loc[last['ID'] == id, 'Colour'] = colour
@@ -128,7 +127,7 @@ def record_data(pages=range(1, 6), min_time=2):
                     print("[ERROR][COLLECT] Skipping")
                     return False
             else:
-                print('[COLLECT] Saved')
+                print("[COLLECT] Saved")
                 break
 
         return True
@@ -151,6 +150,7 @@ def run():
 
         success = record_data(min_time=1, pages=range(1, 3))
         wait = 12 if success else 6
+
         for i in range(wait):
             print(f"[COLLECT] slept {i * 10}/{wait * 10}")
             time.sleep(10 * 60)

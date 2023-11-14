@@ -47,7 +47,7 @@ class Reducer:
         del_count = 0
         while index < len(dates)-1:
             column = dates[index]
-            
+
             diff = dates[index+1] - dates[index-1]
             age = now - column
 
@@ -75,6 +75,7 @@ class Reducer:
         self.data.to_csv('gwaff.csv', encoding='utf-8')
         print('saved')
 
+
 if __name__ == '__main__':
     df = pd.read_csv("gwaff.csv", index_col=0)
     reducer = Reducer(df)
@@ -88,4 +89,3 @@ if __name__ == '__main__':
         reducer.save()
     else:
         print('Aborted')
-    

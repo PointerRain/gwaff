@@ -7,12 +7,12 @@ time.tzset()
 print("[MAIN] Set the timezone")
 
 from warnings import filterwarnings
-filterwarnings("ignore", category=RuntimeWarning, module="matplotlib\..*", lineno=0)
+filterwarnings("ignore", category=RuntimeWarning,
+               module="matplotlib\..*", lineno=0)
 
 print("[MAIN] Filtering warnings")
 
 from database import saveToDB, loadFromDB
-# from replit import db
 
 # for i in db.keys():
 #     del db[i]
