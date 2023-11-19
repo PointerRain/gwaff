@@ -54,7 +54,7 @@ class Plotter:
 
     def sort(self):
         # Find final value for xp using the read_row function
-        data = [self.read_row(row)[1] for index, row in self.data.iterrows()]
+        data = [self.read_row(row)[0] for index, row in self.data.iterrows()]
         self.data['Final'] = [row[-1] for row in data]
         self.data.sort_values(by='Final', inplace=True, ascending=False)
 
@@ -63,22 +63,37 @@ class Plotter:
         Read dates and values that have xp data.
         '''
         xs = []
+        ys = []
         values = []
+        lines = []
+        missing = 0
         for i in self.dates:
             date = datetime.fromisoformat(i)
             if self.start_date and date < self.start_date:
                 continue
             if self.end_date and date > self.end_date:
                 continue
+
             if row[i] is None or pd.isna(row[i]):
-                continue
+                missing += 1
+                if missing >= 3 and len(xs) >= 2:
+                    lines.append((xs, ys))
+                    xs = []
+                    ys = []
+                    missing = 0
+            else:
+                missing = 0
+                values.append(row[i])
+                xs.append(date)
+                ys.append(row[i])
 
-            values.append(row[i])
-            xs.append(date)
+        if len(xs) >= 2:
+            lines.append((xs, ys))
+
         if len(values) <= 1:
-            return None, [0, 0]
+            return [0, 0], []
 
-        return xs, values
+        return values, lines
 
     def draw(self, start=0, max_count=10, include=None, included_ids=None):
         self.sort()
@@ -91,7 +106,7 @@ class Plotter:
             if include is not None and row['ID'] not in include:
                 continue
 
-            xs, values = self.read_row(row)
+            values, lines = self.read_row(row)
 
             if values[-1] - values[0] <= self.active_threshold:
                 continue
@@ -107,7 +122,8 @@ class Plotter:
 
             self.annotations.append(
                 (values[-1], name, colour, avatar, values[0]))
-            plt.plot(xs, values, color=colour)
+            for xs, ys in lines:
+                plt.plot(xs, ys, color=colour)
 
             count += 1
             if count >= max_count:
@@ -122,7 +138,7 @@ class Plotter:
 
         '''
         # Determine how to convert from xp to axes fraction.
-        self.maxxp = sorted(self.annotations, key=lambda x: x[0])[-1][0]
+        self.maxxp = sorted(self.annotations, key=lambda x: x[0])[-2][0]
         self.minxp = sorted(self.annotations, key=lambda x: x[4])[0][-1]
         if len(self.annotations) > 1:
 
@@ -205,8 +221,8 @@ if __name__ == '__main__':
     data = pd.read_csv("gwaff.csv", index_col=0)
 
     plot = Plotter(data,
-                   start_date=datetime.now() - timedelta(days=30),
-                   active_threshold=True)
+                   start_date=datetime.now() - timedelta(days=300),
+                   active_threshold=10000)
     plot.draw(max_count=15)
     plot.annotate()
     plot.configure()
