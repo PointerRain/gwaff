@@ -114,15 +114,16 @@ async def plot_gwaff(interaction: discord.Interaction,
 
 @tree.command(name="daily",
               description="Plots the last 24 hours of growth")
-@app_commands.describe(hidden='Hide from others in this server (default False)'
-                       )
+@app_commands.describe(hidden='Hide from others in this server (default False)')
 async def plot_daily(interaction: discord.Interaction, hidden: bool = False):
     await interaction.response.defer(ephemeral=hidden)
     growth(days=1, special=True, title="Top chatters of the last 24 hours")
     await interaction.followup.send(file=discord.File('out.png'))
 
 
-@tree.command(name="data")
+@tree.command(name="data",
+              description="Gets the entire gwaff data as a csv")
+@app_commands.describe(hidden='Hide from others in this server (default True)')
 async def send_data(interaction: discord.Interaction, hidden: bool = True):
     await interaction.response.defer(ephemeral=hidden)
     if interaction.user.id in [344731282095472641]:
@@ -291,7 +292,7 @@ async def plot_growth(interaction: discord.Interaction,
 
     try:
         growth(days=days, member=member, count=1,
-               title=f"{member_name}'s growth over the last {round(days)} days",
+               title=f"{member.name}'s growth over the last {round(days)} days",
                compare=co_member)
     except IndexError:
         await interaction.followup.send(":bust_in_silhouette: "
