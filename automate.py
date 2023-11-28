@@ -370,6 +370,51 @@ async def leaderboard(interaction: discord.Interaction,
     await interaction.followup.send(embed=board)
 
 
+@tree.command(name="user",
+              description="Shows details about the specified user")
+@app_commands.describe(user="The user to search for",
+                       hidden="Hide from others in this server (default False)")
+async def user_info(interaction: discord.Interaction,
+                    user: discord.Member,
+                    hidden: bool = False):
+    await interaction.response.defer(ephemeral=hidden)
+
+    # name, id, xp, level, rank
+
+    data = pd.read_csv("gwaff.csv", index_col=0)
+    member = resolve_member(interaction, user)
+    if member is False:
+        await interaction.followup.send(":bust_in_silhouette: "
+                                        "That person in not in the server "
+                                        "or hasn't reached level 15")
+        return
+    try:
+        truerank = Truerank(data, threshold=30)
+        result = truerank.find_index(member.id)
+    except IndexError:
+        await interaction.followup.send(":bust_in_silhouette: "
+                                        "That person has not been online "
+                                        "recently enough")
+        return
+
+    id = user.id
+    name = result['name']
+    xp = result['xp']
+    level = xp_to_lvl(xp)
+    url = result['url']
+    rank = result['rank']
+
+    embed = discord.Embed(title=name,
+                          colour=discord.Colour.from_str('#ea625e'))
+    embed.add_field(name='User', value=f"<@{id}>")
+    embed.add_field(name='XP', value=xp)
+    embed.add_field(name='Level', value=level)
+    embed.add_field(name='Rank', value=rank)
+    embed.set_thumbnail(url=url)
+
+    await interaction.followup.send(embed=embed)
+
+
 @tree.command(name="ping", description="Pong!")
 async def ping(interaction: discord.Interaction):
     now = datetime.now(timezone.utc)
@@ -381,7 +426,7 @@ async def ping(interaction: discord.Interaction):
 
 
 @tree.context_menu(name='Growth')
-async def growth_ctx(interaction: discord.Interaction, user: discord.Member):
+async def growth_ctx(interaction: discord.Interaction, member: discord.Member):
     await interaction.response.defer(ephemeral=True)
     member = resolve_member(interaction, user)
     if member is False:
@@ -401,11 +446,12 @@ async def growth_ctx(interaction: discord.Interaction, user: discord.Member):
 
 
 @tree.context_menu(name='True Rank')
-async def truerank_ctx(interaction: discord.Interaction, user: discord.Member):
+async def truerank_ctx(interaction: discord.Interaction,
+                       member: discord.Member):
     await interaction.response.defer(ephemeral=True)
 
     data = pd.read_csv("gwaff.csv", index_col=0)
-    member = resolve_member(interaction, user)
+    member = resolve_member(interaction, member)
     if member is False:
         await interaction.followup.send(":bust_in_silhouette: "
                                         "That person in not in the server "
