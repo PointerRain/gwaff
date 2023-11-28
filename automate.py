@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 import time
 from math import ceil
 
-from predictor import Prediction
+from predictor import Prediction, xp_to_lvl, lvl_to_xp
 from truerank import Truerank
 
 guilds = [
@@ -66,10 +66,6 @@ def growth(days=7, count: int = 15, member=None, title="Top chatters XP growth",
 
     plot.save()
     plot.close()
-
-
-def lvl_to_xp(lvl):
-    return (1.667 * lvl**3) + (22.5 * lvl**2) + (75.833 * lvl)
 
 
 def resolve_member(interaction, user):
