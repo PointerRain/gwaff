@@ -45,18 +45,30 @@ class Truerank:
                 continue
             finalgrowth = finalxp - startxp
             if finalgrowth > self.threshold:
-                item = (row['ID'], row['Name'], finalxp)
+                item = {
+                    'ID': row['ID'],
+                    'name': row['Name'],
+                    'xp': round(finalxp),
+                    'url': row['Avatar']
+                }
                 values.append(item)
         return values
 
     def sort(self):
-        self.values.sort(key=lambda x: x[2], reverse=True)
+        self.values.sort(key=lambda x: x['xp'], reverse=True)
 
     def find_index(self, member):
+        result = {}
         for index, item in enumerate(self.values):
-            if item[0] == member:
-                if index <= 0:
-                    return index, item[2], 0, item[2]
-                return index, item[2], self.values[index - 1][0], self.values[
-                    index - 1][2], self.values[index - 1][1]
+            if item['ID'] == member:
+                result["rank"] = index
+                result['name'] = item['name']
+                result["xp"] = item['xp']
+                result["url"] = item['url']
+                if index == 0:
+                    return result
+                result['other_ID'] = self.values[index - 1]['ID']
+                result['other_name'] = self.values[index - 1]['name']
+                result['other_xp'] = self.values[index - 1]['xp']
+                return result
         raise IndexError

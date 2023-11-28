@@ -316,8 +316,8 @@ async def rank_true(interaction: discord.Interaction,
                                         "or hasn't reached level 15")
         return
     try:
-        rank = Truerank(data, threshold=threshold)
-        index, xp, other, other_xp, other_name = rank.find_index(member.id)
+        truerank = Truerank(data, threshold=threshold)
+        result = truerank.find_index(member.id)
     except IndexError:
         await interaction.followup.send(":bust_in_silhouette: "
                                         "That person has not been online "
@@ -327,14 +327,19 @@ async def rank_true(interaction: discord.Interaction,
     member_name = "You are" if member == interaction.user \
                   else f"<@{member.id}> is"
 
-    if other_xp - xp <= 0:
+    rank = result.get('rank', 0)
+    if rank <= 0:
         await interaction.followup.send(f"{member_name} ranked "
-                                        f"{ordinal(index+1)} in the server")
+                                        f"{ordinal(result['rank']+1)} in the server")
     else:
+        xp = result['xp']
+        other_id = result['other_id']
+        other_xp = result['other_xp']
+        other_name = result['other_name']
         await interaction.followup.send(f"{member_name} ranked "
-                                        f"{ordinal(index+1)} in the server "
-                                        f"({round(other_xp - xp)} behind "
-                                        f"<@{str(other)}>)")
+                                        f"{ordinal(rank+1)} in the server, "
+                                        f"{round(other_xp - xp)} behind "
+                                        f"<@{str(other_id)}> ({other_name})")
 
 
 @tree.command(name="leaderboard",
@@ -350,15 +355,15 @@ async def leaderboard(interaction: discord.Interaction,
     await interaction.response.defer(ephemeral=hidden)
 
     data = pd.read_csv("gwaff.csv", index_col=0)
-    rank = Truerank(data, threshold=threshold)
+    truerank = Truerank(data, threshold=threshold)
     description = ''
-    for index, item in enumerate(rank.values[(page - 1) * 25:page * 25]):
-        description += f"\n**{index+1+(page-1)*25})** <@{item[0]}> "
-        f"({round(item[2])} XP)"
+    for index, item in enumerate(truerank.values[(page - 1) * 25:page * 25]):
+        description += f"\n**{index+1+(page-1)*25})** <@{item['ID']}> ({item['name']})"
+        f"({round(item['xp'])} XP)"
     if len(description) <= 0:
         await interaction.followup.send(":1234: This page does not exist")
         return
-    description += f"\nPage: {page}/{ceil(len(rank.values) / 25)}"
+    description += f"\nPage: {page}/{ceil(len(truerank.values) / 25)}"
     board = discord.Embed(title='Leaderboard',
                           description=description,
                           colour=discord.Colour.from_str('#ea625e'))
@@ -406,20 +411,31 @@ async def truerank_ctx(interaction: discord.Interaction, user: discord.Member):
                                         "That person in not in the server "
                                         "or hasn't reached level 15")
         return
-    rank = Truerank(data, threshold=30)
-    index, xp, other, other_xp, other_name = rank.find_index(member.id)
+    try:
+        truerank = Truerank(data, threshold=threshold)
+        result = truerank.find_index(member.id)
+    except IndexError:
+        await interaction.followup.send(":bust_in_silhouette: "
+                                        "That person has not been online "
+                                        "recently enough")
+        return
 
     member_name = "You are" if member == interaction.user \
                   else f"<@{member.id}> is"
 
-    if other_xp - xp <= 0:
+    rank = result.get('rank', 0)
+    if rank <= 0:
         await interaction.followup.send(f"{member_name} ranked "
-                                        f"{ordinal(index+1)} in the server")
+                                        f"{ordinal(result['rank']+1)} in the server")
     else:
+        xp = result['xp']
+        other_id = result['other_id']
+        other_xp = result['other_xp']
+        other_name = result['other_name']
         await interaction.followup.send(f"{member_name} ranked "
-                                        f"{ordinal(index+1)} in the server "
-                                        f"({round(other_xp - xp)} behind "
-                                        f"<@{str(other)}>)")
+                                        f"{ordinal(rank+1)} in the server, "
+                                        f"{round(other_xp - xp)} behind "
+                                        f"<@{str(other_id)}> ({other_name})")
 
 
 def runTheBot(token):
