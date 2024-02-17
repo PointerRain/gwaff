@@ -1,14 +1,25 @@
 import discord
 from discord import app_commands, utils
 
-from growth import Growth
 import pandas as pd
 from datetime import datetime, timedelta, timezone
 import time
 from math import ceil
 
+from growth import Growth
 from predictor import Prediction, xp_to_lvl, lvl_to_xp
 from truerank import Truerank
+
+GRAPH_MAX_DAYS = 365
+GRAPH_DEFAULT_DAYS = 7
+GRAPH_MAX_USERS = 30
+GRAPH_DEFAULT_USERS = 15
+COLLECTION_MAX_TIME = 3*60
+PREDICTION_DEFAULT_DAYS = 30
+RANK_DEFAULT_THRESHOLD = 30
+RANK_MAX_PAGE = 5
+RANK_PAGE_SIZE = 25
+DEFAULT_COLOUR = '#ea625e'
 
 guilds = [
     discord.Object(id=1031086992403992576),
@@ -34,14 +45,15 @@ class Gwaff(discord.Client):
         print("[BOT] Ready!")
 
 
-def growth(days=7, count: int = 15, member=None, title="Top chatters XP growth",
-           special=False, compare=None):
+def growth(days: int = GRAPH_DEFAULT_DAYS,
+           count: int = GRAPH_DEFAULT_USERS, member=None,
+           title="Top chatters XP growth", special=False, compare=None):
     '''
     Plots and saves a growth plot (aka gwaff)
 
     '''
-    if days >= 365:
-        days = 365
+    if days >= GRAPH_MAX_DAYS:
+        days = GRAPH_MAX_DAYS
     elif days <= 0:
         days = 0
     data = pd.read_csv("gwaff.csv", index_col=0)
@@ -52,7 +64,7 @@ def growth(days=7, count: int = 15, member=None, title="Top chatters XP growth",
                   title=title)
     if member is None:
         include = None
-        count = 15
+        count = count
     else:
         include = [member.id]
         count = 1
@@ -91,13 +103,13 @@ tree = app_commands.CommandTree(client)
 
 @tree.command(name="gwaff",
               description="Plots top users growth")
-@app_commands.describe(days='How many days to plot (default 7)',
-                       count='How many users to plot (default 15)',
+@app_commands.describe(days=f'How many days to plot (default {GRAPH_DEFAULT_DAYS})',
+                       count=f'How many users to plot (default {GRAPH_DEFAULT_USERS})',
                        hidden='Hide from others in this server (default False)')
 async def plot_gwaff(interaction: discord.Interaction,
-                     days: app_commands.Range[float, 0, 365] = 7,
-                     count: int = 15,
-                     hidden: bool = False):
+        days: app_commands.Range[float, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
+        count: app_commands.Range[int, 1, GRAPH_MAX_USERS] = GRAPH_DEFAULT_USERS,
+        hidden: bool = False):
     now = datetime.now()
     # if interaction.user.id in [344731282095472641]:
     #     await interaction.response.defer(ephemeral=hidden)
@@ -151,7 +163,7 @@ async def last_record(interaction: discord.Interaction, hidden: bool = True):
     prevlaststr = utils.format_dt(prevlast, 'R')
 
     alive = "" if (now - last).total_seconds() < 1.1 * \
-        120*60 else "Collection has halted!"
+        COLLECTION_MAX_TIME*60 else "Collection has halted!"
     await interaction.followup.send(f"Data was last collected {laststr}\n"
                                     f"(Before that {prevlaststr})\n{alive}")
 
@@ -182,11 +194,11 @@ async def send_data(interaction: discord.Interaction):
                        growth='Override the average daily growth calculation',
                        hidden='Hide from others in this server (default False)')
 async def predict(interaction: discord.Interaction,
-                  target: str,
-                  member: discord.User = None,
-                  period: int = 30,
-                  growth: int = None,
-                  hidden: bool = False):
+        target: str,
+        member: discord.User = None,
+        period: app_commands.Range[int, 1, GRAPH_MAX_DAYS] = PREDICTION_DEFAULT_DAYS,
+        growth: int = None,
+        hidden: bool = False):
     await interaction.response.defer(ephemeral=hidden)
 
     data = pd.read_csv("gwaff.csv", index_col=0)
@@ -268,10 +280,10 @@ async def predict(interaction: discord.Interaction,
                        compare="A second user to show",
                        hidden="Hide from others in this server (default False)")
 async def plot_growth(interaction: discord.Interaction,
-                      member: discord.User = None,
-                      days: app_commands.Range[float, 0, 365] = 7,
-                      compare: discord.User = None,
-                      hidden: bool = False):
+        member: discord.User = None,
+        days: app_commands.Range[float, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
+        compare: discord.User = None,
+        hidden: bool = False):
     await interaction.response.defer(ephemeral=hidden)
     member = resolve_member(interaction, member)
     if member is False:
@@ -304,10 +316,12 @@ async def plot_growth(interaction: discord.Interaction,
 @tree.command(name="truerank",
               description="Tells you your position out of only active members")
 @app_commands.describe(member='The member to check (default you)',
+                       threshold=f"The monthly xp needed to be listed "
+                       f"(default {RANK_DEFAULT_THRESHOLD})",
                        hidden='Hide from others in this server (default False)')
 async def rank_true(interaction: discord.Interaction,
                     member: discord.User = None,
-                    threshold: int = 30,
+                    threshold: int = RANK_DEFAULT_THRESHOLD,
                     hidden: bool = False):
     await interaction.response.defer(ephemeral=hidden)
 
@@ -348,28 +362,31 @@ async def rank_true(interaction: discord.Interaction,
 @tree.command(name="leaderboard",
               description="Shows the leaderboard of active members")
 @app_commands.describe(page="The page to display (default 1)",
-                       threshold="The monthly xp needed to be listed "
-                                 "(default 30)",
+                       threshold=f"The monthly xp needed to be listed "
+                       f"(default {RANK_DEFAULT_THRESHOLD})",
                        hidden="Hide from others in this server (default False)")
 async def leaderboard(interaction: discord.Interaction,
-                      page: int = 1,
-                      threshold: int = 30,
-                      hidden: bool = False):
+                page: app_commands.Range[int, 1, RANK_MAX_PAGE] = RANK_MAX_PAGE,
+                threshold: int = RANK_DEFAULT_THRESHOLD,
+                hidden: bool = False):
     await interaction.response.defer(ephemeral=hidden)
 
     data = pd.read_csv("gwaff.csv", index_col=0)
     truerank = Truerank(data, threshold=threshold)
     description = ''
-    for index, item in enumerate(truerank.values[(page - 1) * 25:page * 25]):
-        description += f"\n**{index+1+(page-1)*25})** <@{item['ID']}> ({item['name']})"
-        f"({round(item['xp'])} XP)"
+    page_start = (page-1) * RANK_PAGE_SIZE
+    page_end = page * RANK_PAGE_SIZE
+    for index, item in enumerate(truerank.values[page_start:page_end]):
+        description += f"\n**{index + 1 + page_start})**"
+                       f"<@{item['ID']}> ({item['name']})"
+                       f"({round(item['xp'])} XP)"
     if len(description) <= 0:
         await interaction.followup.send(":1234: This page does not exist")
         return
-    description += f"\nPage: {page}/{ceil(len(truerank.values) / 25)}"
+    description += f"\nPage: {page}/{ceil(len(truerank.values) / RANK_PAGE_SIZE)}"
     board = discord.Embed(title='Leaderboard',
                           description=description,
-                          colour=discord.Colour.from_str('#ea625e'))
+                          colour=discord.Colour.from_str(DEFAULT_COLOUR))
     await interaction.followup.send(embed=board)
 
 
@@ -438,7 +455,7 @@ async def growth_ctx(interaction: discord.Interaction, member: discord.Member):
                                         "or hasn't reached level 15")
         return
     try:
-        growth(days=7, member=member, count=1,
+        growth(days=GRAPH_DEFAULT_DAYS, member=member, count=1,
                title=f"{member.name}'s growth over the last {round(days)} days")
     except IndexError:
         await interaction.followup.send(":bust_in_silhouette: "
@@ -461,7 +478,7 @@ async def truerank_ctx(interaction: discord.Interaction,
                                         "or hasn't reached level 15")
         return
     try:
-        truerank = Truerank(data, threshold=threshold)
+        truerank = Truerank(data, threshold=RANK_DEFAULT_THRESHOLD)
         result = truerank.find_index(member.id)
     except IndexError:
         await interaction.followup.send(":bust_in_silhouette: "

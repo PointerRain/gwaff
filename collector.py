@@ -8,6 +8,13 @@ from threading import Thread
 
 from database import saveToDB
 
+MAX_RETRIES = 5
+WAIT_SUCCESS = 120
+WAIT_FAIL = 60
+MIN_SEPERATION = 60
+COLLECTION_LARGE = 8
+COLLECTION_SMALL = 3
+
 
 def request_api(url):
     count = 0
@@ -20,7 +27,7 @@ def request_api(url):
         except Exception as e:
             print("[WARN][COLLECT] Could not retrieve", str(count))
             print(e)
-            if count < 10:
+            if count < MAX_RETRIES:
                 count += 1
                 time.sleep(1)
             else:
@@ -121,7 +128,7 @@ def record_data(pages=range(1, 6), min_time=2):
             except Exception as e:
                 print("[WARN][COLLECT] Could not save", str(count))
                 print(e)
-                if count < 10:
+                if count < MAX_RETRIES:
                     count += 1
                 else:
                     print("[ERROR][COLLECT] Skipping")
@@ -142,17 +149,18 @@ def record_data(pages=range(1, 6), min_time=2):
 
 def run():
     while True:
-        success = record_data(min_time=1, pages=range(1, 8))
-        wait = 12 if success else 6
-        for i in range(wait):
-            print(f"[COLLECT] slept {i * 10}/{wait * 10}")
+        success = record_data(min_time=1, pages=range(1, COLLECTION_LARGE))
+        wait = WAIT_SUCCESS if success else WAIT_FAIL
+
+        for i in range(wait//10):
+            print(f"[COLLECT] slept {i * 10}/{wait}")
             time.sleep(10 * 60)
 
-        success = record_data(min_time=1, pages=range(1, 3))
-        wait = 12 if success else 6
+        success = record_data(min_time=1, pages=range(1, COLLECTION_SMALL))
+        wait = WAIT_SUCCESS if success else WAIT_FAIL
 
-        for i in range(wait):
-            print(f"[COLLECT] slept {i * 10}/{wait * 10}")
+        for i in range(wait//10):
+            print(f"[COLLECT] slept {i * 10}/{wait}")
             time.sleep(10 * 60)
 
 
