@@ -93,28 +93,31 @@ tree = app_commands.CommandTree(client)
               description="Plots top users growth")
 @app_commands.describe(days='How many days to plot (default 7)',
                        count='How many users to plot (default 15)',
-                       hidden='Hide from others in this server (default True)')
+                       hidden='Hide from others in this server (default False)')
 async def plot_gwaff(interaction: discord.Interaction,
                      days: app_commands.Range[float, 0, 365] = 7,
                      count: int = 15,
-                     hidden: bool = True):
+                     hidden: bool = False):
     now = datetime.now()
-    if interaction.user.id in [344731282095472641]:
-        await interaction.response.defer(ephemeral=hidden)
-        growth(days=days, count=count, special=True)
-        await interaction.followup.send(file=discord.File('out.png'))
-    else:
-        await interaction.followup.send(":no_entry: You can't use this command",
-                                        ephemeral=True)
-
-
-@tree.command(name="daily",
-              description="Plots the last 24 hours of growth")
-@app_commands.describe(hidden='Hide from others in this server (default False)')
-async def plot_daily(interaction: discord.Interaction, hidden: bool = False):
+    # if interaction.user.id in [344731282095472641]:
+    #     await interaction.response.defer(ephemeral=hidden)
+    #     growth(days=days, count=count, special=True)
+    #     await interaction.followup.send(file=discord.File('out.png'))
+    # else:
+    #     await interaction.followup.send(":no_entry: You can't use this command",
+    #                                     ephemeral=True)
     await interaction.response.defer(ephemeral=hidden)
-    growth(days=1, special=True, title="Top chatters of the last 24 hours")
+    growth(days=days, count=count, special=True)
     await interaction.followup.send(file=discord.File('out.png'))
+
+
+# @tree.command(name="daily",
+#               description="Plots the last 24 hours of growth")
+# @app_commands.describe(hidden='Hide from others in this server (default False)')
+# async def plot_daily(interaction: discord.Interaction, hidden: bool = False):
+#     await interaction.response.defer(ephemeral=hidden)
+#     growth(days=1, special=True, title="Top chatters of the last 24 hours")
+#     await interaction.followup.send(file=discord.File('out.png'))
 
 
 @tree.command(name="data",
@@ -169,8 +172,8 @@ async def send_data(interaction: discord.Interaction):
 
 
 @tree.command(name="predict",
-              description="Predict when you will pass a given level,"
-                          " xp, or member")
+              description="Predict when you will pass a given level, "
+                          "xp, or member")
 @app_commands.describe(target='Either a level, xp, or member to aim for',
                        member='The member to do the prediction for'
                               ' (default you)',
@@ -381,7 +384,7 @@ async def user_info(interaction: discord.Interaction,
 
     # name, id, xp, level, rank
 
-    data = pd.read_csv("gwaff.csv", index_col=0)
+    data = pd.read_csv("gwaff.csv", index_col='ID')
     member = resolve_member(interaction, user)
     if member is False:
         await interaction.followup.send(":bust_in_silhouette: "
