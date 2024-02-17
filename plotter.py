@@ -182,7 +182,7 @@ class Plotter:
         return True
 
     def configure(self):
-        self.ax.set_xlabel("Date (YYYY-MM-DD AEST)", color="white")
+        self.ax.set_xlabel("Date (YYYY-MM)", color="white")
         self.ax.set_ylabel("Total XP", color="white")
 
         if self.end_date:
@@ -202,7 +202,7 @@ class Plotter:
         for spine in self.ax.spines.values():
             spine.set_edgecolor('#36393F')
 
-        self.fig.subplots_adjust(left=0.05, bottom=0.08, top=0.94, right=0.82)
+        self.fig.subplots_adjust(left=0.06, bottom=0.08, top=0.94, right=0.83)
 
         if self.title:
             plt.title(self.title, color='#FFFFFF')
