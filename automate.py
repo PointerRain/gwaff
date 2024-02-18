@@ -350,7 +350,7 @@ async def rank_true(interaction: discord.Interaction,
                                         f"{ordinal(result['rank']+1)} in the server")
     else:
         xp = result['xp']
-        other_id = result['other_id']
+        other_id = result['other_ID']
         other_xp = result['other_xp']
         other_name = result['other_name']
         await interaction.followup.send(f"{member_name} ranked "
@@ -377,8 +377,8 @@ async def leaderboard(interaction: discord.Interaction,
     page_start = (page-1) * RANK_PAGE_SIZE
     page_end = page * RANK_PAGE_SIZE
     for index, item in enumerate(truerank.values[page_start:page_end]):
-        description += f"\n**{index + 1 + page_start})**"
-                       f"<@{item['ID']}> ({item['name']})"
+        description += f"\n**{index + 1 + page_start})**" \
+                       f"<@{item['ID']}> ({item['name']})" \
                        f"({round(item['xp'])} XP)"
     if len(description) <= 0:
         await interaction.followup.send(":1234: This page does not exist")
@@ -495,7 +495,7 @@ async def truerank_ctx(interaction: discord.Interaction,
                                         f"{ordinal(result['rank']+1)} in the server")
     else:
         xp = result['xp']
-        other_id = result['other_id']
+        other_id = result['other_ID']
         other_xp = result['other_xp']
         other_name = result['other_name']
         await interaction.followup.send(f"{member_name} ranked "

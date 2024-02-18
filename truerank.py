@@ -76,3 +76,9 @@ class Truerank:
                 result['other_xp'] = self.values[index - 1]['xp']
                 return result
         raise IndexError
+
+if __name__ == '__main__':
+    data = pd.read_csv("gwaff.csv", index_col=0)
+    truerank = Truerank(data)
+    result = truerank.find_index(344731282095472641)
+    print(result)
