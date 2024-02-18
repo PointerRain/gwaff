@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 import discord
 from math import floor, ceil
 
+PREDICTION_DEFAULT_DAYS = 30
+
 
 def lvl_to_xp(lvl):
     return (1.667*lvl**3)+(22.5*lvl**2)+(75.833*lvl)
@@ -28,7 +30,7 @@ def remove_suffix(value):
 
 
 class Prediction:
-    def __init__(self, data, member, target, period=30, growth=None):
+    def __init__(self, data, member, target, period=PREDICTION_DEFAULT_DAYS, growth=None):
         self.data = data
         self.member = int(member)
 

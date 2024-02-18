@@ -1,10 +1,14 @@
 import pandas as pd
 from datetime import datetime, timedelta
-import discord
+# import discord
+
+PREDICTION_DEFAULT_DAYS = 30
+RANK_DEFAULT_THRESHOLD = 30
 
 
 class Truerank:
-    def __init__(self, data, period=30, threshold=1):
+    def __init__(self, data, period=PREDICTION_DEFAULT_DAYS,
+                 threshold=RANK_DEFAULT_THRESHOLD):
         self.data = data
 
         self.period = period

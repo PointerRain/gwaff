@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from plotter import Plotter
 
+GAP_MIN_SIZE = 3
 
 class Growth(Plotter):
     def sort(self):
@@ -30,7 +31,7 @@ class Growth(Plotter):
 
             if row[i] is None or pd.isna(row[i]):
                 missing += 1
-                if missing >= 3 and len(xs) >= 2:
+                if missing >= GAP_MIN_SIZE and len(xs) >= 2:
                     lines.append((xs, ys))
                     xs = []
                     ys = []
@@ -61,7 +62,7 @@ if __name__ == '__main__':
     data = pd.read_csv("gwaff.csv", index_col=0)
 
     plot = Growth(data, start_date=datetime.now() - timedelta(days=7))
-    plot.draw(max_count=15)
+    plot.draw()
     plot.annotate()
     plot.configure()
 

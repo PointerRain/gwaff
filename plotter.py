@@ -7,6 +7,20 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
+MAX_RETRIES = 5
+WINDOW_SIZE = (15, 7)
+GAP_MIN_SIZE = 3
+GRAPH_DEFAULT_USERS = 15
+GRAPH_SEPERATOR = 0.03
+GRAPH_IMAGE_WIDTH = 0.018
+
+
+class Colours:
+    missing = '#505050'
+    text = '#FFFFFF'
+    outside = '#2F3136'
+    inside = '#36393F'
+
 
 def getimg(url):
     count = 0
@@ -18,7 +32,7 @@ def getimg(url):
             print("[WARN][PLOTTER] Could not retrieve", str(count))
             print(url)
             print(e)
-            if count < 10:
+            if count < MAX_RETRIES:
                 count += 1
             else:
                 return None
@@ -36,7 +50,7 @@ class Plotter:
         self.data = data
 
         self.fig, self.ax = plt.subplots()
-        self.fig.set_size_inches(15, 7)
+        self.fig.set_size_inches(*WINDOW_SIZE)
 
         self.active_threshold = active_threshold
         self.exclude_missing = exclude_missing
@@ -76,7 +90,7 @@ class Plotter:
 
             if row[i] is None or pd.isna(row[i]):
                 missing += 1
-                if missing >= 3 and len(xs) >= 2:
+                if missing >= GAP_MIN_SIZE and len(xs) >= 2:
                     lines.append((xs, ys))
                     xs = []
                     ys = []
@@ -95,7 +109,8 @@ class Plotter:
 
         return values, lines
 
-    def draw(self, start=0, max_count=10, include=None, included_ids=None):
+    def draw(self, start=0,
+             max_count=GRAPH_DEFAULT_USERS, include=None, included_ids=None):
         self.sort()
 
         # Counts out how many users have been displayed.
@@ -113,7 +128,7 @@ class Plotter:
 
             if pd.isna(row['Name']):
                 name = ''
-                colour = '#505050'
+                colour = Colours.missing
                 avatar = None
             else:
                 name = row['Name']
@@ -131,14 +146,14 @@ class Plotter:
         if count < max_count:
             print("[PLOTTER] " + str(count) + " shown")
 
-    def annotate(self, seperator=0.03):
+    def annotate(self):
         '''
         Adds names to the graph.
-        Ensures the names are seperated by at least 'seperator'.
+        Ensures the names are seperated by at least 'GRAPH_SEPERATOR'.
 
         '''
         # Determine how to convert from xp to axes fraction.
-        self.maxxp = sorted(self.annotations, key=lambda x: x[0])[-2][0]
+        self.maxxp = sorted(self.annotations, key=lambda x: x[0])[-1][0]
         self.minxp = sorted(self.annotations, key=lambda x: x[4])[0][-1]
         if len(self.annotations) > 1:
 
@@ -150,21 +165,22 @@ class Plotter:
 
         # Each point defaults to next to line.
         # Moves up to avoid lower labels.
-        heights = [-seperator]
+        heights = [-GRAPH_SEPERATOR]
         for index, item in enumerate(
                 sorted(self.annotations, key=lambda x: x[0])):
             height = item[0]
-            position = 1.019
+            # position = 1.019
+            position = 1.001 + GRAPH_IMAGE_WIDTH
             new_height = height
             if len(self.annotations) > 1:
                 new_height = xp_to_axes(height)
-                if new_height - heights[-1] < seperator:
-                    new_height = heights[-1] + seperator
+                if new_height - heights[-1] < GRAPH_SEPERATOR:
+                    new_height = heights[-1] + GRAPH_SEPERATOR
                 heights.append(new_height)
                 new_height = axes_to_data(new_height)
             did_img = self.annotate_image(item[3], new_height)
             if not did_img:
-                position -= 0.015
+                position -= GRAPH_IMAGE_WIDTH
             plt.annotate(item[1], (position, height), (position, new_height),
                          xycoords=('axes fraction', 'data'),
                          color=item[2],
@@ -176,36 +192,31 @@ class Plotter:
             return False
         image = plt.imread(image, format='jpeg')
         self.ax.add_artist(
-            AnnotationBbox(OffsetImage(image, zoom=0.1), (1.008, height),
+            AnnotationBbox(OffsetImage(image, zoom=0.1), (1 + GRAPH_IMAGE_WIDTH/2, height),
                            xycoords=('axes fraction', 'data'),
                            frameon=False))
         return True
 
     def configure(self):
-        self.ax.set_xlabel("Date (YYYY-MM)", color="white")
-        self.ax.set_ylabel("Total XP", color="white")
+        self.ax.set_xlabel("Date (YYYY-MM)", color=Colours.text)
+        self.ax.set_ylabel("Total XP", color=Colours.text)
 
-        if self.end_date:
-            end = min(datetime.now(), self.end_date)
-        else:
-            end = datetime.now()
+        end = self.end_date or datetime.now()
         self.ax.set_xlim([self.start_date, end])
 
-        # date_form = DateFormatter("%d-%m")
-        # self.ax.xaxis.set_major_formatter(date_form)
-
         # self.fig.figure(facecolor='')
-        self.fig.patch.set_facecolor('#2F3136')
-        self.ax.set_facecolor('#36393F')
+        self.fig.patch.set_facecolor(Colours.outside)
+        self.ax.set_facecolor(Colours.inside)
 
-        self.ax.tick_params(color='#FFFFFF', labelcolor='#FFFFFF')
+        self.ax.tick_params(color=Colours.text, labelcolor=Colours.text)
         for spine in self.ax.spines.values():
-            spine.set_edgecolor('#36393F')
+            # spine.set_edgecolor(Colours.inside)
+            spine.set_visible(False)
 
         self.fig.subplots_adjust(left=0.06, bottom=0.08, top=0.94, right=0.83)
 
         if self.title:
-            plt.title(self.title, color='#FFFFFF')
+            plt.title(self.title, color=Colours.text)
 
     def show(self):
         plt.show()
@@ -220,10 +231,8 @@ class Plotter:
 if __name__ == '__main__':
     data = pd.read_csv("gwaff.csv", index_col=0)
 
-    plot = Plotter(data,
-                   start_date=datetime.now() - timedelta(days=300),
-                   active_threshold=10000)
-    plot.draw(max_count=15)
+    plot = Plotter(data, start_date=datetime.now() - timedelta(days=365))
+    plot.draw()
     plot.annotate()
     plot.configure()
 
