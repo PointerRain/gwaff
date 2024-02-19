@@ -5,13 +5,14 @@ from plotter import Plotter
 
 GAP_MIN_SIZE = 3
 
+
 class Growth(Plotter):
     def sort(self):
         data = [self.read_row(row)[0] for index, row in self.data.iterrows()]
         self.data['Change'] = [row[-1] - row[0] for row in data]
         self.data.sort_values(by='Change', inplace=True, ascending=False)
 
-    def read_row(self, row):
+    def read_row(self, row: pd.Series) -> tuple[list[int], list[tuple[list[datetime], list[int]]]]:
         '''
         Read dates and values that have xp data.
         '''
@@ -51,7 +52,7 @@ class Growth(Plotter):
 
         return values, lines
 
-    def configure(self):
+    def configure(self) -> None:
         super().configure()
 
         self.ax.set_ylabel("XP Growth")

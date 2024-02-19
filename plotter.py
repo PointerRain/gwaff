@@ -13,6 +13,7 @@ GAP_MIN_SIZE = 3
 GRAPH_DEFAULT_USERS = 15
 GRAPH_SEPERATOR = 0.03
 GRAPH_IMAGE_WIDTH = 0.018
+RANK_DEFAULT_THRESHOLD = 30
 
 
 class Colours:
@@ -22,7 +23,7 @@ class Colours:
     inside = '#36393F'
 
 
-def getimg(url):
+def getimg(url: str):
     count = 0
     while True:
         try:
@@ -40,13 +41,13 @@ def getimg(url):
 
 class Plotter:
     def __init__(self,
-                 data,
-                 start_date=None,
-                 end_date=None,
-                 active_threshold=True,
-                 exclude_missing=True,
-                 special=False,
-                 title="XP Over Time"):
+                 data: pd.DataFrame,
+                 start_date: datetime = None,
+                 end_date: datetime = None,
+                 active_threshold: int = RANK_DEFAULT_THRESHOLD,
+                 exclude_missing: bool = True,
+                 special: bool = False,
+                 title: str = "XP Over Time"):
         self.data = data
 
         self.fig, self.ax = plt.subplots()
@@ -66,15 +67,19 @@ class Plotter:
         self.special = special
         self.title = title
 
-    def sort(self):
+    def sort(self) -> None:
         # Find final value for xp using the read_row function
         data = [self.read_row(row)[0] for index, row in self.data.iterrows()]
         self.data['Final'] = [row[-1] for row in data]
         self.data.sort_values(by='Final', inplace=True, ascending=False)
 
-    def read_row(self, row):
+    def read_row(self, row: pd.Series) -> tuple[list[int], list[tuple[list[datetime], list[int]]]]:
         '''
         Read dates and values that have xp data.
+
+        Returns:
+        Array of all values regardless of 
+        Array of all (roughly) continuous lines
         '''
         xs = []
         ys = []
@@ -106,11 +111,17 @@ class Plotter:
 
         if len(values) <= 1:
             return [0, 0], []
-
         return values, lines
 
-    def draw(self, start=0,
-             max_count=GRAPH_DEFAULT_USERS, include=None, included_ids=None):
+    def draw(self, start: int = 0,
+             max_count: int = GRAPH_DEFAULT_USERS,
+             include: list[int] = None) -> None:
+        '''
+        Draws a plot.
+        start: the number of users to skip over at the start.
+        max_count: the number of users to show.
+        include: if specified, only the specified users are shown.
+        '''
         self.sort()
 
         # Counts out how many users have been displayed.
@@ -146,11 +157,10 @@ class Plotter:
         if count < max_count:
             print("[PLOTTER] " + str(count) + " shown")
 
-    def annotate(self):
+    def annotate(self) -> None:
         '''
         Adds names to the graph.
         Ensures the names are seperated by at least 'GRAPH_SEPERATOR'.
-
         '''
         # Determine how to convert from xp to axes fraction.
         self.maxxp = sorted(self.annotations, key=lambda x: x[0])[-1][0]
@@ -186,7 +196,13 @@ class Plotter:
                          color=item[2],
                          va='center')
 
-    def annotate_image(self, avatar, height):
+    def annotate_image(self, avatar: str, height: float) -> bool:
+        '''
+        Add an image at the given height.
+        avatar: str url to the avatar image.
+        height: height in data units to position the image.
+        Returns: bool representing if the image was added successfully.
+        '''
         image = getimg(avatar)
         if image is None:
             return False
@@ -197,7 +213,7 @@ class Plotter:
                            frameon=False))
         return True
 
-    def configure(self):
+    def configure(self) -> None:
         self.ax.set_xlabel("Date (YYYY-MM)", color=Colours.text)
         self.ax.set_ylabel("Total XP", color=Colours.text)
 

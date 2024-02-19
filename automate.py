@@ -10,16 +10,16 @@ from growth import Growth
 from predictor import Prediction, xp_to_lvl, lvl_to_xp
 from truerank import Truerank
 
-GRAPH_MAX_DAYS = 365
-GRAPH_DEFAULT_DAYS = 7
-GRAPH_MAX_USERS = 30
-GRAPH_DEFAULT_USERS = 15
-COLLECTION_MAX_TIME = 3*60
-PREDICTION_DEFAULT_DAYS = 30
-RANK_DEFAULT_THRESHOLD = 30
-RANK_MAX_PAGE = 5
-RANK_PAGE_SIZE = 25
-DEFAULT_COLOUR = '#ea625e'
+GRAPH_MAX_DAYS: int = 365
+GRAPH_DEFAULT_DAYS: int = 7
+GRAPH_MAX_USERS: int = 30
+GRAPH_DEFAULT_USERS: int = 15
+COLLECTION_MAX_TIME: int = 3*60
+PREDICTION_DEFAULT_DAYS: int = 30
+RANK_DEFAULT_THRESHOLD: int = 30
+RANK_MAX_PAGE: int = 5
+RANK_PAGE_SIZE: int = 25
+ACCENT_COLOUR: str = '#ea625e'
 
 guilds = [
     discord.Object(id=1031086992403992576),
@@ -35,7 +35,7 @@ class Gwaff(discord.Client):
         self.synced = False
         self.servers = []
 
-    async def on_ready(self):
+    async def on_ready(self) -> None:
         if not self.synced:
             await tree.sync()
             for server in client.guilds:
@@ -46,8 +46,11 @@ class Gwaff(discord.Client):
 
 
 def growth(days: int = GRAPH_DEFAULT_DAYS,
-           count: int = GRAPH_DEFAULT_USERS, member=None,
-           title="Top chatters XP growth", special=False, compare=None):
+           count: int = GRAPH_DEFAULT_USERS,
+           member: discord.User = None,
+           title: str = "Top chatters XP growth",
+           special: bool = False,
+           compare: discord.User = None) -> None:
     '''
     Plots and saves a growth plot (aka gwaff)
 
@@ -80,7 +83,8 @@ def growth(days: int = GRAPH_DEFAULT_DAYS,
     plot.close()
 
 
-def resolve_member(interaction, user):
+def resolve_member(interaction: discord.Interaction,
+                   user: discord.User) -> discord.User:
     if user is None and interaction is not None:
         return interaction.user
     data = pd.read_csv("gwaff.csv", index_col=0)
@@ -90,7 +94,7 @@ def resolve_member(interaction, user):
         return False
 
 
-def ordinal(n):
+def ordinal(n: int) -> str:
     suffixes = {1: "st", 2: "nd", 3: "rd"}
     i = n if (n < 20) else (n % 10)
     suffix = suffixes.get(i, 'th')
@@ -103,9 +107,10 @@ tree = app_commands.CommandTree(client)
 
 @tree.command(name="gwaff",
               description="Plots top users growth")
-@app_commands.describe(days=f'How many days to plot (default {GRAPH_DEFAULT_DAYS})',
-                       count=f'How many users to plot (default {GRAPH_DEFAULT_USERS})',
-                       hidden='Hide from others in this server (default False)')
+@app_commands.describe(
+    days=f'How many days to plot (default {GRAPH_DEFAULT_DAYS})',
+    count=f'How many users to plot (default {GRAPH_DEFAULT_USERS})',
+    hidden='Hide from others in this server (default False)')
 async def plot_gwaff(interaction: discord.Interaction,
         days: app_commands.Range[float, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
         count: app_commands.Range[int, 1, GRAPH_MAX_USERS] = GRAPH_DEFAULT_USERS,
@@ -317,7 +322,7 @@ async def plot_growth(interaction: discord.Interaction,
               description="Tells you your position out of only active members")
 @app_commands.describe(member='The member to check (default you)',
                        threshold=f"The monthly xp needed to be listed "
-                       f"(default {RANK_DEFAULT_THRESHOLD})",
+                                 f"(default {RANK_DEFAULT_THRESHOLD})",
                        hidden='Hide from others in this server (default False)')
 async def rank_true(interaction: discord.Interaction,
                     member: discord.User = None,
@@ -367,7 +372,7 @@ async def rank_true(interaction: discord.Interaction,
                        hidden="Hide from others in this server (default False)")
 async def leaderboard(interaction: discord.Interaction,
                 page: app_commands.Range[int, 1, RANK_MAX_PAGE] = RANK_MAX_PAGE,
-                threshold: int = RANK_DEFAULT_THRESHOLD,
+                threshold: app_commands.Range[int, 0] = RANK_DEFAULT_THRESHOLD,
                 hidden: bool = False):
     await interaction.response.defer(ephemeral=hidden)
 
@@ -378,15 +383,15 @@ async def leaderboard(interaction: discord.Interaction,
     page_end = page * RANK_PAGE_SIZE
     for index, item in enumerate(truerank.values[page_start:page_end]):
         description += f"\n**{index + 1 + page_start})**" \
-                       f"<@{item['ID']}> ({item['name']})" \
-                       f"({round(item['xp'])} XP)"
+            f"<@{item['ID']}> ({item['name']})" \
+            f"({round(item['xp'])} XP)"
     if len(description) <= 0:
         await interaction.followup.send(":1234: This page does not exist")
         return
     description += f"\nPage: {page}/{ceil(len(truerank.values) / RANK_PAGE_SIZE)}"
     board = discord.Embed(title='Leaderboard',
                           description=description,
-                          colour=discord.Colour.from_str(DEFAULT_COLOUR))
+                          colour=discord.Colour.from_str(ACCENT_COLOUR))
     await interaction.followup.send(embed=board)
 
 
@@ -504,7 +509,10 @@ async def truerank_ctx(interaction: discord.Interaction,
                                         f"<@{str(other_id)}> ({other_name})")
 
 
-def runTheBot(token):
+def runTheBot(token) -> None:
+    '''
+    Runs the bot
+    '''
     client.run(token)
 
 

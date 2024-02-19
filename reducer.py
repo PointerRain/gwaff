@@ -9,18 +9,19 @@ from datetime import datetime, timedelta
 
 
 class Reducer:
-    def __init__(self, data):
+    def __init__(self, data: pd.DataFrame):
         self.data = data
         self.dates = data.columns
         self.dates = list(self.dates)[4:]
 
-    def sort(self):
+    def sort(self) -> None:
         # Find final value for xp using the read_row function
         data = [self.read_row(row)[1] for index, row in self.data.iterrows()]
         self.data['Final'] = [row[-1] for row in data]
         self.data.sort_values(by='Final', inplace=True, ascending=False)
 
-    def read_row(self, row, start_date=None):
+    def read_row(self, row: pd.Series,
+                 start_date: datetime = None) -> tuple[list[datetime], list[int]]:
         xs = []
         values = []
         for i in self.dates:
@@ -37,7 +38,7 @@ class Reducer:
 
         return xs, values
 
-    def reduce_cols(self):
+    def reduce_cols(self) -> None:
         self.sort()
         new_columns = [column for column in self.data][:4]
         dates = [datetime.fromisoformat(date) for date in self.dates]
@@ -70,7 +71,7 @@ class Reducer:
         self.data = self.data[new_columns]
         print('Deleted', del_count, 'columns')
 
-    def save(self):
+    def save(self) -> None:
         # self.data.drop(['Final'], axis=1, inplace=True)
         self.data.to_csv('gwaff.csv', encoding='utf-8')
         print('saved')

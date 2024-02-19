@@ -2,7 +2,7 @@ from replit import db
 import pandas as pd
 
 
-def saveToDB():
+def saveToDB() -> None:
     data = pd.read_csv("gwaff.csv", index_col='ID')
     data_cols = data.columns
     db_cols = db.keys()
@@ -17,7 +17,7 @@ def saveToDB():
     #         del db[key]
 
 
-def loadFromDB():
+def loadFromDB() -> None:
     struct = {}
     keys = list(db.keys())
 

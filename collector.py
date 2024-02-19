@@ -16,7 +16,12 @@ COLLECTION_LARGE = 8
 COLLECTION_SMALL = 3
 
 
-def request_api(url):
+def request_api(url: str) -> dict:
+    '''
+    Requests data from the given api.
+
+    Returns: dict of the requested data.
+    '''
     count = 0
     while True:
         try:
@@ -32,10 +37,15 @@ def request_api(url):
                 time.sleep(1)
             else:
                 print("[ERROR][COLLECT] Skipping")
-                return False
+                return None
 
 
-def url_constructor(base, **kwargs):
+def url_constructor(base: str, **kwargs: dict[str, str]) -> str:
+    '''
+    Constructs a url from a base url and several key-values.
+
+    Returns: str of the final url.
+    '''
     if kwargs:
         keys = list(kwargs.keys())
         url = f"{base}?{keys[0]}={kwargs[keys[0]]}"
@@ -48,10 +58,13 @@ server = "377946908783673344"
 base_url = f"https://gdcolon.com/polaris/api/leaderboard/{server}"
 
 
-def record_data(pages=range(1, 6), min_time=2):
+def record_data(pages: list[int] = range(1, COLLECTION_LARGE),
+                min_time: int = WAIT_FAIL) -> bool:
     '''
     Record the current xp data to gwaff.csv.
     Ensures records are seperated by at least min_time.
+
+    Returns: bool representing if data was successfully gathered.
     '''
 
     print("[COLLECT] Collecting!")
@@ -147,7 +160,10 @@ def record_data(pages=range(1, 6), min_time=2):
     print()
 
 
-def run():
+def run() -> None:
+    '''
+    Periodically collects data.
+    '''
     while True:
         success = record_data(min_time=1, pages=range(1, COLLECTION_LARGE))
         wait = WAIT_SUCCESS if success else WAIT_FAIL
@@ -164,7 +180,10 @@ def run():
             time.sleep(10 * 60)
 
 
-def collect():
+def collect() -> None:
+    '''
+    Creates a thread to periodically collect data.
+    '''
     t = Thread(target=run)
     t.start()
 

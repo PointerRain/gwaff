@@ -1,14 +1,14 @@
 import pandas as pd
 from datetime import datetime, timedelta
-# import discord
 
 PREDICTION_DEFAULT_DAYS = 30
 RANK_DEFAULT_THRESHOLD = 30
 
 
 class Truerank:
-    def __init__(self, data, period=PREDICTION_DEFAULT_DAYS,
-                 threshold=RANK_DEFAULT_THRESHOLD):
+    def __init__(self, data: pd.DataFrame,
+                 period: int = PREDICTION_DEFAULT_DAYS,
+                 threshold: int = RANK_DEFAULT_THRESHOLD):
         self.data = data
 
         self.period = period
@@ -25,12 +25,8 @@ class Truerank:
         self.values = self.get_data()
 
         self.sort()
-        # self.growth = growth or self.growth
 
-        # if self.value is None or self.growth is None:
-        #     raise ValueError
-
-    def get_data(self):
+    def get_data(self) -> list[dict[str, str]]:
         values = []
         for index, row in list(self.data.iterrows()):
             startxp = None
@@ -58,10 +54,26 @@ class Truerank:
                 values.append(item)
         return values
 
-    def sort(self):
+    def sort(self) -> None:
+        '''
+        Sorts the data by xp in descending order.
+        '''
         self.values.sort(key=lambda x: x['xp'], reverse=True)
 
-    def find_index(self, member):
+    def find_index(self, member: int) -> dict[str, str]:
+        '''
+        Find information (crucially index) of the given member.
+        Returns: dict
+            - User's ID
+            - User's index
+            - User's server nickname
+            - User's XP
+            - User's avatar url
+            If there is a preceeding member
+            - Previous' ID
+            - Previous' server nickname
+            - Previous' XP
+        '''
         result = {}
         for index, item in enumerate(self.values):
             if item['ID'] == member:
@@ -76,6 +88,7 @@ class Truerank:
                 result['other_xp'] = self.values[index - 1]['xp']
                 return result
         raise IndexError
+
 
 if __name__ == '__main__':
     data = pd.read_csv("gwaff.csv", index_col=0)
