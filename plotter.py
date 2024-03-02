@@ -211,10 +211,11 @@ class Plotter:
         if image is None:
             return False
         image = plt.imread(image, format='jpeg')
-        self.ax.add_artist(
-            AnnotationBbox(OffsetImage(image, zoom=0.1), (1 + GRAPH_IMAGE_WIDTH/2, height),
+        image = OffsetImage(image, zoom=0.1)
+        annotation = AnnotationBbox(image, (1 + GRAPH_IMAGE_WIDTH/2, height),
                            xycoords=('axes fraction', 'data'),
-                           frameon=False))
+                           frameon=False)
+        self.ax.add_artist(annotation)
         return True
 
     def configure(self) -> None:
