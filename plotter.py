@@ -137,6 +137,9 @@ class Plotter:
             if values[-1] - values[0] <= self.active_threshold:
                 continue
 
+            name: str;
+            colour: str;
+            avatar: str;
             if pd.isna(row['Name']):
                 name = ''
                 colour = Colours.missing
@@ -164,7 +167,7 @@ class Plotter:
         '''
         # Determine how to convert from xp to axes fraction.
         self.maxxp = sorted(self.annotations, key=lambda x: x[0])[-1][0]
-        self.minxp = sorted(self.annotations, key=lambda x: x[4])[0][-1]
+        self.minxp = sorted(self.annotations, key=lambda x: x[4])[0][4]
         if len(self.annotations) > 1:
 
             def xp_to_axes(xp):
@@ -201,6 +204,7 @@ class Plotter:
         Add an image at the given height.
         avatar: str url to the avatar image.
         height: height in data units to position the image.
+
         Returns: bool representing if the image was added successfully.
         '''
         image = getimg(avatar)

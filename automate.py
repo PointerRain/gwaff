@@ -115,7 +115,6 @@ async def plot_gwaff(interaction: discord.Interaction,
         days: app_commands.Range[float, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
         count: app_commands.Range[int, 1, GRAPH_MAX_USERS] = GRAPH_DEFAULT_USERS,
         hidden: bool = False):
-    now = datetime.now()
     # if interaction.user.id in [344731282095472641]:
     #     await interaction.response.defer(ephemeral=hidden)
     #     growth(days=days, count=count, special=True)
@@ -156,7 +155,7 @@ async def send_data(interaction: discord.Interaction, hidden: bool = True):
 @tree.command(name="isalive",
               description="When did I last collect data")
 @app_commands.describe(hidden='Hide from others in this server (default True)')
-async def last_record(interaction: discord.Interaction, hidden: bool = True):
+async def is_alive(interaction: discord.Interaction, hidden: bool = True):
     await interaction.response.defer(ephemeral=hidden)
 
     now = datetime.now()
@@ -172,8 +171,11 @@ async def last_record(interaction: discord.Interaction, hidden: bool = True):
     prevlast = datetime.fromisoformat(prevlast)
     prevlaststr = utils.format_dt(prevlast, 'R')
 
-    alive = "" if (now - last).total_seconds() < 1.1 * \
-        COLLECTION_MAX_TIME*60 else "Collection has halted!"
+    alive: str;
+    if (now - last).total_seconds() < 1.1 * COLLECTION_MAX_TIME*60:
+        alive = ""
+    else:
+        alive = "Collection has halted!"
     await interaction.followup.send(f"Data was last collected {laststr}\n"
                                     f"(Before that {prevlaststr})\n{alive}")
 
@@ -183,10 +185,11 @@ async def last_record(interaction: discord.Interaction, hidden: bool = True):
 async def send_data(interaction: discord.Interaction):
     if interaction.user.id in [344731282095472641]:
         await interaction.response.defer(ephemeral=True)
-        startsize = 0
+        start_size = 0
         reduce()
-        endsize = 0
-        await interaction.followup.send("Reduced filesize by "+str(endsize-startsize)+"!")
+        end_size = 0
+        await interaction.followup.send(f"Reduced filesize by "
+                                        f"{end_size-start_size}!")
     else:
         await interaction.followup.send(":no_entry: You can't use this command",
                                         ephemeral=True)
@@ -245,7 +248,7 @@ async def predict(interaction: discord.Interaction,
         await interaction.followup.send(":mag: That target does not exist")
         return
     except Exception as e:
-        await interaction.followup.send(":question: An unknown error occured")
+        await interaction.followup.send(":question: An unknown error occurred")
         raise e
         return
     if days == 'target':
@@ -256,12 +259,13 @@ async def predict(interaction: discord.Interaction,
                                         "That target is too far away")
         return
     if days != days:
-        await interaction.followup.send(":question: An unknown error occured")
+        await interaction.followup.send(":question: An unknown error occurred")
         return
 
     date = time.mktime((datetime.now() + timedelta(days=days)).timetuple())
     member_name = "You" if member == interaction.user else f"<@{member.id}>"
 
+    target: str;
     if prediction.target_type == 'xp':
         target = str(prediction.target) + ' xp'
     elif prediction.target_type == 'level':
@@ -301,6 +305,8 @@ async def plot_growth(interaction: discord.Interaction,
                                         "That person in not in the server "
                                         "or hasn't reached level 15")
         return
+        
+    co_member: discord.User;
     if compare:
         co_member = resolve_member(None, compare)
         if co_member is False:
@@ -451,7 +457,7 @@ async def ping(interaction: discord.Interaction):
     msgtime = interaction.created_at
     ping = (now - msgtime).total_seconds() * 2000.0
     print("[BOT] Ping:", ping)
-    await interaction.response.send_message(f"Pong!\n {round(ping)} ms",
+    await interaction.response.send_message(f"Pong!\n{round(ping)} ms",
                                             ephemeral=True)
 
 
