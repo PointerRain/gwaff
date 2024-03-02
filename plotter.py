@@ -19,8 +19,8 @@ RANK_DEFAULT_THRESHOLD = 30
 class Colours:
     missing = '#505050'
     text = '#FFFFFF'
-    outside = '#2F3136'
-    inside = '#36393F'
+    outside = '#2B2D31'
+    inside = '#313338'
 
 
 def getimg(url: str):
