@@ -124,7 +124,12 @@ async def plot_gwaff(interaction: discord.Interaction,
     #     await interaction.followup.send(":no_entry: You can't use this command",
     #                                     ephemeral=True)
     await interaction.response.defer(ephemeral=hidden)
-    growth(days=days, count=count, special=True)
+    title: str;
+    if days == GRAPH_DEFAULT_DAYS:
+        title = "Top chatters XP growth"
+    else:
+        title = f"Top chatters XP over the last {round(days)} days"
+    growth(days=days, count=count, title=title, special=True)
     await interaction.followup.send(file=discord.File('out.png'))
 
 
