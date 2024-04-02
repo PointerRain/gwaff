@@ -8,6 +8,8 @@ from math import ceil
 
 from growth import Growth
 from predictor import Prediction, xp_to_lvl, lvl_to_xp
+from predictor import (NoDataError, ZeroGrowthError,
+                       InvalidTargetError, TargetBoundsError)
 from truerank import Truerank
 
 GRAPH_MAX_DAYS: int = 365
@@ -123,6 +125,7 @@ async def plot_gwaff(interaction: discord.Interaction,
     #     await interaction.followup.send(":no_entry: You can't use this command",
     #                                     ephemeral=True)
     await interaction.response.defer(ephemeral=hidden)
+
     title: str;
     if days == GRAPH_DEFAULT_DAYS:
         title = "Top chatters XP growth"
@@ -239,27 +242,20 @@ async def predict(interaction: discord.Interaction,
         await interaction.followup.send(":1234: "
                                         "Level or xp must be a whole number")
         return
-    except ZeroDivisionError:
-        await interaction.followup.send(":mirror: "
-                                        "The target cannot be the same as "
-                                        "the member")
+    except ZeroGrowthError:
+        await interaction.followup.send(":chart_with_downwards_trend: "
+                                        "That person has earnt no xp recently")
         return
-    except IndexError:
+    except NoDataError:
         await interaction.followup.send(":mag: That target does not exist")
         return
-    except Exception as e:
-        await interaction.followup.send(":question: An unknown error occurred")
-        raise e
-        return
-    if days == 'target':
-        await interaction.followup.send(f":x: Invalid target {target}")
-        return
-    if days >= 100 * 365:
+    except TargetBoundsError:
         await interaction.followup.send(":telescope: "
                                         "That target is too far away")
         return
-    if days != days:
-        await interaction.followup.send(":question: An unknown error occurred")
+    except Exception as e:
+        await interaction.followup.send(f":question: An unknown error occurred {e}")
+        raise e
         return
 
     date = time.mktime((datetime.now() + timedelta(days=days)).timetuple())
@@ -305,7 +301,7 @@ async def plot_growth(interaction: discord.Interaction,
                                         "That person in not in the server "
                                         "or hasn't reached level 15")
         return
-        
+
     co_member: discord.User;
     if compare:
         co_member = resolve_member(None, compare)
@@ -382,7 +378,7 @@ async def rank_true(interaction: discord.Interaction,
                        f"(default {RANK_DEFAULT_THRESHOLD})",
                        hidden="Hide from others in this server (default False)")
 async def leaderboard(interaction: discord.Interaction,
-                page: app_commands.Range[int, 1, RANK_MAX_PAGE] = RANK_MAX_PAGE,
+                page: app_commands.Range[int, 1, RANK_MAX_PAGE] = 1,
                 threshold: app_commands.Range[int, 0] = RANK_DEFAULT_THRESHOLD,
                 hidden: bool = False):
     await interaction.response.defer(ephemeral=hidden)
