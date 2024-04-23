@@ -53,14 +53,21 @@ def lvl_to_xp(lvl: int) -> int:
 def xp_to_lvl(xp: int) -> int:
     '''
     Converts an xp value to the equivalent level.
-    Behaviour is only correct when xp>6859 and level<100.
+    Behaviour is only correct when xp>12017 and level<100.
+
     xp: The xp value to convert to a level.
+
+    Returns: The level at the given level.
     '''
-    A = 3.582
-    B = 2.861
-    C = 6859
-    if xp <= C:
-        return 0
+    if xp <= 145000:
+        # If xp is relatively low (<=39) use this approximation
+        A = 3.266
+        B = 2.881
+        C = 12017
+        if xp <= C:
+            return 0
+    else:
+        # If xp is relatively high (>39) use separate approximation
         A = 6.204
         B = 2.724
         C = 2079
@@ -243,10 +250,6 @@ class Prediction:
 
 
 if __name__ == '__main__':
-    print(xp_to_lvl(183734))
-    print(lvl_to_xp(43))
-    print(xp_to_lvl(177375))
-    print(xp_to_lvl(188870))
     # Some test cases
     assert xp_to_lvl(183734) == 43
     assert lvl_to_xp(43) >= 177373
