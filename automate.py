@@ -12,11 +12,16 @@ from predictor import (NoDataError, ZeroGrowthError,
                        InvalidTargetError, TargetBoundsError)
 from truerank import Truerank
 
-GRAPH_MAX_DAYS: int = 365
-GRAPH_DEFAULT_DAYS: int = 7
-GRAPH_MAX_USERS: int = 30
-GRAPH_DEFAULT_USERS: int = 15
-COLLECTION_MAX_TIME: int = 3*60
+GRAPH_MAX_DAYS: int = 365           # The maximum days that can be plotted on
+                                    #  the gwaff/growth
+GRAPH_DEFAULT_DAYS: int = 7         # The default days to be plotted on
+                                    #  the gwaff/growth
+GRAPH_MAX_USERS: int = 30           # The maximum number of users data to be
+                                    #  plotted on the gwaff
+GRAPH_DEFAULT_USERS: int = 15       # The default number of users to be
+                                    #  plotted on the gwaff
+COLLECTION_MAX_TIME: int = 3*60     # The maximum length of time that must go by
+                                    #  before collection is said to be stopped.
 PREDICTION_DEFAULT_DAYS: int = 30
 RANK_DEFAULT_THRESHOLD: int = 30
 RANK_MAX_PAGE: int = 5
@@ -259,7 +264,7 @@ async def predict(interaction: discord.Interaction,
         return
 
     date = time.mktime((datetime.now() + timedelta(days=days)).timetuple())
-    member_name = "You" if member == interaction.user else f"<@{member.id}>"
+    member_name = "You" if member is interaction.user else f"<@{member.id}>"
 
     target: str;
     if prediction.target_type == 'xp':

@@ -8,12 +8,17 @@ from threading import Thread
 
 from database import saveToDB
 
-MAX_RETRIES = 5
-WAIT_SUCCESS = 120
-WAIT_FAIL = 60
-MIN_SEPERATION = 60
-COLLECTION_LARGE = 8
-COLLECTION_SMALL = 3
+MAX_RETRIES: int = 5        # How many times to attempt to collect and save data
+WAIT_SUCCESS: int = 240     # How many minutes to wait after a success
+WAIT_FAIL: int = 60         # How many minutes to wait after a failure
+MIN_SEPERATION: int = 60    # Do not store new data if the last collection was
+                            #  less than this many minutes ago
+COLLECTION_SMALL: int = 3   # Collect data from up to this page every 
+                            #  collection event
+COLLECTION_LARGE: int = 8   # Collect data from up to this page every second 
+                            #  collection event
+SERVER_ID = "377946908783673344"
+API_URL = f"https://gdcolon.com/polaris/api/leaderboard/{SERVER_ID}"
 
 
 def request_api(url: str) -> dict:
@@ -40,7 +45,7 @@ def request_api(url: str) -> dict:
                 return None
 
 
-def url_constructor(base: str, **kwargs: dict[str, str]) -> str:
+def url_constructor(base: str, **kwargs: dict) -> str:
     '''
     Constructs a url from a base url and several key-values.
 
@@ -54,11 +59,9 @@ def url_constructor(base: str, **kwargs: dict[str, str]) -> str:
     return url
 
 
-server = "377946908783673344"
-base_url = f"https://gdcolon.com/polaris/api/leaderboard/{server}"
 
 
-def record_data(pages: list[int] = range(1, COLLECTION_LARGE),
+def record_data(pages: list = range(1, COLLECTION_LARGE),
                 min_time: int = WAIT_FAIL) -> bool:
     '''
     Record the current xp data to gwaff.csv.
@@ -80,7 +83,7 @@ def record_data(pages: list[int] = range(1, COLLECTION_LARGE),
     last = pd.read_csv("gwaff.csv", index_col=0)
 
     for page in pages:
-        url = url_constructor(base_url, page=page)
+        url = url_constructor(API_URL, page=page)
 
         data = request_api(url)
         if not data:
@@ -107,6 +110,8 @@ def record_data(pages: list[int] = range(1, COLLECTION_LARGE),
                 names.append(name)
                 colours.append(colour)
                 avatars.append(avatar)
+
+        print(f"[COLLECT] Page {page} collected")
 
     # Below saves the data
     struct = {'ID': ids, 'Name': names, 'Colour': colours, 'Avatar': avatars}
