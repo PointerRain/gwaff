@@ -118,7 +118,7 @@ class Prediction:
         self.start_date = datetime.now()-timedelta(days=period)
 
         self.dates = data.columns
-        self.date = [d for d in list(self.dates)[4:]
+        self.dates = [d for d in list(self.dates)[4:]
                      if d > str(self.start_date)]
         self.dates.sort()
 
