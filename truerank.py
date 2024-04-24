@@ -50,6 +50,7 @@ class Truerank:
                     'name': row['Name'],
                     'xp': round(finalxp),
                     'url': row['Avatar']
+                    'colour': row['colour']
                 }
                 values.append(item)
         return values
@@ -77,10 +78,11 @@ class Truerank:
         result = {}
         for index, item in enumerate(self.values):
             if item['ID'] == member:
-                result["rank"] = index
+                result['rank'] = index
                 result['name'] = item['name']
-                result["xp"] = item['xp']
-                result["url"] = item['url']
+                result['xp'] = item['xp']
+                result['url'] = item['url']
+                result['colour'] = item['colour']
                 if index == 0:
                     return result
                 result['other_ID'] = self.values[index - 1]['ID']
