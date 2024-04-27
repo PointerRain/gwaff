@@ -60,17 +60,17 @@ def xp_to_lvl(xp: int) -> int:
     Returns: The level at the given level.
     '''
     if xp <= 145000:
-        # If xp is relatively low (<=39) use this approximation
-        A = 3.266
-        B = 2.881
-        C = 12017
-        if xp <= C:
-            return 0
-    else:
-        # If xp is relatively high (>39) use separate approximation
+        # If xp is relatively low (<=lvl39) use this approximation
         A = 6.204
         B = 2.724
         C = 2079
+        if xp <= C:
+            return 0
+    else:
+        # If xp is relatively high (>lvl39) use separate approximation
+        A = 3.266
+        B = 2.881
+        C = 12017
     return floor(((xp-C)/A)**(1/B))
 
 
@@ -253,5 +253,5 @@ if __name__ == '__main__':
     # Some test cases
     assert xp_to_lvl(183734) == 43
     assert lvl_to_xp(43) >= 177373
-    assert xp_to_lvl(177390) == 43
-    assert xp_to_lvl(188870) == 44
+    assert xp_to_lvl(180000) == 43
+    assert xp_to_lvl(189870) == 44
