@@ -34,6 +34,7 @@ guilds = [
 ]
 # guilds = []
 
+
 class Gwaff(discord.Client):
     def __init__(self):
         intents = discord.Intents.default()
@@ -152,11 +153,20 @@ async def plot_gwaff(interaction: discord.Interaction,
               description="Gets the entire gwaff data as a csv")
 @app_commands.describe(hidden='Hide from others in this server (default True)')
 async def send_data(interaction: discord.Interaction, hidden: bool = True):
-    await interaction.response.defer(ephemeral=hidden)
+    # await interaction.response.defer(ephemeral=hidden)
     if interaction.user.id in [344731282095472641]:
-        await interaction.followup.send(file=discord.File('gwaff.csv'))
-    else:
-        await interaction.followup.send(":no_entry: You can't use this command")
+        await interaction.response.send_message(file=discord.File('gwaff.csv'), ephemeral=hidden)
+    await interaction.response.send_message(":no_entry: You can't use this command", ephemeral=True)
+
+
+@tree.command(name="last",
+              description="Sends the last plot.")
+@app_commands.describe(hidden='Hide from others in this server (default False)')
+async def send_data(interaction: discord.Interaction, hidden: bool = False):
+    # await interaction.response.defer(ephemeral=hidden)
+    if interaction.user.id in [344731282095472641]:
+        await interaction.followup.send_message(file=discord.File('out.png'), ephemeral=hidden)
+    await interaction.followup.send_message(":no_entry: You can't use this command", ephemeral=True)
 
 
 @tree.command(name="isalive",
@@ -214,11 +224,11 @@ async def send_data(interaction: discord.Interaction):
                        growth='Override the average daily growth calculation',
                        hidden='Hide from others in this server (default False)')
 async def predict(interaction: discord.Interaction,
-        target: str,
-        member: discord.User = None,
-        period: app_commands.Range[int, 1, GRAPH_MAX_DAYS] = PREDICTION_DEFAULT_DAYS,
-        growth: int = None,
-        hidden: bool = False):
+                  target: str,
+                  member: discord.User = None,
+                  period: app_commands.Range[int, 1, GRAPH_MAX_DAYS] = PREDICTION_DEFAULT_DAYS,
+                  growth: int = None,
+                  hidden: bool = False):
     await interaction.response.defer(ephemeral=hidden)
 
     data = pd.read_csv("gwaff.csv", index_col=0)
@@ -265,9 +275,9 @@ async def predict(interaction: discord.Interaction,
     date = time.mktime((datetime.now() + timedelta(days=days)).timetuple())
     member_name = "You" if member is interaction.user else f"<@{member.id}>"
 
-    target: str;
+    target: str
     if prediction.target_type == 'xp':
-        target = str(prediction.target) + ' xp'
+        target = str(int(prediction.target)) + ' xp'
     elif prediction.target_type == 'level':
         target = 'level ' + str(prediction.target)
     elif prediction.target_type == 'user':
@@ -294,10 +304,10 @@ async def predict(interaction: discord.Interaction,
                        compare="A second user to show",
                        hidden="Hide from others in this server (default False)")
 async def plot_growth(interaction: discord.Interaction,
-        member: discord.User = None,
-        days: app_commands.Range[float, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
-        compare: discord.User = None,
-        hidden: bool = False):
+                      member: discord.User = None,
+                      days: app_commands.Range[float, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
+                      compare: discord.User = None,
+                      hidden: bool = False):
     await interaction.response.defer(ephemeral=hidden)
     member = resolve_member(interaction, member)
     if member is False:
@@ -382,9 +392,9 @@ async def rank_true(interaction: discord.Interaction,
                        f"(default {RANK_DEFAULT_THRESHOLD})",
                        hidden="Hide from others in this server (default False)")
 async def leaderboard(interaction: discord.Interaction,
-                page: app_commands.Range[int, 1, RANK_MAX_PAGE] = 1,
-                threshold: app_commands.Range[int, 0] = RANK_DEFAULT_THRESHOLD,
-                hidden: bool = False):
+                      page: app_commands.Range[int, 1, RANK_MAX_PAGE] = 1,
+                      threshold: app_commands.Range[int, 0] = RANK_DEFAULT_THRESHOLD,
+                      hidden: bool = False):
     await interaction.response.defer(ephemeral=hidden)
 
     data = pd.read_csv("gwaff.csv", index_col=0)
