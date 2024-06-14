@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -130,6 +131,8 @@ class Plotter:
             if self.exclude_missing and pd.isna(row['Name']):
                 continue
             if include is not None and row['ID'] not in include:
+                continue
+            if int(row['ID']) in [483515866319945728]:
                 continue
 
             values, lines = self.read_row(row)
