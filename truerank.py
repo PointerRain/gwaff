@@ -49,7 +49,7 @@ class Truerank:
                     'ID': row['ID'],
                     'name': row['Name'],
                     'xp': round(finalxp),
-                    'url': row['Avatar']
+                    'url': row['Avatar'],
                     'colour': row['colour']
                 }
                 values.append(item)

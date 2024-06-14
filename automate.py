@@ -34,7 +34,6 @@ guilds = [
 ]
 # guilds = []
 
-
 class Gwaff(discord.Client):
     def __init__(self):
         intents = discord.Intents.default()
@@ -259,7 +258,7 @@ async def predict(interaction: discord.Interaction,
                                         "That target is too far away")
         return
     except Exception as e:
-        await interaction.followup.send(f":question: An unknown error occurred {e}")
+        await interaction.followup.send(f":question: An unknown error occurred:\n {e}")
         raise e
         return
 
