@@ -9,8 +9,8 @@ from threading import Thread
 from database import saveToDB
 
 MAX_RETRIES: int = 5        # How many times to attempt to collect and save data
-WAIT_SUCCESS: int = 240     # How many minutes to wait after a success
-WAIT_FAIL: int = 60         # How many minutes to wait after a failure
+WAIT_SUCCESS: int = 120     # How many minutes to wait after a success
+WAIT_FAIL: int = 30         # How many minutes to wait after a failure
 MIN_SEPERATION: int = 60    # Do not store new data if the last collection was
                             #  less than this many minutes ago
 COLLECTION_SMALL: int = 3   # Collect data from up to this page every 

@@ -20,7 +20,7 @@ GRAPH_MAX_USERS: int = 30           # The maximum number of users data to be
                                     #  plotted on the gwaff
 GRAPH_DEFAULT_USERS: int = 15       # The default number of users to be
                                     #  plotted on the gwaff
-COLLECTION_MAX_TIME: int = 3*60     # The maximum length of time that must go by
+COLLECTION_MAX_TIME: int = 120      # The maximum length of time that must go by
                                     #  before collection is said to be stopped.
 PREDICTION_DEFAULT_DAYS: int = 30
 RANK_DEFAULT_THRESHOLD: int = 30
