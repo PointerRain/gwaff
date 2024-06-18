@@ -33,7 +33,7 @@ from collector import collect
 collect()
 print("[MAIN] Collecting")
 
-from automate import runTheBot
+from bot import runTheBot
 TOKEN = os.environ['BOT_TOKEN']
 runTheBot(TOKEN)
 
