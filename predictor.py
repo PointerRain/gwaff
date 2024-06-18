@@ -86,11 +86,11 @@ def remove_suffix(value: str) -> int:
 
     Returns: the equivalent int with the suffix removed.
     '''
-    if value.endswith('k'):
+    if value.lower().endswith('k'):
         return int(value[:-1]) * 1000
-    if value.endswith('M'):
+    if value.lower().endswith('m'):
         return int(value[:-1]) * 1000000
-    if value.endswith('B'):
+    if value.lower().endswith('b'):
         return int(value[:-1]) * 1000000000
     return int(value)
 
