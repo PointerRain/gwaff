@@ -1,10 +1,9 @@
 import os
-import time
+# import time
 
-os.environ['TZ'] = 'Australia/Brisbane'
-time.tzset()
-
-print("[MAIN] Set the timezone")
+# os.environ['TZ'] = 'Australia/Brisbane'
+# time.tzset()
+# print("[MAIN] Set the timezone")
 
 from warnings import filterwarnings
 filterwarnings("ignore", category=RuntimeWarning,
@@ -12,28 +11,23 @@ filterwarnings("ignore", category=RuntimeWarning,
 
 print("[MAIN] Filtering warnings")
 
-from database import saveToDB, loadFromDB
+# from database import saveToDB, loadFromDB
 
-# for i in db.keys():
-#     del db[i]
-# print('[MAIN] Deleted')
+# # DANGER ZONE
+# # for i in db.keys():
+# #     del db[i]
+# # print('[MAIN] Deleted')
+# # saveToDB()
+# # print("[MAIN] Saved")
 
-# saveToDB()
-# print("[MAIN] Saved")
-
-loadFromDB()
-print("[MAIN] Loaded")
-
-
-from keep_alive import keep_alive
-keep_alive()
-print("[MAIN] Staying alive")
+# loadFromDB()
+# print("[MAIN] Loaded")
 
 from collector import collect
 collect()
 print("[MAIN] Collecting")
 
-from automate import runTheBot
+from bot import runTheBot
 TOKEN = os.environ['BOT_TOKEN']
 runTheBot(TOKEN)
 
