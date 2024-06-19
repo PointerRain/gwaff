@@ -27,8 +27,8 @@ from collector import collect
 collect()
 print("[MAIN] Collecting")
 
-from bot import runTheBot
 TOKEN = os.environ['BOT_TOKEN']
-runTheBot(TOKEN)
+from bot import run_the_bot
+run_the_bot(TOKEN)
 
 print("[MAIN] Fin!")

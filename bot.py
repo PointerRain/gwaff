@@ -1,3 +1,5 @@
+from typing import Optional, Any, Callable
+
 import discord
 from discord import app_commands, utils
 
@@ -11,6 +13,7 @@ from predictor import Prediction, xp_to_lvl, lvl_to_xp
 from predictor import (NoDataError, ZeroGrowthError,
                        InvalidTargetError, TargetBoundsError)
 from truerank import Truerank
+from permissions import require_admin
 
 GRAPH_MAX_DAYS: int = 365           # The maximum days that can be plotted on
                                     #  the gwaff/growth
@@ -45,7 +48,7 @@ class Gwaff(discord.Client):
     async def on_ready(self) -> None:
         if not self.synced:
             await tree.sync()
-            for server in client.guilds:
+            for server in self.guilds:
                 await tree.sync(guild=discord.Object(id=server.id))
                 print("[BOT] - " + server.name)
             self.synced = True
@@ -108,8 +111,8 @@ def ordinal(n: int) -> str:
     return str(n) + suffix
 
 
-client = Gwaff()
-tree = app_commands.CommandTree(client)
+bot = Gwaff()
+tree = app_commands.CommandTree(bot)
 
 
 @tree.command(name="gwaff",
@@ -152,21 +155,17 @@ async def plot_gwaff(interaction: discord.Interaction,
 @tree.command(name="data",
               description="Gets the entire gwaff data as a csv")
 @app_commands.describe(hidden='Hide from others in this server (default True)')
+@require_admin
 async def send_data(interaction: discord.Interaction, hidden: bool = True):
-    # await interaction.response.defer(ephemeral=hidden)
-    if interaction.user.id in [344731282095472641]:
-        await interaction.response.send_message(file=discord.File('gwaff.csv'), ephemeral=hidden)
-    await interaction.response.send_message(":no_entry: You can't use this command", ephemeral=True)
+    await interaction.followup.send(file=discord.File('gwaff.csv'), ephemeral=hidden)
 
 
 @tree.command(name="last",
               description="Sends the last plot.")
 @app_commands.describe(hidden='Hide from others in this server (default False)')
+@require_admin
 async def send_data(interaction: discord.Interaction, hidden: bool = False):
-    # await interaction.response.defer(ephemeral=hidden)
-    if interaction.user.id in [344731282095472641]:
-        await interaction.followup.send_message(file=discord.File('out.png'), ephemeral=hidden)
-    await interaction.followup.send_message(":no_entry: You can't use this command", ephemeral=True)
+    await interaction.followup.send(file=discord.File('out.png'), ephemeral=hidden)
 
 
 @tree.command(name="isalive",
@@ -530,13 +529,14 @@ async def truerank_ctx(interaction: discord.Interaction,
                                         f"<@{str(other_id)}> ({other_name})")
 
 
-def runTheBot(token) -> None:
+def run_the_bot(token) -> None:
     '''
     Runs the bot
     '''
-    client.run(token)
+
+    bot.run(token)
 
 
 if __name__ == '__main__':
-    print("[ERROR][BOT] Need to run through runTheBot with the token!")
+    print("[ERROR][BOT] Need to run through run_the_bot with the token!")
     exit()
