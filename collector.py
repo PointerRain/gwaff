@@ -5,6 +5,7 @@ import time
 import pandas as pd
 from datetime import datetime
 from threading import Thread
+import logging
 
 from database import saveToDB
 
@@ -35,13 +36,13 @@ def request_api(url: str) -> dict:
             data = urlopen(request).read()
             return json.loads(data)
         except Exception as e:
-            print("[WARN][COLLECT] Could not retrieve", str(count))
+            logging.warning(f"Could not retrieve {str(count)}")
             print(e)
             if count < MAX_RETRIES:
                 count += 1
                 time.sleep(1)
             else:
-                print("[ERROR][COLLECT] Skipping")
+                logging.error("Skipping")
                 return None
 
 
@@ -70,7 +71,7 @@ def record_data(pages: list = range(1, COLLECTION_LARGE),
     Returns: bool representing if data was successfully gathered.
     '''
 
-    print("[COLLECT] Collecting!")
+    logging.info("Collecting!")
 
     ids = []
     names = []
@@ -111,18 +112,18 @@ def record_data(pages: list = range(1, COLLECTION_LARGE),
                 colours.append(colour)
                 avatars.append(avatar)
 
-        print(f"[COLLECT] Page {page} collected")
+        logging.info(f"- Page {page} collected")
 
     # Below saves the data
     struct = {'ID': ids, 'Name': names, 'Colour': colours, 'Avatar': avatars}
 
     lasttime = last.columns[-1]
     lasttime = datetime.fromisoformat(lasttime)
-    print("[COLLECT] Last:", lasttime)
+    logging.info(f"Last: {str(lasttime)}")
     now = datetime.now()
-    print("[COLLECT]  Now:", now)
+    logging.info(f" Now: {str(now)}")
     difference = now - lasttime
-    print("[COLLECT] Diff:", difference)
+    logging.info(f"Diff: {str(difference)}")
 
     # Checks before saving. Could be improved
     if difference.total_seconds() > min_time * 60 * 60:
@@ -144,25 +145,22 @@ def record_data(pages: list = range(1, COLLECTION_LARGE),
                 df.to_csv('gwaff.csv', encoding='utf-8')
                 saveToDB()
             except Exception as e:
-                print("[WARN][COLLECT] Could not save", str(count))
+                logging.warning(f"Could not save {str(count)}")
                 print(e)
                 if count < MAX_RETRIES:
                     count += 1
                 else:
-                    print("[ERROR][COLLECT] Skipping")
+                    logging.error("Skipping")
                     return False
             else:
-                print("[COLLECT] Saved")
+                logging.info("[COLLECT] Saved")
                 break
 
         return True
 
     else:
-        print("[COLLECT] Too soon")
-        print(f"[COLLECT] {difference.total_seconds() / 60}/{min_time * 60}")
+        logging.info(f"Too soon - {int(difference.total_seconds() / 60)}/{min_time * 60}")
         return False
-
-    print()
 
 
 def run() -> None:
@@ -174,14 +172,14 @@ def run() -> None:
         wait = WAIT_SUCCESS if success else WAIT_FAIL
 
         for i in range(wait//10):
-            print(f"[COLLECT] slept {i * 10}/{wait}")
+            logging.info(f"Slept {i * 10}/{wait}")
             time.sleep(10 * 60)
 
         success = record_data(min_time=1, pages=range(1, COLLECTION_SMALL))
         wait = WAIT_SUCCESS if success else WAIT_FAIL
 
         for i in range(wait//10):
-            print(f"[COLLECT] slept {i * 10}/{wait}")
+            logging.info(f"Slept {i * 10}/{wait}")
             time.sleep(10 * 60)
 
 
@@ -196,4 +194,4 @@ def collect() -> None:
 if __name__ == '__main__':
     collect()
 
-    print("[COLLECT] Collection Started")
+    logging.info("Collection Started")

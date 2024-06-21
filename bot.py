@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime, timedelta, timezone
 import time
 from math import ceil
+import logging
 
 from growth import Growth
 from predictor import Prediction, xp_to_lvl, lvl_to_xp
@@ -465,7 +466,7 @@ async def ping(interaction: discord.Interaction):
     now = datetime.now(timezone.utc)
     msgtime = interaction.created_at
     ping = (now - msgtime).total_seconds() * 2000.0
-    print("[BOT] Ping:", ping)
+    logging.info("Ping:", ping)
     await interaction.response.send_message(f"Pong!\n{round(ping)} ms",
                                             ephemeral=True)
 
@@ -538,5 +539,5 @@ def run_the_bot(token) -> None:
 
 
 if __name__ == '__main__':
-    print("[ERROR][BOT] Need to run through run_the_bot with the token!")
+    logging.error("Need to run through run_the_bot with the token!")
     exit()

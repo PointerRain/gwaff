@@ -1,34 +1,38 @@
-import os
+# import os
 # import time
 
 # os.environ['TZ'] = 'Australia/Brisbane'
 # time.tzset()
 # print("[MAIN] Set the timezone")
 
-from warnings import filterwarnings
-filterwarnings("ignore", category=RuntimeWarning,
-               module="matplotlib\..*", lineno=0)
+import logging
+logging.basicConfig(level=logging.INFO,
+                    format='%(levelname)8s [%(asctime)s] %(filename)12s | %(message)s',
+                    datefmt='%H:%M:%S')
 
-print("[MAIN] Filtering warnings")
+from warnings import filterwarnings
+filterwarnings("ignore", category=RuntimeWarning, module="matplotlib\..*", lineno=0)
+# filterwarnings("ignore", category=RuntimeWarning, module="discord\..*", lineno=0)
+
+logging.info("Filtering warnings")
 
 # from database import saveToDB, loadFromDB
 
 # # DANGER ZONE
 # # for i in db.keys():
 # #     del db[i]
-# # print('[MAIN] Deleted')
+# # logging.info("Deleted")
 # # saveToDB()
-# # print("[MAIN] Saved")
+# # logging.info("Saved")
 
 # loadFromDB()
-# print("[MAIN] Loaded")
+# logging.info("Loaded")
 
 from collector import collect
 collect()
-print("[MAIN] Collecting")
 
 TOKEN = os.environ['BOT_TOKEN']
 from bot import run_the_bot
 run_the_bot(TOKEN)
 
-print("[MAIN] Fin!")
+logging.info("Fin!")
