@@ -26,13 +26,14 @@ class ManageCogs(commands.Cog):
         Note that most of these commands can make the bot load files to execute. Care should be made to ensure only entrusted users have access.
         """
         try:
-            match action:
-                case "load":
-                    await self.bot.load_extension(f"{cog}")
-                case "unload":
-                    await self.bot.unload_extension(f"{cog}")
-                case "reload":
-                    await self.bot.reload_extension(f"{cog}")
+            if action == "load":
+                await self.bot.load_extension(f"{cog}")
+            elif action == "unload":
+                await self.bot.unload_extension(f"{cog}")
+            elif action == "reload":
+                await self.bot.reload_extension(f"{cog}")
+            else:
+                raise Exception("Unknown Operation")
         except Exception as error:
             # Many errors can be caught during loading/unloading/reloading the bot, so it would be painful to separate by exception type
             await interaction.response.send_message(
