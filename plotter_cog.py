@@ -21,6 +21,11 @@ class Plotter_Cog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+        self.growth_ctxmenu = app_commands.ContextMenu(
+            name='Growth',
+            callback=self.growth_ctx
+        )
+        self.bot.tree.add_command(self.growth_ctxmenu)
 
     @app_commands.command(name="gwaff",
                           description="Plots top users growth")
@@ -84,27 +89,24 @@ class Plotter_Cog(commands.Cog):
             return
         await interaction.followup.send(file=discord.File('out.png'))
 
-
-    # @app_commands.context_menu(name='Growth')
-    # async def growth_ctx(self, interaction: discord.Interaction,
-    #                      member: discord.Member):
-    #     await interaction.response.defer(ephemeral=True)
-    #     member = resolve_member(interaction, user)
-    #     if member is False:
-    #         await interaction.followup.send(":bust_in_silhouette: "
-    #                                         "That person in not in the server "
-    #                                         "or hasn't reached level 15")
-    #         return
-    #     try:
-    #         growth(days=GRAPH_DEFAULT_DAYS, member=member, count=1,
-    #                title=f"{member.name}'s growth over the last {round(days)} days")
-    #     except IndexError:
-    #         await interaction.followup.send(":bust_in_silhouette: "
-    #                                         "That person has not been online "
-    #                                         "recently enough")
-    #         return
-    #     await interaction.followup.send(file=discord.File('out.png'))
-
+    async def growth_ctx(self, interaction: discord.Interaction,
+                         member: discord.Member):
+        await interaction.response.defer(ephemeral=True)
+        member = resolve_member(interaction, member)
+        if member is False:
+            await interaction.followup.send(":bust_in_silhouette: "
+                                            "That person in not in the server "
+                                            "or hasn't reached level 15")
+            return
+        try:
+            growth(days=GRAPH_DEFAULT_DAYS, member=member, count=1,
+                   title=f"{member.name}'s growth over the last {round(days)} days")
+        except IndexError:
+            await interaction.followup.send(":bust_in_silhouette: "
+                                            "That person has not been online "
+                                            "recently enough")
+            return
+        await interaction.followup.send(file=discord.File('out.png'))
 
 
 async def setup(bot: commands.Bot):

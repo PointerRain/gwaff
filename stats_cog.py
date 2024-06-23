@@ -25,6 +25,12 @@ ACCENT_COLOUR: str = '#ea625e'
 class Stats_Cog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        
+        self.truerank_ctxmenu = app_commands.ContextMenu(
+            name='True Rank',
+            callback=self.truerank_ctx
+        )
+        self.bot.tree.add_command(self.truerank_ctxmenu)
 
     @app_commands.command(name="predict",
                   description="Predict when you will pass a given level, "
@@ -231,43 +237,43 @@ class Stats_Cog(commands.Cog):
 
         await interaction.followup.send(embed=embed)
 
-    # @app_commands.context_menu(name='True Rank')
-    # async def truerank_ctx(self, interaction: discord.Interaction,
-    #                        member: discord.Member):
-    #     await interaction.response.defer(ephemeral=True)
+    async def truerank_ctx(self, interaction: discord.Interaction,
+                           member: discord.Member):
+        await interaction.response.defer(ephemeral=True)
 
-    #     data = pd.read_csv("gwaff.csv", index_col=0)
-    #     member = resolve_member(interaction, member)
-    #     if member is False:
-    #         await interaction.followup.send(":bust_in_silhouette: "
-    #                                         "That person in not in the server "
-    #                                         "or hasn't reached level 15")
-    #         return
-    #     try:
-    #         truerank = Truerank(data, threshold=RANK_DEFAULT_THRESHOLD)
-    #         result = truerank.find_index(member.id)
-    #     except IndexError:
-    #         await interaction.followup.send(":bust_in_silhouette: "
-    #                                         "That person has not been online "
-    #                                         "recently enough")
-    #         return
+        data = pd.read_csv("gwaff.csv", index_col=0)
+        member = resolve_member(interaction, member)
+        if member is False:
+            await interaction.followup.send(":bust_in_silhouette: "
+                                            "That person in not in the server "
+                                            "or hasn't reached level 15")
+            return
+        try:
+            truerank = Truerank(data, threshold=RANK_DEFAULT_THRESHOLD)
+            result = truerank.find_index(member.id)
+        except IndexError:
+            await interaction.followup.send(":bust_in_silhouette: "
+                                            "That person has not been online "
+                                            "recently enough")
+            return
 
-    #     member_name = "You are" if member == interaction.user \
-    #                   else f"<@{member.id}> is"
+        member_name = "You are" if member == interaction.user \
+                      else f"<@{member.id}> is"
 
-    #     rank = result.get('rank', 0)
-    #     if rank <= 0:
-    #         await interaction.followup.send(f"{member_name} ranked "
-    #                                         f"{ordinal(result['rank']+1)} in the server")
-    #     else:
-    #         xp = result['xp']
-    #         other_id = result['other_ID']
-    #         other_xp = result['other_xp']
-    #         other_name = result['other_name']
-    #         await interaction.followup.send(f"{member_name} ranked "
-    #                                         f"{ordinal(rank+1)} in the server, "
-    #                                         f"{round(other_xp - xp)} behind "
-    #                                         f"<@{str(other_id)}> ({other_name})")
+        rank = result.get('rank', 0)
+        if rank <= 0:
+            await interaction.followup.send(f"{member_name} ranked "
+                                            f"{ordinal(result['rank']+1)} in the server")
+        else:
+            xp = result['xp']
+            other_id = result['other_ID']
+            other_xp = result['other_xp']
+            other_name = result['other_name']
+            await interaction.followup.send(f"{member_name} ranked "
+                                            f"{ordinal(rank+1)} in the server, "
+                                            f"{round(other_xp - xp)} behind "
+                                            f"<@{str(other_id)}> ({other_name})")
+
 
 async def setup(bot: commands.Bot):
     cog = Stats_Cog(bot)
