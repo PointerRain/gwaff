@@ -153,7 +153,7 @@ def record_data(pages: list = range(1, COLLECTION_LARGE),
                     logging.error("Skipping")
                     return False
             else:
-                logging.info("[COLLECT] Saved")
+                logging.info("Saved latest data!")
                 break
 
         return True
