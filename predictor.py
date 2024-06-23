@@ -4,9 +4,9 @@ import discord
 from math import floor, ceil
 
 PREDICTION_DEFAULT_DAYS: int = 30       # The default number of days to be used
-#  in a prediction
+                                        #  in a prediction.
 MAX_TARGET_DISTANCE: int = 100 * 365    # The number of days before a target is
-#  too far away
+                                        #  too far away.
 
 
 class NoDataError(Exception):

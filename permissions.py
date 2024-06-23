@@ -15,7 +15,6 @@ def require_admin(func: Callable):
         **kwargs
     ):
         if int(interaction.user.id) in ADMIN_LIST:
-            await interaction.response.defer(ephemeral=hidden)
             await func(interaction, *args, **kwargs)
             return
         await interaction.response.send_message(":no_entry: You can't use this command", ephemeral=True)

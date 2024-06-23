@@ -1,6 +1,7 @@
 from __future__ import annotations
 import pandas as pd
 from datetime import datetime, timedelta
+import logging
 
 import matplotlib.pyplot as plt
 
@@ -30,10 +31,8 @@ def getimg(url: str):
         try:
             request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
             return urlopen(request)
-        except HTTPError as e:
-            print("[WARN][PLOTTER] Could not retrieve", str(count))
-            print(url)
-            print(e)
+        except Exception as e:
+            logging.warning(f"Could not retrieve {url} {str(count)}\n {e.message}")
             if count < MAX_RETRIES:
                 count += 1
             else:
@@ -161,7 +160,7 @@ class Plotter:
             if count >= max_count:
                 break
         if count < max_count:
-            print("[PLOTTER] " + str(count) + " shown")
+            logging.info(f"{count} shown")
 
     def annotate(self) -> None:
         '''
