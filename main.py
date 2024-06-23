@@ -1,5 +1,6 @@
 # import os
 # import time
+import asyncio
 
 # os.environ['TZ'] = 'Australia/Brisbane'
 # time.tzset()
@@ -7,12 +8,12 @@
 
 import logging
 logging.basicConfig(level=logging.INFO,
-                    format='%(levelname)8s [%(asctime)s] %(filename)12s | %(message)s',
+                    format='%(levelname)8s [%(asctime)s] %(filename)13s | %(message)s',
                     datefmt='%H:%M:%S')
 
 from warnings import filterwarnings
 filterwarnings("ignore", category=RuntimeWarning, module="matplotlib\..*", lineno=0)
-# filterwarnings("ignore", category=RuntimeWarning, module="discord\..*", lineno=0)
+filterwarnings("ignore", category=UserWarning, module="matplotlib\..*", lineno=0)
 
 logging.info("Filtering warnings")
 
@@ -33,6 +34,6 @@ collect()
 
 TOKEN = os.environ['BOT_TOKEN']
 from bot import run_the_bot
-run_the_bot(TOKEN)
+asyncio.run(run_the_bot(TOKEN))
 
 logging.info("Fin!")
