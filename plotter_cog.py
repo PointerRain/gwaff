@@ -3,7 +3,8 @@ from discord import app_commands, utils
 from discord.ext import commands
 
 import pandas as pd
-import logging
+from custom_logger import Logger
+logger = Logger('gwaff.bot.plot')
 
 from growth import Growth
 from utils import growth, resolve_member

@@ -7,7 +7,8 @@ from discord.ext import commands
 from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import asyncio
-import logging
+from custom_logger import Logger
+logger = Logger('gwaff.bot')
 
 
 class GwaffBot(commands.Bot):
@@ -44,9 +45,9 @@ class GwaffBot(commands.Bot):
             await self.tree.sync()
             for server in self.guilds:
                 await self.tree.sync(guild=discord.Object(id=server.id))
-                logging.info("- " + server.name)
+                logger.info("- " + server.name)
             self.synced = True
-        logging.info("Ready!")
+        logger.info("Ready!")
 
     def schedule_task(self, func: Callable, *args: Any, **kwargs: Any):
         """Schedule a function to be run at a later time. A wrapper for apscheduler add_job."""
@@ -69,11 +70,11 @@ async def run_the_bot(token) -> None:
 
     bot = GwaffBot()
 
-    logging.info("Loading cogs")
+    logger.info("Loading cogs")
     for cog in cogs:
         await bot.load_extension(cog)
-        logging.info(f"- {cog}")
-    logging.info("Loaded all cogs!")
+        logger.info(f"- {cog}")
+    logger.info("Loaded all cogs!")
 
     await bot.start(token)
 

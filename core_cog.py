@@ -4,7 +4,8 @@ from discord.ext import commands
 
 from datetime import datetime, timedelta, timezone
 import pandas as pd
-import logging
+from custom_logger import Logger
+logger = Logger('gwaff.bot.core')
 
 from permissions import require_admin
 from plotter import Plotter
@@ -88,7 +89,7 @@ class Core_Cog(commands.Cog):
         now = datetime.now(timezone.utc)
         msgtime = interaction.created_at
         ping = (now - msgtime).total_seconds() * 2000.0
-        logging.info(f"Ping: {ping}")
+        logger.info(f"Ping: {ping}")
         await interaction.response.send_message(f"Pong!\n{round(ping)} ms",
                                                 ephemeral=True)
 

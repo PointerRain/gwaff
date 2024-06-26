@@ -1,34 +1,32 @@
 import os
 import asyncio
-import logging
+from custom_logger import Logger
+logger = Logger('gwaff.main')
+
 from warnings import filterwarnings
-
-logging.basicConfig(level=logging.INFO,
-                    format='%(levelname)8s [%(asctime)s] %(filename)13s | %(message)s',
-                    datefmt='%H:%M:%S')
-
 filterwarnings("ignore", category=RuntimeWarning, module="matplotlib\..*", lineno=0)
 filterwarnings("ignore", category=UserWarning, module="matplotlib\..*", lineno=0)
 
-logging.info("Filtering warnings")
+logger.info("Filtering warnings")
 
 # from database import saveToDB, loadFromDB
 
 # # DANGER ZONE
 # # for i in db.keys():
 # #     del db[i]
-# # logging.info("Deleted")
+# # logger.info("Deleted")
 # # saveToDB()
-# # logging.info("Saved")
+# # logger.info("Saved")
 
 # loadFromDB()
-# logging.info("Loaded")
+# logger.info("Loaded")
 
 from collector import collect
 collect()
+logger.info("Collecting")
 
 TOKEN = os.environ['BOT_TOKEN']
 from bot import run_the_bot
 asyncio.run(run_the_bot(TOKEN))
 
-logging.info("Fin!")
+logger.info("Fin!")

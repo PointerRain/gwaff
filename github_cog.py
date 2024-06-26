@@ -2,7 +2,8 @@ import discord
 from discord import app_commands, utils
 from discord.ext import commands
 
-import logging
+from custom_logger import Logger
+logger = Logger('gwaff.bot.github')
 
 from permissions import require_admin
 
@@ -17,10 +18,12 @@ class Github_Cog(commands.Cog):
         self.channel = None
 
     async def upload(self):
-        if isinstance(self.channel, discord.TextChannel):
-            await self.channel.send("Hello!")
+        logger.info("Starting upload")
+        if self.bot.logging_channel:
+            await self.bot.logging_channel.send("Hello!")
         else:
-            logging.warning(f"Could not find required channel #{self.bot.CHANNEL_NAME}")
+            logger.warning(f"Could not find required channel")
+        logger.info("Upload was not completed successfully")
 
     @app_commands.command(name="upload",
                           description="(Admin only) Upload the data to github")
@@ -33,7 +36,9 @@ class Github_Cog(commands.Cog):
                           description="(Admin only) Update the bot from github")
     async def update(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
+        # logger.info("Starting update")
         await interaction.followup.send("No such luck")
+        logger.warning("Update was not completed successfully")
 
     async def scheduled_upload(self):
         await self.upload()

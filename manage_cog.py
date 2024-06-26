@@ -4,7 +4,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-import logging
+from custom_logger import Logger
+logger = Logger('gwaff.bot.cogs')
 
 class ManageCogs(commands.Cog):
     """
@@ -39,10 +40,10 @@ class ManageCogs(commands.Cog):
             await interaction.response.send_message(
                 f"Error occured {action}ing {cog}: {error}"
             )
-            logging.error(f"Error occured {action}ing {cog}: {error}")
+            logger.error(f"Error occured {action}ing {cog}: {error}")
             return
         await interaction.response.send_message(f"Successfully {action}ed {cog}")
-        logging.info(f"Successfully {action}ed {cog}")
+        logger.info(f"Successfully {action}ed {cog}")
         await self.bot.tree.sync()
 
 

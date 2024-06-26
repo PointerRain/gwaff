@@ -5,7 +5,8 @@ import time
 import pandas as pd
 from datetime import datetime
 from threading import Thread
-import logging
+from custom_logger import Logger
+logger = Logger('gwaff.collect')
 
 from database import saveToDB
 

@@ -1,7 +1,8 @@
 from __future__ import annotations
 import pandas as pd
 from datetime import datetime, timedelta
-import logging
+from custom_logger import Logger
+logger = Logger('gwaff.plotter')
 
 import matplotlib.pyplot as plt
 
@@ -32,7 +33,7 @@ def getimg(url: str):
             request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
             return urlopen(request)
         except Exception as e:
-            logging.warning(f"Could not retrieve {url} {str(count)}\n {e.message}")
+            logger.warning(f"Could not retrieve image {url} {str(count)} {e.message}")
             if count < MAX_RETRIES:
                 count += 1
             else:
@@ -160,7 +161,7 @@ class Plotter:
             if count >= max_count:
                 break
         if count < max_count:
-            logging.info(f"{count} shown")
+            logger.info(f"{count} shown")
 
     def annotate(self) -> None:
         '''

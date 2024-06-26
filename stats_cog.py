@@ -6,7 +6,8 @@ from time import mktime
 from datetime import datetime, timedelta
 import pandas as pd
 from math import ceil
-import logging
+from custom_logger import Logger
+logger = Logger('gwaff.bot.stats')
 
 from predictor import Prediction, xp_to_lvl, lvl_to_xp
 from predictor import (NoDataError, ZeroGrowthError,
