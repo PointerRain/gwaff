@@ -25,23 +25,64 @@ class GwaffBot(commands.Bot):
         self.scheduler = AsyncIOScheduler()
         self.start_time = datetime.now()
 
-        self.LOGGING_SERVER = 1118158249254985771
-        self.CHANNEL_NAME = "gwaff"
+        self.SERVER = 1118158249254985771
+        self.CHANNEL = "gwaff"
+        self.LOGGING_SERVER = 1077927097739247727
+        self.LOGGING_CHANNEL = "testing"
 
+        self.logging_server: discord.Guild
+        self.logging_channel: discord.TextChannel
         self.server: discord.Guild
+        self.channel: discord.TextChannel
 
         self.synced = False
-        self.servers = []
 
     async def on_ready(self) -> None:
-        self.scheduler.start()
-
-        if (server := self.get_guild(self.LOGGING_SERVER)) is None:
-            raise RuntimeError(f"[BOT] Unable to find server with id {str(self.LOGGING_SERVER)}")
-        self.server = server
-        logging.info("Got server!")
-
         if not self.synced:
+            self.scheduler.start()
+
+            if (server := self.get_guild(self.SERVER)) is not None:
+                self.server = server
+                logger.info(f"Found server")
+                self.channel = discord.utils.get(
+                    self.server.channels,
+                    name=self.CHANNEL
+                )
+                if isinstance(self.channel, discord.TextChannel):
+                    logger.info(f"Found logging channel")
+                else:
+                    logger.warning(f"Could not find logging channel #{self.bot.CHANNEL}")
+                    self.channel = None
+            else:
+                logger.error(f"Unable to find server with id {str(self.SERVER)}")
+                self.server = None
+                self.channel = None
+
+            if (server := self.get_guild(self.LOGGING_SERVER)) is not None:
+                self.logging_server = server
+                logger.info(f"Found logging server")
+                self.logging_channel = discord.utils.get(
+                    self.logging_server.channels,
+                    name=self.LOGGING_CHANNEL
+                )
+                if isinstance(self.logging_channel, discord.TextChannel):
+                    logger.info(f"Found logging channel")
+                else:
+                    logger.warning(f"Could not find logging channel #{self.bot.LOGGING_CHANNEL}")
+                    self.logging_channel = None
+            else:
+                logger.error(f"Unable to find logging server with id {str(self.LOGGING_SERVER)}")
+                self.logging_server = None
+                self.logging_channel = None
+
+            server_finds = sum(bool(s) for s in [self.server, self.logging_server])
+            if server_finds == 0:
+                logger.error(f"Found {server_finds} of 2 servers")
+            elif server_finds == 1:
+                logger.warning(f"Found {server_finds} of 2 servers")
+            else:
+                logger.info(f"Found {server_finds} of 2 servers")
+
             await self.tree.sync()
             for server in self.guilds:
                 await self.tree.sync(guild=discord.Object(id=server.id))

@@ -95,14 +95,10 @@ class Core_Cog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.channel = discord.utils.get(
-            self.bot.server.channels, name=self.bot.CHANNEL_NAME
-        )
-
-        if isinstance(self.channel, discord.TextChannel):
-            await self.channel.send("I have rebooted!")
+        if self.bot.logging_channel:
+            await self.bot.logging_channel.send("I have rebooted!")
         else:
-            logging.warning("Could not find required channel #{self.bot.CHANNEL_NAME}")
+            logger.warning(f"Could not find required channel")
 
 async def setup(bot: commands.Bot):
     cog = Core_Cog(bot)

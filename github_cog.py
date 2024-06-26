@@ -43,11 +43,6 @@ class Github_Cog(commands.Cog):
     async def scheduled_upload(self):
         await self.upload()
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.channel = discord.utils.get(
-            self.bot.server.channels, name=self.bot.CHANNEL_NAME
-        )
 
 async def setup(bot: commands.Bot):
     cog = Github_Cog(bot)
