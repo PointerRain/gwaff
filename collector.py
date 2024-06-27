@@ -37,13 +37,13 @@ def request_api(url: str) -> dict:
             data = urlopen(request).read()
             return json.loads(data)
         except Exception as e:
-            logging.warning(f"Could not retrieve {str(count)}")
+            logger.warning(f"Could not retrieve {str(count)}")
             print(e)
             if count < MAX_RETRIES:
                 count += 1
                 time.sleep(1)
             else:
-                logging.error("Skipping")
+                logger.error("Skipping")
                 return None
 
 
@@ -61,8 +61,6 @@ def url_constructor(base: str, **kwargs: dict) -> str:
     return url
 
 
-
-
 def record_data(pages: list = range(1, COLLECTION_LARGE),
                 min_time: int = WAIT_FAIL) -> bool:
     '''
@@ -72,7 +70,7 @@ def record_data(pages: list = range(1, COLLECTION_LARGE),
     Returns: bool representing if data was successfully gathered.
     '''
 
-    logging.info("Collecting!")
+    logger.info("Collecting!")
 
     ids = []
     names = []
@@ -113,18 +111,18 @@ def record_data(pages: list = range(1, COLLECTION_LARGE),
                 colours.append(colour)
                 avatars.append(avatar)
 
-        logging.info(f"- Page {page} collected")
+        logger.debug(f"- Page {page} collected")
 
     # Below saves the data
     struct = {'ID': ids, 'Name': names, 'Colour': colours, 'Avatar': avatars}
 
     lasttime = last.columns[-1]
     lasttime = datetime.fromisoformat(lasttime)
-    logging.info(f"Last: {str(lasttime)}")
+    logger.info(f"Last: {str(lasttime)}")
     now = datetime.now()
-    logging.info(f" Now: {str(now)}")
+    logger.info(f" Now: {str(now)}")
     difference = now - lasttime
-    logging.info(f"Diff: {str(difference)}")
+    logger.info(f"Diff: {str(difference)}")
 
     # Checks before saving. Could be improved
     if difference.total_seconds() > min_time * 60 * 60:
@@ -146,21 +144,21 @@ def record_data(pages: list = range(1, COLLECTION_LARGE),
                 df.to_csv('gwaff.csv', encoding='utf-8')
                 saveToDB()
             except Exception as e:
-                logging.warning(f"Could not save {str(count)}")
+                logger.warning(f"Could not save {str(count)}")
                 print(e)
                 if count < MAX_RETRIES:
                     count += 1
                 else:
-                    logging.error("Skipping")
+                    logger.error("Skipping")
                     return False
             else:
-                logging.info("Saved latest data!")
+                logger.info("Saved latest data!")
                 break
 
         return True
 
     else:
-        logging.info(f"Too soon - {int(difference.total_seconds() / 60)}/{min_time * 60}")
+        logger.info(f"Too soon - {int(difference.total_seconds() / 60)}/{min_time * 60}")
         return False
 
 
@@ -173,14 +171,14 @@ def run() -> None:
         wait = WAIT_SUCCESS if success else WAIT_FAIL
 
         for i in range(wait//10):
-            logging.info(f"Slept {i * 10}/{wait}")
+            logger.debug(f"Slept {i * 10}/{wait}")
             time.sleep(10 * 60)
 
         success = record_data(min_time=1, pages=range(1, COLLECTION_SMALL))
         wait = WAIT_SUCCESS if success else WAIT_FAIL
 
         for i in range(wait//10):
-            logging.info(f"Slept {i * 10}/{wait}")
+            logger.debug(f"Slept {i * 10}/{wait}")
             time.sleep(10 * 60)
 
 
@@ -195,4 +193,4 @@ def collect() -> None:
 if __name__ == '__main__':
     collect()
 
-    logging.info("Collection Started")
+    logger.info("Collection Started")
