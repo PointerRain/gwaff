@@ -33,7 +33,7 @@ class Core_Cog(commands.Cog):
                   description="(Admin only) Sends the last plot")
     @app_commands.describe(hidden='Hide from others in this server (default False)')
     @require_admin
-    async def send_data(self, interaction: discord.Interaction,
+    async def last_plot(self, interaction: discord.Interaction,
                         hidden: bool = False):
         await interaction.response.defer(ephemeral=hidden)
         await interaction.followup.send(file=discord.File('out.png'), ephemeral=hidden)
