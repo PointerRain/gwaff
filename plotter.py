@@ -1,14 +1,14 @@
 from __future__ import annotations
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
+from matplotlib.dates import DateFormatter
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime, timedelta
 from custom_logger import Logger
 logger = Logger('gwaff.plotter')
 
-import matplotlib.pyplot as plt
-
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from urllib.request import Request, urlopen
-from urllib.error import HTTPError
 
 MAX_RETRIES = 5
 WINDOW_SIZE = (15, 7)
@@ -26,6 +26,34 @@ class Colours:
     inside = '#313338'
 
 
+class ResponsiveDateFormat:
+    def __init__(self, start_date, end_date):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.difference = abs((end_date-start_date).days)
+        print(self.difference)
+        if self.difference <= 3:
+            self.formatter = DateFormatter('%d %H')
+        elif self.difference <= 180:
+            self.formatter = DateFormatter('%y-%m-%d')
+        elif self.difference <= 365:
+            self.formatter = DateFormatter('%Y-%m')
+        else:
+            self.formatter = DateFormatter('%Y-%m')
+
+    def __str__(self):
+        if self.difference <= 3:
+            return 'DD HH AEST'
+        elif self.difference <= 7:
+            return 'YY-MM-DD AEST'
+        elif self.difference <= 180:
+            return 'YY-MM-DD'
+        elif self.difference <= 365:
+            return 'YYYY-MM'
+        else:
+            return 'YYYY-MM'
+
+
 def getimg(url: str):
     count = 0
     while True:
@@ -33,7 +61,7 @@ def getimg(url: str):
             request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
             return urlopen(request)
         except Exception as e:
-            logger.warning(f"Could not retrieve image {url} {str(count)} {e.message}")
+            logger.warning(f"Could not retrieve image {url} {str(count)} {e}")
             if count < MAX_RETRIES:
                 count += 1
             else:
@@ -79,7 +107,7 @@ class Plotter:
         Read dates and values that have xp data.
 
         Returns:
-        Array of all values regardless of 
+        Array of all values regardless of continuity
         Array of all (roughly) continuous lines
         '''
         xs = []
@@ -222,11 +250,15 @@ class Plotter:
         return True
 
     def configure(self) -> None:
-        self.ax.set_xlabel("Date (YYYY-MM)", color=Colours.text)
-        self.ax.set_ylabel("Total XP", color=Colours.text)
 
         end = self.end_date or datetime.now()
         self.ax.set_xlim([self.start_date, end])
+
+        dateformat = ResponsiveDateFormat(self.start_date, end)
+        self.ax.xaxis.set_major_formatter(dateformat.formatter)
+
+        self.ax.set_xlabel(f"Date ({str(dateformat)})", color=Colours.text)
+        self.ax.set_ylabel("Total XP", color=Colours.text)
 
         # self.fig.figure(facecolor='')
         self.fig.patch.set_facecolor(Colours.outside)
