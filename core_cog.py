@@ -1,36 +1,118 @@
+from plotter import Plotter
+from permissions import require_admin
 import discord
-from discord import app_commands, utils
+from discord import app_commands, utils, ui
 from discord.ext import commands
 
 from datetime import datetime, timedelta, timezone
 import pandas as pd
+
 from custom_logger import Logger
 logger = Logger('gwaff.bot.core')
 
-from permissions import require_admin
-from plotter import Plotter
+from reducer import Reducer
+
+COLLECTION_MAX_TIME: int = 120      # The time in minutes that must go by
+# before collection is said to be stopped.
+REDUCER_TIMEOUT: int = 30           # Time in seconds before a reducer process
+# times out and is halted.
 
 
-COLLECTION_MAX_TIME: int = 120      # The maximum length of time that must go by
-                                    # before collection is said to be stopped.
+class ReducerView(discord.ui.View):
+    def __init__(self, interaction: discord.Interaction):
+        super().__init__(timeout=REDUCER_TIMEOUT)
+        df = pd.read_csv("gwaff.csv", index_col=0)
+        self.reducer = Reducer(df)
+        self.started = False
+        self.interaction = interaction
+
+    async def on_timeout(self):
+        """
+        Called when the view times out. This will deactivate the buttons.
+        """
+        await self.interaction.edit_original_response(
+            content="Timed out"
+        )
+        await self.remove_ui()
+        return
+
+    async def remove_ui(self):
+        for child in self.children:
+            child.disabled = True
+        await self.interaction.edit_original_response(view=self)
+        self.stop()
+
+    @ui.button(label="Proceed", style=discord.ButtonStyle.danger)
+    async def button_one_callback(
+        self, interaction: discord.Interaction, button: ui.Button
+    ):
+        await interaction.response.defer()
+
+        if not self.started:
+            await self.interaction.edit_original_response(
+                content=f"Processing..."
+            )
+
+            msg = self.reducer.reduce_cols()
+            if not msg:
+                await self.interaction.edit_original_response(
+                    content=f"Something went wrong."
+                )
+                await self.remove_ui()
+                return
+            elif int(msg.split()[1]) <= 1:
+                await self.interaction.edit_original_response(
+                    content=f"There are no columns to remove."
+                )
+                await self.remove_ui()
+                return
+
+            await self.interaction.edit_original_response(
+                content=f"{msg}\nAre you really sure?"
+            )
+            self.started = True
+            return
+
+        else:
+            result = self.reducer.save()
+            if result:
+                await self.interaction.edit_original_response(
+                    content=f"Saved the changes!"
+                )
+            else:
+                await self.interaction.edit_original_response(
+                    content=f"Something went wrong."
+                )
+            await self.remove_ui()
+            return
+
+    @ui.button(label="Cancel", style=discord.ButtonStyle.primary)
+    async def button_two_callback(
+        self, interaction: discord.Interaction, button: ui.Button
+    ):
+        await interaction.response.defer()
+        await self.interaction.edit_original_response(
+            content=f"Aborted!"
+        )
+        await self.remove_ui()
+        return
+
 
 class Core_Cog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-
     @app_commands.command(name="data",
-                  description="(Admin only) Gets the entire gwaff data as a csv")
+                          description="(Admin only) Gets the entire gwaff data as a csv")
     @app_commands.describe(hidden='Hide from others in this server (default True)')
     @require_admin
     async def send_data(self, interaction: discord.Interaction,
                         hidden: bool = True):
         await interaction.response.defer(ephemeral=hidden)
-        await interaction.followup.send(file=discord.File('gwaff.csv'), ephemeral=hidden)
-
+        await interaction.followup.send(file=discord.File('gwaff.csv'))
 
     @app_commands.command(name="last",
-                  description="(Admin only) Sends the last plot")
+                          description="(Admin only) Sends the last plot")
     @app_commands.describe(hidden='Hide from others in this server (default False)')
     @require_admin
     async def last_plot(self, interaction: discord.Interaction,
@@ -38,9 +120,8 @@ class Core_Cog(commands.Cog):
         await interaction.response.defer(ephemeral=hidden)
         await interaction.followup.send(file=discord.File('out.png'), ephemeral=hidden)
 
-
     @app_commands.command(name="isalive",
-                  description="When did I last collect data")
+                          description="When did I last collect data")
     @app_commands.describe(hidden='Hide from others in this server (default True)')
     async def is_alive(self, interaction: discord.Interaction,
                        hidden: bool = True):
@@ -59,7 +140,7 @@ class Core_Cog(commands.Cog):
         prevlast = datetime.fromisoformat(prevlast)
         prevlaststr = utils.format_dt(prevlast, 'R')
 
-        alive: str;
+        alive: str
         if (now - last).total_seconds() < 1.1 * COLLECTION_MAX_TIME*60:
             alive = ""
         else:
@@ -67,22 +148,13 @@ class Core_Cog(commands.Cog):
         await interaction.followup.send(f"Data was last collected {laststr}\n"
                                         f"(Before that {prevlaststr})\n{alive}")
 
-
-    '''
-    # @app_commands.command(name="reduce")
-    # async def reduce(interaction: discord.Interaction):
-    #     if interaction.user.id in [344731282095472641]:
-    #         await interaction.response.defer(ephemeral=True)
-    #         start_size = 0
-    #         reduce()
-    #         end_size = 0
-    #         await interaction.followup.send(f"Reduced filesize by "
-    #                                         f"{end_size-start_size}!")
-    #     else:
-    #         await interaction.followup.send(":no_entry: You can't use this command",
-    #                                         ephemeral=True)
-    '''
-
+    @app_commands.command(name="reduce", description="(Admin only) Clean up old datapoints")
+    @require_admin
+    async def reduce(self, interaction: discord.Interaction):
+        await interaction.response.send_message(
+            "Do you want to run the reducer?", view=ReducerView(interaction),
+            ephemeral=True
+        )
 
     @app_commands.command(name="ping", description="Pong!")
     async def ping(self, interaction: discord.Interaction):
@@ -99,6 +171,7 @@ class Core_Cog(commands.Cog):
             await self.bot.logging_channel.send("I have rebooted!")
         else:
             logger.warning(f"Could not find required channel")
+
 
 async def setup(bot: commands.Bot):
     cog = Core_Cog(bot)
