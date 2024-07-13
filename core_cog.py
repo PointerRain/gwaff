@@ -1,3 +1,4 @@
+from reducer import Reducer
 from plotter import Plotter
 from permissions import require_admin
 import discord
@@ -10,12 +11,11 @@ import pandas as pd
 from custom_logger import Logger
 logger = Logger('gwaff.bot.core')
 
-from reducer import Reducer
 
-COLLECTION_MAX_TIME: int = 120      # The time in minutes that must go by
-# before collection is said to be stopped.
-REDUCER_TIMEOUT: int = 30           # Time in seconds before a reducer process
-# times out and is halted.
+COLLECTION_MAX_TIME: int = 120  # The time in minutes that must go by
+                                # before collection is said to be stopped.
+REDUCER_TIMEOUT: int = 60       # Time in seconds before the reducer process
+                                # times out and is halted.
 
 
 class ReducerView(discord.ui.View):
@@ -27,16 +27,19 @@ class ReducerView(discord.ui.View):
         self.interaction = interaction
 
     async def on_timeout(self):
-        """
+        '''
         Called when the view times out. This will deactivate the buttons.
-        """
+        '''
         await self.interaction.edit_original_response(
             content="Timed out"
         )
-        await self.remove_ui()
+        await self.remove_view()
         return
 
-    async def remove_ui(self):
+    async def remove_view(self):
+        '''
+        Removes and deactivates the view.
+        '''
         for child in self.children:
             child.disabled = True
         await self.interaction.edit_original_response(view=self)
@@ -58,13 +61,13 @@ class ReducerView(discord.ui.View):
                 await self.interaction.edit_original_response(
                     content=f"Something went wrong."
                 )
-                await self.remove_ui()
+                await self.remove_view()
                 return
             elif int(msg.split()[1]) <= 1:
                 await self.interaction.edit_original_response(
                     content=f"There are no columns to remove."
                 )
-                await self.remove_ui()
+                await self.remove_view()
                 return
 
             await self.interaction.edit_original_response(
@@ -83,7 +86,7 @@ class ReducerView(discord.ui.View):
                 await self.interaction.edit_original_response(
                     content=f"Something went wrong."
                 )
-            await self.remove_ui()
+            await self.remove_view()
             return
 
     @ui.button(label="Cancel", style=discord.ButtonStyle.primary)
@@ -94,7 +97,7 @@ class ReducerView(discord.ui.View):
         await self.interaction.edit_original_response(
             content=f"Aborted!"
         )
-        await self.remove_ui()
+        await self.remove_view()
         return
 
 
