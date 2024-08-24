@@ -32,8 +32,8 @@ class GwaffBot(commands.Bot):
 
         self.logging_server: discord.Guild
         self.logging_channel: discord.TextChannel
-        self.server: discord.Guild
-        self.channel: discord.TextChannel
+        self.server: discord.Guild = None
+        self.channel: discord.TextChannel = None
 
         self.synced = False
 
@@ -48,7 +48,7 @@ class GwaffBot(commands.Bot):
                     self.server.channels,
                     name=self.CHANNEL
                 )
-                if isinstance(self.channel, discord.TextChannel):
+                if self.channel is not None and isinstance(self.channel, discord.TextChannel):
                     logger.info(f"Found logging channel")
                 else:
                     logger.warning(f"Could not find logging channel #{self.bot.CHANNEL}")
@@ -65,7 +65,7 @@ class GwaffBot(commands.Bot):
                     self.logging_server.channels,
                     name=self.LOGGING_CHANNEL
                 )
-                if isinstance(self.logging_channel, discord.TextChannel):
+                if self.logging_channel is not None and isinstance(self.logging_channel, discord.TextChannel):
                     logger.info(f"Found logging channel")
                 else:
                     logger.warning(f"Could not find logging channel #{self.bot.LOGGING_CHANNEL}")
@@ -75,7 +75,8 @@ class GwaffBot(commands.Bot):
                 self.logging_server = None
                 self.logging_channel = None
 
-            server_finds = sum(bool(s) for s in [self.server, self.logging_server])
+            server_finds = sum(bool(s)
+                               for s in [self.server, self.logging_server])
             if server_finds == 0:
                 logger.error(f"Found {server_finds} of 2 servers")
             elif server_finds == 1:
@@ -90,6 +91,11 @@ class GwaffBot(commands.Bot):
             self.synced = True
         logger.info("Ready!")
 
+    async def on_app_command_completion(self, interaction, command):
+        logger.info(f"User '{interaction.user.name}' "
+                    f"used command '{command.name}' "
+                    f"in guild '{interaction.guild.name}'")
+
     def schedule_task(self, func: Callable, *args: Any, **kwargs: Any):
         """Schedule a function to be run at a later time. A wrapper for apscheduler add_job."""
         self.scheduler.add_job(func, *args, **kwargs)
@@ -103,6 +109,7 @@ cogs = [
     "github_cog",
     "manage_cog"
 ]
+
 
 async def run_the_bot(token) -> None:
     '''
