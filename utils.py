@@ -1,10 +1,7 @@
 import discord
-from discord import app_commands, utils
-from discord.ext import commands
 
 from datetime import datetime, timedelta
 import pandas as pd
-import logging
 
 from growth import Growth
 

@@ -1,11 +1,12 @@
 import discord
-from discord import app_commands, utils
+from discord import app_commands
 from discord.ext import commands
 
 from time import mktime
 from datetime import datetime, timedelta
 import pandas as pd
 from math import ceil
+
 from custom_logger import Logger
 logger = Logger('gwaff.bot.stats')
 

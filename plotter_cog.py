@@ -3,20 +3,22 @@ from discord import app_commands, utils
 from discord.ext import commands
 
 import pandas as pd
+
 from custom_logger import Logger
 logger = Logger('gwaff.bot.plot')
 
 from growth import Growth
-from utils import growth, resolve_member
+from bot.utils import growth, resolve_member
 
 GRAPH_MAX_DAYS: int = 365           # The maximum days that can be plotted on
-                                    #  the gwaff/growth
+                                    # the gwaff/growth
 GRAPH_DEFAULT_DAYS: int = 7         # The default days to be plotted on
-                                    #  the gwaff/growth
+                                    # the gwaff/growth
 GRAPH_MAX_USERS: int = 30           # The maximum number of users data to be
-                                    #  plotted on the gwaff
+                                    # plotted on the gwaff
 GRAPH_DEFAULT_USERS: int = 15       # The default number of users to be
-                                    #  plotted on the gwaff
+                                    # plotted on the gwaff
+
 
 class Plotter_Cog(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -35,9 +37,9 @@ class Plotter_Cog(commands.Cog):
         count=f'How many users to plot (default {GRAPH_DEFAULT_USERS})',
         hidden='Hide from others in this server (default False)')
     async def plot_gwaff(self, interaction: discord.Interaction,
-            days: app_commands.Range[float, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
-            count: app_commands.Range[int, 1, GRAPH_MAX_USERS] = GRAPH_DEFAULT_USERS,
-            hidden: bool = False):
+                         days: app_commands.Range[float, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
+                         count: app_commands.Range[int, 1, GRAPH_MAX_USERS] = GRAPH_DEFAULT_USERS,
+                         hidden: bool = False):
         await interaction.response.defer(ephemeral=hidden)
 
         title: str;
@@ -48,9 +50,8 @@ class Plotter_Cog(commands.Cog):
         growth(days=days, count=count, title=title, special=True)
         await interaction.followup.send(file=discord.File('out.png'))
 
-
     @app_commands.command(name="growth",
-                  description="Plots a specific member's growth")
+                          description="Plots a specific member's growth")
     @app_commands.describe(member="The member plot (default you)",
                            days="How many days to plot (default 7)",
                            compare="A second user to show",

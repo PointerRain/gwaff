@@ -1,6 +1,3 @@
-from reducer import Reducer
-from plotter import Plotter
-from permissions import require_admin
 import discord
 from discord import app_commands, utils, ui
 from discord.ext import commands
@@ -10,6 +7,11 @@ import pandas as pd
 
 from custom_logger import Logger
 logger = Logger('gwaff.bot.core')
+
+from reducer import Reducer
+from plotter import Plotter
+from permissions import require_admin
+
 
 
 COLLECTION_MAX_TIME: int = 120  # The time in minutes that must go by

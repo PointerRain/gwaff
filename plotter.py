@@ -1,4 +1,3 @@
-from __future__ import annotations
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from matplotlib.dates import DateFormatter
@@ -6,6 +5,7 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime, timedelta
+
 from custom_logger import Logger
 logger = Logger('gwaff.plotter')
 

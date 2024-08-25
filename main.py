@@ -1,7 +1,10 @@
 import os
 import asyncio
+
 from custom_logger import Logger
 logger = Logger('gwaff.main')
+
+logger.info("Starting")
 
 from warnings import filterwarnings
 filterwarnings("ignore", category=RuntimeWarning, module="matplotlib\..*", lineno=0)
@@ -9,17 +12,6 @@ filterwarnings("ignore", category=UserWarning, module="matplotlib\..*", lineno=0
 
 logger.info("Filtering warnings")
 
-# from database import saveToDB, loadFromDB
-
-# # DANGER ZONE
-# # for i in db.keys():
-# #     del db[i]
-# # logger.info("Deleted")
-# # saveToDB()
-# # logger.info("Saved")
-
-# loadFromDB()
-# logger.info("Loaded")
 
 from collector import collect
 collect()

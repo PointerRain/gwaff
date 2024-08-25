@@ -1,4 +1,3 @@
-from typing import Optional, Any, Callable
 from functools import wraps
 
 import discord

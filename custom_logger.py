@@ -55,7 +55,7 @@ class CustomLogger(logging.Logger):
         file_handler = handlers.TimedRotatingFileHandler(f'gwaff.log',
                                                    when='midnight',
                                                    backupCount=3)
-        file_handler.setFormatter(BasicFormatter(datefmt='%m-%d %H:%M'))
+        file_handler.setFormatter(BasicFormatter(datefmt='%H:%M:%S'))
 
         self.addHandler(console_handler)
         self.addHandler(file_handler)

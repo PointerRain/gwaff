@@ -15,8 +15,6 @@ class Github_Cog(commands.Cog):
             self.upload, trigger="cron", hour=1, timezone="Australia/Brisbane"
         )
 
-        self.channel = None
-
     async def upload(self):
         logger.info("Starting upload")
         if self.bot.logging_channel:
@@ -27,6 +25,7 @@ class Github_Cog(commands.Cog):
 
     @app_commands.command(name="upload",
                           description="(Admin only) Upload the data to github")
+    @require_admin
     async def command_upload(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         await self.upload()
@@ -34,6 +33,7 @@ class Github_Cog(commands.Cog):
 
     @app_commands.command(name="update",
                           description="(Admin only) Update the bot from github")
+    @require_admin
     async def update(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         # logger.info("Starting update")
@@ -47,4 +47,3 @@ class Github_Cog(commands.Cog):
 async def setup(bot: commands.Bot):
     cog = Github_Cog(bot)
     await bot.add_cog(cog, guilds=bot.guilds)
-

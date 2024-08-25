@@ -7,6 +7,7 @@ from discord.ext import commands
 from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import asyncio
+
 from custom_logger import Logger
 logger = Logger('gwaff.bot')
 
@@ -28,7 +29,7 @@ class GwaffBot(commands.Bot):
         self.SERVER = 1118158249254985771
         self.CHANNEL = "gwaff"
         self.LOGGING_SERVER = 1077927097739247727
-        self.LOGGING_CHANNEL = "testing"
+        self.LOGGING_CHANNEL = "gwaff"
 
         self.logging_server: discord.Guild
         self.logging_channel: discord.TextChannel
