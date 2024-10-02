@@ -47,7 +47,8 @@ def lvl_to_xp(lvl: int) -> int:
 
     Returns: The xp value required for the given level.
     '''
-    return (1.667*lvl**3)+(22.5*lvl**2)+(75.833*lvl)
+    xp = (1.667*lvl**3)+(22.5*lvl**2)+(75.833*lvl)
+    return 5*round(xp/5)
 
 
 def xp_to_lvl(xp: int) -> int:
@@ -167,7 +168,7 @@ class Prediction:
         elif remove_suffix(target) <= 100000000:
             self.target_type = 'xp'
             self.target = remove_suffix(target)
-        elif remove_suffix(target) >= 10000000000:
+        elif target >= 10**16:
             self.target_type = 'user'
             self.target = int(target)
 

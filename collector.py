@@ -42,7 +42,7 @@ def request_api(url: str) -> dict:
             print(e)
             if count < MAX_RETRIES:
                 count += 1
-                time.sleep(1)
+                time.sleep(2**count)
             else:
                 logger.error("Skipping")
                 return None

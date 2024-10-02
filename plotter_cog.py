@@ -8,7 +8,7 @@ from custom_logger import Logger
 logger = Logger('gwaff.bot.plot')
 
 from growth import Growth
-from bot.utils import growth, resolve_member
+from utils import growth, resolve_member
 
 GRAPH_MAX_DAYS: int = 365           # The maximum days that can be plotted on
                                     # the gwaff/growth
