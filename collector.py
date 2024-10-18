@@ -1,4 +1,4 @@
-from urllib.request import Request, urlopen
+from urllib.parse import urlencode
 import requests
 import json
 import time
@@ -6,7 +6,9 @@ import pandas as pd
 from datetime import datetime
 from threading import Thread
 
+from database import DatabaseReader, DatabaseSaver
 from custom_logger import Logger
+
 logger = Logger('gwaff.collect')
 
 from database import saveToDB
@@ -14,7 +16,7 @@ from database import saveToDB
 MAX_RETRIES: int = 5        # How many times to attempt to collect and save data
 WAIT_SUCCESS: int = 120     # How many minutes to wait after a success
 WAIT_FAIL: int = 30         # How many minutes to wait after a failure
-MIN_SEPERATION: int = 60    # Do not store new data if the last collection was
+MIN_SEPARATION: int = 60    # Do not store new data if the last collection was
                             #  less than this many minutes ago
 COLLECTION_SMALL: int = 3   # Collect data from up to this page every 
                             #  collection event
@@ -31,20 +33,18 @@ def request_api(url: str) -> dict:
     Returns: dict of the requested data.
     '''
     count = 0
-    while True:
+    while count < MAX_RETRIES:
         try:
-            request = Request(url)
-            request.encoding = 'utf-8'
-            data = urlopen(request).read()
-            return json.loads(data)
+            response = requests.get(url)
+            response.raise_for_status()  # Raises an HTTPError for bad responses
+            return response.json()
         except Exception as e:
-            logger.warning(f"Could not retrieve {str(count)}")
-            print(e)
+            logger.warning(f"Attempt {count+1} failed: {str(e)}")
             if count < MAX_RETRIES:
                 count += 1
-                time.sleep(2**count)
+                time.sleep(1 << count)
             else:
-                logger.error("Skipping")
+                logger.error("Max retries reached, skipping collection")
                 return None
 
 
@@ -54,112 +54,76 @@ def url_constructor(base: str, **kwargs: dict) -> str:
 
     Returns: str of the final url.
     '''
-    if kwargs:
-        keys = list(kwargs.keys())
-        url = f"{base}?{keys[0]}={kwargs[keys[0]]}"
-        for kw in keys[1:]:
-            url += f"&{kw}={kwargs[kw]}"
-    return url
+    query = urlencode(kwargs)
+    return f"{base}?{query}"
 
 
 def record_data(pages: list = range(1, COLLECTION_LARGE),
-                min_time: int = WAIT_FAIL) -> bool:
+                min_time: int = MIN_SEPARATION) -> bool:
     '''
-    Record the current xp data to gwaff.csv.
-    Ensures records are seperated by at least min_time.
+    Record the current XP data and ensure records are separated by at least min_time minutes.
 
     Returns: bool representing if data was successfully gathered.
     '''
+    logger.info("Starting data collection")
 
-    logger.info("Collecting!")
+    dbr = DatabaseReader()
+    lasttime = dbr.get_last_timestamp()
+    now = datetime.now()
 
-    ids = []
-    names = []
-    colours = []
-    avatars = []
+    difference = now - lasttime
+    if difference.total_seconds() < min_time * 60:
+        logger.info(f"Too soon - {int(difference.total_seconds() / 60)} minutes/{min_time} minutes required")
+        return False
 
-    xps = {}
-
-    # Open the last copy of the data.
-    last = pd.read_csv("gwaff.csv", index_col=0)
+    dbi = DatabaseSaver()
+    success, failure = (0, 0)
 
     for page in pages:
         url = url_constructor(API_URL, page=page)
-
         data = request_api(url)
         if not data:
             return False
-        leaderboard = data['leaderboard']
+
+        leaderboard = data.get('leaderboard', [])
 
         for member in leaderboard:
-            if not ('missing' in member or member['color'] == '#000000'):
-                # Save xp and ids
-                id = int(member['id'])
-                ids.append(id)
-                xp = member['xp']
-                xps[id] = xp
-                # Update names, colours, and avatars
-                name = member['nickname'] \
-                    or member['displayName'] \
-                    or member['username']
-                last.loc[last['ID'] == id, 'Name'] = name
-                colour = member['color']
-                last.loc[last['ID'] == id, 'Colour'] = colour
-                avatar = member['avatar']
-                last.loc[last['ID'] == id, 'Avatar'] = avatar
-                # Also append to lists
-                names.append(name)
-                colours.append(colour)
-                avatars.append(avatar)
+            if 'missing' not in member and member['color'] != '#000000':
+                count = 0
+                while count < MAX_RETRIES:
+                    try:
+                        # Extract member data
+                        member_id = int(member['id'])
+                        xp = member['xp']
+                        name = member.get('nickname') or member.get(
+                            'displayName') or member.get('username')
+                        colour = member['color']
+                        avatar = member['avatar']
 
-        logger.debug(f"- Page {page} collected")
+                        # Update profile and record
+                        dbi.update_profile(member_id, name, colour, avatar)
+                        dbi.insert_record(member_id, now, xp)
 
-    # Below saves the data
-    struct = {'ID': ids, 'Name': names, 'Colour': colours, 'Avatar': avatars}
+                        success += 1
+                        break  # Exit retry loop on success
+                    except Exception as e:
+                        logger.warning(f"Failed to save record (attempt {count+1}): {str(e)}")
+                        if count < MAX_RETRIES:
+                            count += 1
+                        else:
+                            logger.error("Skipping record after max retries")
+                            failure += 1
+                            break
 
-    lasttime = last.columns[-1]
-    lasttime = datetime.fromisoformat(lasttime)
-    logger.info(f"Last: {str(lasttime)}")
-    now = datetime.now()
-    logger.info(f" Now: {str(now)}")
-    difference = now - lasttime
-    logger.info(f"Diff: {str(difference)}")
+        logger.debug(f"Page {page} collected")
 
-    # Checks before saving. Could be improved
-    if difference.total_seconds() > min_time * 60 * 60:
-        other = pd.DataFrame(struct)
-        df = pd.concat([last, other])
-        df = df.drop_duplicates('ID', keep='first')
+    dbi.commit()
 
-        newxp = []
-        for index, row in df.iterrows():
-            if row['ID'] in xps:
-                newxp.append(xps[row['ID']])
-            else:
-                newxp.append(None)
-        df[now] = newxp
-
-        count = 0
-        while True:
-            try:
-                df.to_csv('gwaff.csv', encoding='utf-8')
-                saveToDB()
-            except Exception as e:
-                logger.warning(f"Could not save {str(count)}")
-                print(e)
-                if count < MAX_RETRIES:
-                    count += 1
-                else:
-                    logger.error("Skipping")
-                    return False
-            else:
-                logger.info("Saved latest data!")
-                break
-
+    if success > failure:
+        logger.info("Successfully saved the latest data!")
         return True
-
     else:
-        logger.info(f"Too soon - {int(difference.total_seconds() / 60)}/{min_time * 60}")
+        logger.error("Considerable record save failures!")
         return False
 
 
@@ -168,18 +132,18 @@ def run() -> None:
     Periodically collects data.
     '''
     while True:
-        success = record_data(min_time=1, pages=range(1, COLLECTION_LARGE))
+        success = record_data(pages=range(1, COLLECTION_LARGE))
         wait = WAIT_SUCCESS if success else WAIT_FAIL
 
-        for i in range(wait//10):
-            logger.debug(f"Slept {i * 10}/{wait}")
+        for i in range(wait // 10):
+            logger.debug(f"Slept {i * 10}/{wait} minutes")
             time.sleep(10 * 60)
 
-        success = record_data(min_time=1, pages=range(1, COLLECTION_SMALL))
+        success = record_data(pages=range(1, COLLECTION_SMALL))
         wait = WAIT_SUCCESS if success else WAIT_FAIL
 
-        for i in range(wait//10):
-            logger.debug(f"Slept {i * 10}/{wait}")
+        for i in range(wait // 10):
+            logger.debug(f"Slept {i * 10}/{wait} minutes")
             time.sleep(10 * 60)
 
 
@@ -193,5 +157,4 @@ def collect() -> None:
 
 if __name__ == '__main__':
     collect()
-
-    logger.info("Collection Started")
+    logger.info("Collection started")

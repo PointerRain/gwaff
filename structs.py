@@ -9,7 +9,7 @@ class Profile(Base):
     __tablename__ = 'profiles'
 
     id = Column(Integer, primary_key=True)
-    nickname = Column(String, nullable=False)
+    name = Column(String, nullable=False)
     colour = Column(String)
     avatar = Column(String)
 
