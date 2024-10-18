@@ -3,9 +3,9 @@ from urllib.request import Request, urlopen
 from matplotlib.dates import DateFormatter
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import matplotlib.pyplot as plt
-import pandas as pd
 from datetime import datetime, timedelta
 
+from database import DatabaseReader
 from custom_logger import Logger
 logger = Logger('gwaff.plotter')
 
@@ -70,23 +70,16 @@ def getimg(url: str):
 
 class Plotter:
     def __init__(self,
-                 data: pd.DataFrame,
                  start_date: datetime = None,
                  end_date: datetime = None,
                  active_threshold: int = RANK_DEFAULT_THRESHOLD,
-                 exclude_missing: bool = True,
                  special: bool = False,
                  title: str = "XP Over Time"):
-        self.data = data
 
         self.fig, self.ax = plt.subplots()
         self.fig.set_size_inches(*WINDOW_SIZE)
 
         self.active_threshold = active_threshold
-        self.exclude_missing = exclude_missing
-
-        self.dates = data.columns
-        self.dates = list(self.dates)[4:]
 
         self.annotations = []
 
@@ -96,94 +89,26 @@ class Plotter:
         self.special = special
         self.title = title
 
-    def sort(self) -> None:
-        # Find final value for xp using the read_row function
-        data = [self.read_row(row)[0] for index, row in self.data.iterrows()]
-        self.data['Final'] = [row[-1] for row in data]
-        self.data.sort_values(by='Final', inplace=True, ascending=False)
-
-    def read_row(self, row: pd.Series) -> tuple[list[int], list[tuple[list[datetime], list[int]]]]:
-        '''
-        Read dates and values that have xp data.
-
-        Returns:
-        Array of all values regardless of continuity
-        Array of all (roughly) continuous lines
-        '''
-        xs = []
-        ys = []
-        values = []
-        lines = []
-        missing = 0
-        for i in self.dates:
-            date = datetime.fromisoformat(i)
-            if self.start_date and date < self.start_date:
-                continue
-            if self.end_date and date > self.end_date:
-                continue
-
-            if row[i] is None or pd.isna(row[i]):
-                missing += 1
-                if missing >= GAP_MIN_SIZE and len(xs) >= 2:
-                    lines.append((xs, ys))
-                    xs = []
-                    ys = []
-                    missing = 0
-            else:
-                missing = 0
-                values.append(row[i])
-                xs.append(date)
-                ys.append(row[i])
-
-        if len(xs) >= 2:
-            lines.append((xs, ys))
-
-        if len(values) <= 1:
-            return [0, 0], []
-        return values, lines
+    def get_data(self, limit):
+        dbr = DatabaseReader()
+        return dbr.get_data_in_range(self.start_date, limit=limit)
 
     def draw(self, start: int = 0,
              max_count: int = GRAPH_DEFAULT_USERS,
              include: list[int] = None) -> None:
-        '''
-        Draws a plot.
-        start: the number of users to skip over at the start.
-        max_count: the number of users to show.
-        include: if specified, only the specified users are shown.
-        '''
-        self.sort()
-
-        # Counts out how many users have been displayed.
         count = 0
-        for index, row in list(self.data.iterrows())[start:]:
-            if self.exclude_missing and pd.isna(row['Name']):
-                continue
+
+        for profile, xs, ys in self.get_data(max_count):
             if include is not None and row['ID'] not in include:
                 continue
-            if int(row['ID']) in [483515866319945728]:
+            if len(xs) <= 1:
                 continue
 
-            values, lines = self.read_row(row)
-
-            if values[-1] - values[0] <= self.active_threshold:
-                continue
-
-            name: str;
-            colour: str;
-            avatar: str;
-            if pd.isna(row['Name']):
-                name = ''
-                colour = Colours.missing
-                avatar = None
-            else:
-                name = row['Name']
-                colour = row['Colour']
-                avatar = row['Avatar']
-
+            id, name, colour, avatar = profile
+            print(ys)
             self.annotations.append(
-                (values[-1], name, colour, avatar, values[0]))
-            for xs, ys in lines:
-                plt.plot(xs, ys, color=colour)
+                (ys[-1], name, colour, avatar, ys[0]))
+            plt.plot(xs, ys, color=colour)
 
             count += 1
             if count >= max_count:
@@ -287,9 +212,7 @@ class Plotter:
 
 
 if __name__ == '__main__':
-    data = pd.read_csv("gwaff.csv", index_col=0)
-
-    plot = Plotter(data, start_date=datetime.now() - timedelta(days=365))
+    plot = Plotter(start_date=datetime.now() - timedelta(days=365))
     plot.draw()
     plot.annotate()
     plot.configure()

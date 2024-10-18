@@ -204,7 +204,6 @@ class DatabaseMinecraft(BaseDatabase):
                             .filter_by(discord_id=discord_id).first())
 
         if user is not None:
-            print('Updating')
             user.mc_uuid = mc_uuid or user.mc_uuid
             user.mc_name = mc_name or user.mc_name
             return
@@ -216,13 +215,13 @@ class DatabaseMinecraft(BaseDatabase):
     def get_users(self):
         return self.session.query(Minecraft).join(Profile, Minecraft.discord_id == Profile.id).all()
 
-    def find_mc_name(self, mc_uuid):
+    def find_mc_name(self, discord_id, mc_uuid, mc_name=None):
         try:
-            data = request_api(f"https://sessionserver.mojang.com/session/minecraft/profile/{user.mc_uuid}")
+            data = request_api(f"https://sessionserver.mojang.com/session/minecraft/profile/{mc_uuid}")
             if data and (name := data.get('name')):
                 print(name)
-                if name != user.mc_name:
-                    self.add_user(user.discord_id, user.mc_uuid, name)
+                if name != mc_name:
+                    self.add_user(discord_id, mc_uuid, name)
                 return True
             else:
                 print('COULDNT FIND IT')
@@ -236,7 +235,7 @@ class DatabaseMinecraft(BaseDatabase):
         changed, kept, failed = (0,0,0)
         print(changed, kept, failed)
         for user in users:
-            self.find_mc_name(user.mc_uuid)
+            self.find_mc_name(user.discord_id, user.mc_uuid, user.mc_name)
         self.commit()
         return (changed, kept, failed)
 

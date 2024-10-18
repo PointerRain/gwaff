@@ -11,7 +11,7 @@ logger = Logger('gwaff.bot.core')
 from reducer import Reducer
 from plotter import Plotter
 from permissions import require_admin
-
+from database import DatabaseReader
 
 
 COLLECTION_MAX_TIME: int = 120  # The time in minutes that must go by
@@ -134,15 +134,12 @@ class Core_Cog(commands.Cog):
 
         now = datetime.now()
 
-        data = pd.read_csv("gwaff.csv", index_col=0)
-        plot = Plotter(data)
+        dbr = DatabaseReader()
 
-        last = plot.dates[-1]
-        last = datetime.fromisoformat(last)
+        last = dbr.get_last_timestamp()
         laststr = utils.format_dt(last, 'R')
 
-        prevlast = plot.dates[-2]
-        prevlast = datetime.fromisoformat(prevlast)
+        prevlast = dbr.get_dates_in_range(now - timedelta(days=1))[-2]
         prevlaststr = utils.format_dt(prevlast, 'R')
 
         alive: str
@@ -153,13 +150,13 @@ class Core_Cog(commands.Cog):
         await interaction.followup.send(f"Data was last collected {laststr}\n"
                                         f"(Before that {prevlaststr})\n{alive}")
 
-    @app_commands.command(name="reduce", description="(Admin only) Clean up old datapoints")
-    @require_admin
-    async def reduce(self, interaction: discord.Interaction):
-        await interaction.response.send_message(
-            "Do you want to run the reducer?", view=ReducerView(interaction),
-            ephemeral=True
-        )
+    # @app_commands.command(name="reduce", description="(Admin only) Clean up old datapoints")
+    # @require_admin
+    # async def reduce(self, interaction: discord.Interaction):
+    #     await interaction.response.send_message(
+    #         "Do you want to run the reducer?", view=ReducerView(interaction),
+    #         ephemeral=True
+    #     )
 
     @app_commands.command(name="ping", description="Pong!")
     async def ping(self, interaction: discord.Interaction):
