@@ -52,7 +52,6 @@ class Stats_Cog(commands.Cog):
             hidden: bool = False):
         await interaction.response.defer(ephemeral=hidden)
 
-        data = pd.read_csv("gwaff.csv", index_col=0)
         member = resolve_member(interaction, member)
         if member is False:
             await interaction.followup.send(":bust_in_silhouette: "
@@ -66,8 +65,7 @@ class Stats_Cog(commands.Cog):
             return
 
         try:
-            prediction = Prediction(data,
-                                    member=member.id,
+            prediction = Prediction(member=member.id,
                                     target=target,
                                     period=period,
                                     growth=growth)

@@ -1,41 +1,34 @@
-import pandas as pd
 from datetime import datetime, timedelta
-import discord
-from math import floor, ceil
+from math import floor
+
+from database import DatabaseReader
 
 PREDICTION_DEFAULT_DAYS: int = 30       # The default number of days to be used
-                                        #  in a prediction.
+#  in a prediction.
 MAX_TARGET_DISTANCE: int = 100 * 365    # The number of days before a target is
-                                        #  too far away.
+#  too far away.
 
 
 class NoDataError(Exception):
     '''
-    Thrown when there is no data, or not enough
-    recent data to make a prediction.
+    Thrown when there is no data, or not enough recent data
+    to make a prediction.
     '''
     pass
 
 
 class ZeroGrowthError(Exception):
-    '''
-    Thrown when a user has had no growth within the timeframe.
-    '''
+    '''Thrown when a user has had no growth within the timeframe.'''
     pass
 
 
 class InvalidTargetError(Exception):
-    '''
-    Thrown when an invalid target format is chosen.
-    '''
+    '''Thrown when an invalid target format is chosen.'''
     pass
 
 
 class TargetBoundsError(Exception):
-    '''
-    Thrown when the target is too far away.
-    > MAX_TARGET_DISTANCE
-    '''
+    '''Thrown when the target is too far away (> MAX_TARGET_DISTANCE).'''
     pass
 
 
@@ -47,8 +40,8 @@ def lvl_to_xp(lvl: int) -> int:
 
     Returns: The xp value required for the given level.
     '''
-    xp = (1.667*lvl**3)+(22.5*lvl**2)+(75.833*lvl)
-    return 5*round(xp/5)
+    xp = (1.667 * lvl**3) + (22.5 * lvl**2) + (75.833 * lvl)
+    return 5 * round(xp / 5)
 
 
 def xp_to_lvl(xp: int) -> int:
@@ -62,17 +55,12 @@ def xp_to_lvl(xp: int) -> int:
     '''
     if xp <= 145000:
         # If xp is relatively low (<=lvl39) use this approximation
-        A = 6.204
-        B = 2.724
-        C = 2079
-        if xp <= C:
-            return 0
+        A, B, C = 6.204, 2.724, 2079
     else:
         # If xp is relatively high (>lvl39) use separate approximation
-        A = 3.266
-        B = 2.881
-        C = 12017
-    return floor(((xp-C)/A)**(1/B))
+        A, B, C = 3.266, 2.881, 12017
+
+    return floor(((xp - C) / A) ** (1 / B))
 
 
 def remove_suffix(value: str) -> int:
@@ -87,12 +75,14 @@ def remove_suffix(value: str) -> int:
 
     Returns: the equivalent int with the suffix removed.
     '''
-    if value.lower().endswith('k'):
-        return int(value[:-1]) * 1000
-    if value.lower().endswith('m'):
-        return int(value[:-1]) * 1000000
-    if value.lower().endswith('b'):
-        return int(value[:-1]) * 1000000000
+    value = value.lower()
+    if value.endswith('k'):
+        return int(float(value[:-1]) * 1_000)
+    if value.endswith('m'):
+        return int(float(value[:-1]) * 1_000_000)
+    if value.endswith('b'):
+        return int(float(value[:-1]) * 1_000_000_000)
+
     return int(value)
 
 
@@ -101,31 +91,20 @@ class Prediction:
     Class to process and evaluate predictions
     '''
 
-    def __init__(self, data: pd.DataFrame,
-                 member: int,
+    def __init__(self, member: int,
                  target: str,
                  period: int = PREDICTION_DEFAULT_DAYS,
                  growth: int = None):
-        self.data = data
-        self.member = int(member)
-
-        # Determine the target type and level
-        self.parse_target(target)
-
-        # Find period to check
+        self.member = member
         self.period = period
-        if period <= 0:
-            raise NoDataError('Period must be greater than 0')
-        self.start_date = datetime.now()-timedelta(days=period)
+        self.start_date = datetime.now() - timedelta(days=period)
 
-        self.dates = data.columns
-        self.dates = [d for d in list(self.dates)[4:]
-                     if d > str(self.start_date)]
-        self.dates.sort()
+        # Validate and process the target
+        self.target_type, self.target, self.relative = self.parse_target(target)
 
         # Get growth data for the member
         self.value, self.growth = self.get_data(member)
-        if growth != None:
+        if growth is not None:
             self.growth = growth
 
         # If it is a relative prediction, set the target according to their
@@ -138,85 +117,46 @@ class Prediction:
 
     def parse_target(self, target: str) -> tuple:
         # Determine if the target is relative
-        if type(target) is str and target.startswith('+'):
-            self.relative = True
-            self.target = target[1:]
-        elif type(target) is str and target.startswith('-'):
-            self.relative = True
-            self.target = target
+        target = target.strip()
+        relative = target.startswith(('+', '-'))
+
+        if target.endswith('xp'):
+            target_type = 'xp'
+            target_value = remove_suffix(target[:-2])
+        elif target.startswith(('lvl', 'level')):
+            target_type = 'level'
+            target_value = remove_suffix(target.lstrip('level').lstrip('lvl'))
+        elif target.startswith('<@'):
+            target_type = 'user'
+            target_value = int(target[2:-1])
         else:
-            self.relative = False
+            target_value = remove_suffix(target)
+            target_type = 'level' if target_value <= 1000 else 'xp'
 
-        # Determine type from simple clues
-        if type(target) is str and target.endswith('xp'):
-            self.target_type = 'xp'
-            self.target = remove_suffix(target[:-2])
-        elif type(target) is str and target.startswith('lvl'):
-            self.target_type = 'level'
-            self.target = remove_suffix(target[3:])
-        elif type(target) is str and target.startswith('level'):
-            self.target_type = 'level'
-            self.target = remove_suffix(target[5:])
-        elif type(target) is str and target.startswith('<@'):
-            self.target_type = 'user'
-            self.target = int(target[2:-1])
+        if target_type not in {'xp', 'level', 'user'}:
+            raise InvalidTargetError(f"Unknown target format: {target}")
 
-        # Determine type from size
-        elif remove_suffix(target) <= 1000:
-            self.target_type = 'level'
-            self.target = remove_suffix(target)
-        elif remove_suffix(target) <= 100000000:
-            self.target_type = 'xp'
-            self.target = remove_suffix(target)
-        elif target >= 10**16:
-            self.target_type = 'user'
-            self.target = int(target)
-
-        else:
-            raise InvalidTargetError('The target does not match a known format')
-
-        return (self.target_type, self.target)
+        return target_type, target_value, relative
 
     def get_data(self, user: int) -> tuple:
-        start_xp = None
-        start_date = None
-        final_xp = None
-        final_date = None
+        dbr = DatabaseReader()
+        row = dbr.get_row(user, self.start_date)
 
-        for index, row in list(self.data.iterrows()):
-            if row['ID'] == int(user):
-                for i in self.dates:
-                    date = datetime.fromisoformat(i)
-                    if self.start_date and date < self.start_date:
-                        continue
-                    if row[i] is None or pd.isna(row[i]):
-                        continue
+        if len(row) <= 1:
+            raise NoDataError('There is no data for this user within range')
 
-                    # Update values if not already set
-                    start_xp = start_xp or row[i]
-                    start_date = start_date or date
-                    final_xp = final_xp or row[i]
-                    final_date = final_date or date
-                    # Overwrite previous values if needed
-                    start_xp = min(row[i], start_xp)
-                    start_date = min(date, start_date)
-                    final_xp = max(row[i], final_xp)
-                    final_date = max(date, final_date)
+        start_xp, start_date = row[0].value, row[0].timestamp
+        final_xp, final_date = row[-1].value, row[-1].timestamp
 
-                if final_date is None:
-                    raise NoDataError(
-                        'There is no data for this user within range')
+        final_growth = final_xp - start_xp
 
-                final_growth = final_xp-start_xp
+        if final_growth <= 0:
+            raise ZeroGrowthError('The user has no activity during this period')
 
-                if final_growth <= 0:
-                    raise ZeroGrowthError
+        # Find the actual period the data was taken from
+        actual_period = (final_date - start_date) / timedelta(days=1)
 
-                # Find the actual period the data was taken from
-                actual_period = (final_date - start_date) / timedelta(days=1)
-
-                return final_xp, final_growth/actual_period
-        raise NoDataError('The specified user could not be found')
+        return final_xp, final_growth/actual_period
 
     def simple_target(self, target: int) -> float:
         '''
@@ -224,7 +164,7 @@ class Prediction:
         y = mx+c
         x = (y-c)/m
         '''
-        return (target-self.value)/self.growth
+        return (target - self.value) / self.growth
 
     def complex_target(self, target) -> float:
         '''
@@ -233,10 +173,9 @@ class Prediction:
         x = (c2-c1)/(m1-m2)
         '''
         other_value, other_growth = self.get_data(target)
-        return (other_value-self.value)/(self.growth-other_growth)
+        return (other_value - self.value) / (self.growth - other_growth)
 
     def evaluate(self) -> float:
-        days = None
         if self.target_type == 'xp':
             days = self.simple_target(self.target)
         elif self.target_type == 'level':
@@ -244,9 +183,11 @@ class Prediction:
         elif self.target_type == 'user':
             days = self.complex_target(self.target)
         else:
-            raise InvalidTargetError
-        if abs(days) >= 100 * 365:
-            raise TargetBoundsError
+            raise InvalidTargetError("Invalid target type.")
+
+        if abs(days) >= MAX_TARGET_DISTANCE:
+            raise TargetBoundsError(f"Target exceeds the maximum distance of {MAX_TARGET_DISTANCE} days.")
+
         return days
 
 

@@ -12,7 +12,7 @@ MAX_RETRIES = 5
 
 class BaseDatabase():
     def __init__(self):
-        self.engine = create_engine('sqlite:///gwaff.db')
+        self.engine = create_engine('sqlite:///gwaff.db', echo=False)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
 

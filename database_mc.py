@@ -1,8 +1,10 @@
 import pandas as pd
 import json
 
+from database import BaseDatabase
 from structs import *
 from utils import request_api
+
 
 class DatabaseMinecraft(BaseDatabase):
     def load_from_csv(self, data):
@@ -12,9 +14,6 @@ class DatabaseMinecraft(BaseDatabase):
         self.commit()
 
     def add_user(self, discord_id, mc_uuid, mc_name=None):
-        if pd.isna(mc_uuid):
-            return
-
         user = (self.session.query(Minecraft)
                             .filter_by(discord_id=discord_id).first())
 
@@ -76,10 +75,23 @@ class DatabaseMinecraft(BaseDatabase):
             data.append({
                 'mc_name': user.mc_name,
                 'mc_uuid': uuid,
-                'discord_id': user.discord_id,
+                # 'discord_id': user.discord_id,
                 'discord_nick': user.profile.name,
                 'colour': colour
             })
         with open('minecraft.txt', 'w', encoding='utf-8') as f:
             json.dump(data, f)
         return len(str(data))
+
+if __name__ == '__main__':
+    dbm = DatabaseMinecraft()
+    # dbm.load_from_csv(pd.read_csv("users_withnames.csv"))
+
+    # for i in dbm.get_users():
+    #     print(i.discord_id, i.profile.name, i.mc_name)
+
+    # print(dbm.find_all_mc_names())
+
+    # print(dbm.get_users())
+
+    print(dbm.to_json())
