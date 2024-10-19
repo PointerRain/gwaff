@@ -1,65 +1,101 @@
+from urllib.parse import urlencode
+import requests
+from io import BytesIO
+import json
 import discord
 
-from datetime import datetime, timedelta
-import pandas as pd
+from database import DatabaseReader
 
-from growth import Growth
+MAX_RETRIES = 5
 
-GRAPH_MAX_DAYS: int = 365           # The maximum days that can be plotted on
-                                    #  the gwaff/growth
-GRAPH_DEFAULT_DAYS: int = 7         # The default days to be plotted on
-                                    #  the gwaff/growth
-GRAPH_MAX_USERS: int = 30           # The maximum number of users data to be
-                                    #  plotted on the gwaff
-GRAPH_DEFAULT_USERS: int = 15       # The default number of users to be
-                                    #  plotted on the gwaff
 
-def growth(days: int = GRAPH_DEFAULT_DAYS,
-           count: int = GRAPH_DEFAULT_USERS,
-           member: discord.User = None,
-           title: str = "Top chatters XP growth",
-           special: bool = False,
-           compare: discord.User = None) -> None:
+def retry_request(request_func, url, **kwargs):
     '''
-    Plots and saves a growth plot (aka gwaff)
+    Handles retry logic for making requests.
 
+    Parameters:
+        request_func: Function to call for the request (e.g., requests.get).
+        url: The URL to request.
+        kwargs: Additional arguments for the request.
+
+    Returns: The result of the request_func, or None on failure.
     '''
-    if days >= GRAPH_MAX_DAYS:
-        days = GRAPH_MAX_DAYS
-    elif days <= 0:
-        days = 0
-    data = pd.read_csv("gwaff.csv", index_col=0)
+    count = 0
+    while count < MAX_RETRIES:
+        try:
+            response = request_func(url, **kwargs)
+            response.raise_for_status()  # Raises an HTTPError for bad responses
+            return response
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Attempt {count+1} failed: {str(e)}")
+            count += 1
+            if count < MAX_RETRIES:
+                time.sleep(1 << count)
+            else:
+                logger.error("Max retries reached, skipping.")
+                return None
 
-    plot = Growth(data,
-                  start_date=datetime.now() - timedelta(days=days),
-                  special=special,
-                  title=title)
-    if member is None:
-        include = None
-        count = count
-    else:
-        include = [member.id]
-        count = 1
-    if compare is not None:
-        include = [member.id, compare.id]
-        count = 2
-        plot.title = f"Comparing growth over the last {round(days)} days"
-    plot.draw(max_count=count, include=include)
-    plot.annotate()
-    plot.configure()
 
-    plot.save()
-    plot.close()
+def request_api(url: str, **kwargs) -> dict:
+    '''
+    Requests JSON data from the given API.
+
+    Returns: dict of the requested data.
+    '''
+    if kwargs:
+        url = url_constructor(url, **kwargs)
+
+    # Timeout to avoid hanging
+    response = retry_request(requests.get, url, timeout=10)
+    if response:
+        try:
+            return response.json()  # Parse JSON response
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON: {str(e)}")
+            return None
+    return None
+
+
+def request_img(url: str, **kwargs):
+    '''
+    Requests an image from the given URL.
+
+    Returns: a file-like object of the image that matplotlib can read.
+    '''
+    if kwargs:
+        url = url_constructor(url, **kwargs)
+    
+    headers = kwargs.get('headers', {"User-Agent": "Mozilla/5.0"})
+    
+    response = retry_request(requests.get, url, headers=headers, timeout=10, stream=True)
+    if response:
+        return BytesIO(response.content)  # Return image as a file-like object
+    return None
+
+
+def url_constructor(base: str, **kwargs: dict) -> str:
+    '''
+    Constructs a url from a base url and several key-values.
+
+    Returns: str of the final url.
+    '''
+    query = urlencode(kwargs)
+    return f"{base}?{query}"
+
 
 def resolve_member(interaction: discord.Interaction,
                    user: discord.User) -> discord.User:
-    if user is None and interaction is not None:
-        return interaction.user
-    data = pd.read_csv("gwaff.csv", index_col=0)
-    if int(user.id) in data['ID'].unique():
-        return user
-    else:
-        return False
+    '''
+    Chooses the member between a specified member, and the triggering member.
+    '''
+    dbr = DatabaseReader()
+    if user is not None:
+        if dbr.get_profile_data(user.id):
+            return user
+    if interaction is not None:
+        if dbr.get_profile_data(interaction.user.id):
+            return interaction.user
+    return False
 
 
 def ordinal(n: int) -> str:

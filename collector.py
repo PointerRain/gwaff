@@ -1,22 +1,18 @@
-from urllib.parse import urlencode
-import requests
-import json
 import time
-import pandas as pd
 from datetime import datetime
 from threading import Thread
 
 from database import DatabaseReader, DatabaseSaver
 from custom_logger import Logger
+from utils import request_api
 
 logger = Logger('gwaff.collect')
 
-from database import saveToDB
 
 MAX_RETRIES: int = 5        # How many times to attempt to collect and save data
-WAIT_SUCCESS: int = 120     # How many minutes to wait after a success
+WAIT_SUCCESS: int = 60     # How many minutes to wait after a success
 WAIT_FAIL: int = 30         # How many minutes to wait after a failure
-MIN_SEPARATION: int = 60    # Do not store new data if the last collection was
+MIN_SEPARATION: int = 30    # Do not store new data if the last collection was
                             #  less than this many minutes ago
 COLLECTION_SMALL: int = 3   # Collect data from up to this page every 
                             #  collection event
@@ -24,38 +20,6 @@ COLLECTION_LARGE: int = 8   # Collect data from up to this page every second
                             #  collection event
 SERVER_ID = "377946908783673344"
 API_URL = f"https://gdcolon.com/polaris/api/leaderboard/{SERVER_ID}"
-
-
-def request_api(url: str) -> dict:
-    '''
-    Requests data from the given api.
-
-    Returns: dict of the requested data.
-    '''
-    count = 0
-    while count < MAX_RETRIES:
-        try:
-            response = requests.get(url)
-            response.raise_for_status()  # Raises an HTTPError for bad responses
-            return response.json()
-        except Exception as e:
-            logger.warning(f"Attempt {count+1} failed: {str(e)}")
-            if count < MAX_RETRIES:
-                count += 1
-                time.sleep(1 << count)
-            else:
-                logger.error("Max retries reached, skipping collection")
-                return None
-
-
-def url_constructor(base: str, **kwargs: dict) -> str:
-    '''
-    Constructs a url from a base url and several key-values.
-
-    Returns: str of the final url.
-    '''
-    query = urlencode(kwargs)
-    return f"{base}?{query}"
 
 
 def record_data(pages: list = range(1, COLLECTION_LARGE),
@@ -80,8 +44,7 @@ def record_data(pages: list = range(1, COLLECTION_LARGE),
     success, failure = (0, 0)
 
     for page in pages:
-        url = url_constructor(API_URL, page=page)
-        data = request_api(url)
+        data = request_api(API_URL, page=page)
         if not data:
             return False
 

@@ -16,9 +16,7 @@ class Growth(Plotter):
 
 
 if __name__ == '__main__':
-    data = pd.read_csv("gwaff.csv", index_col=0)
-
-    plot = Growth(data, start_date=datetime.now() - timedelta(days=30))
+    plot = Growth(start_date=datetime.now() - timedelta(days=30))
     plot.draw()
     plot.annotate()
     plot.configure()

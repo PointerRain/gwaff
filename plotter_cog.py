@@ -1,23 +1,54 @@
 import discord
 from discord import app_commands, utils
 from discord.ext import commands
+from datetime import datetime, timedelta
 
-import pandas as pd
-
+from utils import resolve_member
+from growth import Growth
 from custom_logger import Logger
 logger = Logger('gwaff.bot.plot')
 
-from growth import Growth
-from utils import growth, resolve_member
 
-GRAPH_MAX_DAYS: int = 365           # The maximum days that can be plotted on
-                                    # the gwaff/growth
-GRAPH_DEFAULT_DAYS: int = 7         # The default days to be plotted on
-                                    # the gwaff/growth
-GRAPH_MAX_USERS: int = 30           # The maximum number of users data to be
-                                    # plotted on the gwaff
-GRAPH_DEFAULT_USERS: int = 15       # The default number of users to be
-                                    # plotted on the gwaff
+GRAPH_MAX_DAYS: int = 365       # The maximum number of days that can be plotted
+GRAPH_DEFAULT_DAYS: int = 7     # The default number of days to be plot
+GRAPH_MAX_USERS: int = 30       # The maximum number of users that can be plotted
+GRAPH_DEFAULT_USERS: int = 15   # The default number of users to be plot
+
+
+def growth(days: int = GRAPH_DEFAULT_DAYS,
+           count: int = GRAPH_DEFAULT_USERS,
+           member: discord.User = None,
+           title: str = "Top chatters XP growth",
+           special: bool = False,
+           compare: discord.User = None) -> None:
+    '''
+    Plots and saves a growth plot (aka gwaff)
+
+    '''
+    if days >= GRAPH_MAX_DAYS:
+        days = GRAPH_MAX_DAYS
+    elif days <= 0:
+        days = 0
+
+    plot = Growth(start_date=datetime.now() - timedelta(days=days),
+                  special=special,
+                  title=title)
+    if member is None:
+        include = None
+        count = count
+    else:
+        include = [member.id]
+        count = 1
+    if compare is not None:
+        include = [member.id, compare.id]
+        count = 2
+        plot.title = f"Comparing growth over the last {round(days)} days"
+    plot.draw(max_count=count, include=include)
+    plot.annotate()
+    plot.configure()
+
+    plot.save()
+    plot.close()
 
 
 class Plotter_Cog(commands.Cog):
@@ -42,7 +73,7 @@ class Plotter_Cog(commands.Cog):
                          hidden: bool = False):
         await interaction.response.defer(ephemeral=hidden)
 
-        title: str;
+        title: str
         if days == GRAPH_DEFAULT_DAYS:
             title = "Top chatters XP growth"
         else:
@@ -69,16 +100,15 @@ class Plotter_Cog(commands.Cog):
                                             "or hasn't reached level 15")
             return
 
-        co_member: discord.User;
+        co_member: discord.User = None
         if compare:
             co_member = resolve_member(None, compare)
             if co_member is False:
                 await interaction.followup.send(":bust_in_silhouette: "
-                                                "That person in not in the server "
-                                                "or hasn't reached level 15")
+                                                "The compared person is not in "
+                                                "the server or hasn't reached "
+                                                "level 15")
                 return
-        else:
-            co_member = None
 
         try:
             growth(days=days, member=member, count=1,
