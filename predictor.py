@@ -86,6 +86,30 @@ def remove_suffix(value: str) -> int:
     return int(value)
 
 
+def parse_target(target: str) -> tuple:
+    # Determine if the target is relative
+    target = target.strip()
+    relative = target.startswith(('+', '-'))
+
+    if target.endswith('xp'):
+        target_type = 'xp'
+        target_value = remove_suffix(target[:-2])
+    elif target.startswith(('lvl', 'level')):
+        target_type = 'level'
+        target_value = remove_suffix(target.lstrip('level').lstrip('lvl'))
+    elif target.startswith('<@'):
+        target_type = 'user'
+        target_value = int(target[2:-1])
+    else:
+        target_value = remove_suffix(target)
+        target_type = 'level' if target_value <= 1000 else 'xp'
+
+    if target_type not in {'xp', 'level', 'user'}:
+        raise InvalidTargetError(f"Unknown target format: {target}")
+
+    return target_type, target_value, relative
+
+
 class Prediction:
     '''
     Class to process and evaluate predictions
@@ -100,7 +124,7 @@ class Prediction:
         self.start_date = datetime.now() - timedelta(days=period)
 
         # Validate and process the target
-        self.target_type, self.target, self.relative = self.parse_target(target)
+        self.target_type, self.target, self.relative = parse_target(target)
 
         # Get growth data for the member
         self.value, self.growth = self.get_data(member)
@@ -114,29 +138,6 @@ class Prediction:
                 self.target = self.value + self.target
             if self.target_type == 'level':
                 self.target = xp_to_lvl(self.value) + self.target
-
-    def parse_target(self, target: str) -> tuple:
-        # Determine if the target is relative
-        target = target.strip()
-        relative = target.startswith(('+', '-'))
-
-        if target.endswith('xp'):
-            target_type = 'xp'
-            target_value = remove_suffix(target[:-2])
-        elif target.startswith(('lvl', 'level')):
-            target_type = 'level'
-            target_value = remove_suffix(target.lstrip('level').lstrip('lvl'))
-        elif target.startswith('<@'):
-            target_type = 'user'
-            target_value = int(target[2:-1])
-        else:
-            target_value = remove_suffix(target)
-            target_type = 'level' if target_value <= 1000 else 'xp'
-
-        if target_type not in {'xp', 'level', 'user'}:
-            raise InvalidTargetError(f"Unknown target format: {target}")
-
-        return target_type, target_value, relative
 
     def get_data(self, user: int) -> tuple:
         dbr = DatabaseReader()
@@ -197,3 +198,5 @@ if __name__ == '__main__':
     assert lvl_to_xp(43) >= 177373
     assert xp_to_lvl(180000) == 43
     assert xp_to_lvl(189870) == 44
+
+    print(Prediction(207349634174025729, '100').evaluate())

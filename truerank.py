@@ -1,16 +1,15 @@
-import pandas as pd
 from datetime import datetime, timedelta
+from typing import Any
+
+from database import DatabaseReader
 
 PREDICTION_DEFAULT_DAYS = 30
 RANK_DEFAULT_THRESHOLD = 30
 
 
 class Truerank:
-    def __init__(self, data: pd.DataFrame,
-                 period: int = PREDICTION_DEFAULT_DAYS,
+    def __init__(self, period: int = PREDICTION_DEFAULT_DAYS,
                  threshold: int = RANK_DEFAULT_THRESHOLD):
-        self.data = data
-
         self.period = period
         if period <= 0:
             raise ZeroDivisionError
@@ -18,50 +17,28 @@ class Truerank:
 
         self.threshold = threshold
 
-        self.dates = data.columns
-        self.dates = list(self.dates)[4:]
-        self.dates.sort()
-
         self.values = self.get_data()
 
-        self.sort()
+    def get_data(self) -> list[dict[str, Any]]:
+        dbr = DatabaseReader()
+        data = dbr.get_data_in_range(start_date=self.start_date, limit=200)
 
-    def get_data(self) -> list[dict[str, str]]:
         values = []
-        for index, row in list(self.data.iterrows()):
-            startxp = None
-            finalxp = 0
-            for i in self.dates:
-                date = datetime.fromisoformat(i)
-                if self.start_date and date < self.start_date:
-                    continue
-                if row[i] is None or pd.isna(row[i]):
-                    continue
-
-                startxp = startxp or row[i]
-                startxp = min(row[i], startxp)
-                finalxp = max(row[i], finalxp)
-            if startxp is None:
+        for row in data:
+            if len(row[2]) <= 1:
                 continue
-            finalgrowth = finalxp - startxp
-            if finalgrowth > self.threshold:
-                item = {
-                    'ID': row['ID'],
-                    'name': row['Name'],
-                    'xp': round(finalxp),
-                    'url': row['Avatar'],
-                    'colour': row['Colour']
-                }
-                values.append(item)
+            if row[2][-1] - row[2][0] >= self.threshold:
+                values.append({
+                    'ID': row[0][0],
+                    'name': row[0][1],
+                    'colour': row[0][2],
+                    'avatar': row[0][3],
+                    'xp': row[2][-1]
+                })
+
         return values
 
-    def sort(self) -> None:
-        '''
-        Sorts the data by xp in descending order.
-        '''
-        self.values.sort(key=lambda x: x['xp'], reverse=True)
-
-    def find_index(self, member: int) -> dict[str, str]:
+    def find_index(self, member: int) -> dict[str, Any]:
         '''
         Find information (crucially index) of the given member.
         Returns: dict
@@ -70,19 +47,15 @@ class Truerank:
             - User's server nickname
             - User's XP
             - User's avatar url
-            If there is a preceeding member
+            If there is a preceding member
             - Previous' ID
             - Previous' server nickname
             - Previous' XP
         '''
-        result = {}
         for index, item in enumerate(self.values):
             if item['ID'] == member:
+                result = item
                 result['rank'] = index
-                result['name'] = item['name']
-                result['xp'] = item['xp']
-                result['url'] = item['url']
-                result['colour'] = item['colour']
                 if index == 0:
                     return result
                 result['other_ID'] = self.values[index - 1]['ID']
@@ -93,7 +66,9 @@ class Truerank:
 
 
 if __name__ == '__main__':
-    data = pd.read_csv("gwaff.csv", index_col=0)
-    truerank = Truerank(data)
-    result = truerank.find_index(344731282095472641)
+    truerank = Truerank()
+    # result = truerank.find_index(344731282095472641)
+    result = truerank.get_data()
+    print(result)
+    result = truerank.find_index(309647479178264579)
     print(result)

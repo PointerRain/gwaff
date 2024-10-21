@@ -1,18 +1,21 @@
-from sqlalchemy import (create_engine, Column, Integer, String, DateTime,
-                        ForeignKey, PrimaryKeyConstraint, func, desc)
-from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from datetime import datetime, timedelta
-import time
+
 import pandas as pd
-import json
+from sqlalchemy import create_engine, func, desc
+from sqlalchemy.orm import sessionmaker
 
 from structs import *
 
 MAX_RETRIES = 5
 
-class BaseDatabase():
+import os.path
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_DIR = os.path.join(BASE_DIR, 'gwaff.db')
+
+class BaseDatabase:
     def __init__(self):
-        self.engine = create_engine('sqlite:///gwaff.db', echo=False)
+        self.engine = create_engine(f'sqlite:///{DB_DIR}', echo=False)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
 
@@ -125,7 +128,20 @@ class DatabaseReader(BaseDatabase):
         return self.session.query(func.max(Record.timestamp)).first()[0]
 
     def get_last_record(self):
-        raise NotImplemented
+        profile_query = (self.session.query(Profile, func.max(Record.value))
+                                     .join(Record, Profile.id == Record.id)
+                                     .group_by(Profile.id)
+                                     .order_by(desc(func.max(Record.value))).all())
+        # return [(i, i.records[-1]) for i in profile_query]
+        return profile_query
+
+    def get_growth_filtered_last_record(self, growth):
+        profile_query = (self.session.query(Profile, func.max(Record.value))
+                                     .join(Record, Profile.id == Record.id)
+                                     .group_by(Profile.id)
+                                     .order_by(desc(func.max(Record.value))).all())
+        # return [(i, i.records[-1]) for i in profile_query]
+        return profile_query
 
     def get_profile_data(self, id=None):
         if id is None:
