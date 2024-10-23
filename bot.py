@@ -1,14 +1,14 @@
-from typing import Optional, Any, Callable
+from datetime import datetime
+from logging import handlers
+from typing import Any, Callable
 
 import discord
-from discord import app_commands, utils
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from discord import utils
 from discord.ext import commands
 
-from datetime import datetime
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import asyncio
+from custom_logger import Logger, BasicFormatter
 
-from custom_logger import Logger
 logger = Logger('gwaff.bot')
 
 
@@ -26,15 +26,15 @@ class GwaffBot(commands.Bot):
         self.scheduler = AsyncIOScheduler()
         self.start_time = datetime.now()
 
-        self.SERVER = 1118158249254985771
-        self.CHANNEL = "gwaff"
+        self.SERVER = 1077927097739247727
+        self.CHANNEL = "testing"
         self.LOGGING_SERVER = 1077927097739247727
-        self.LOGGING_CHANNEL = "gwaff"
+        self.LOGGING_CHANNEL = "testing"
 
-        self.logging_server: discord.Guild
-        self.logging_channel: discord.TextChannel
         self.server: discord.Guild = None
         self.channel: discord.TextChannel = None
+        self.logging_server: discord.Guild = None
+        self.logging_channel: discord.TextChannel = None
 
         self.synced = False
 
@@ -50,9 +50,9 @@ class GwaffBot(commands.Bot):
                     name=self.CHANNEL
                 )
                 if self.channel is not None and isinstance(self.channel, discord.TextChannel):
-                    logger.info(f"Found logging channel")
+                    logger.info(f"Found channel")
                 else:
-                    logger.warning(f"Could not find logging channel #{self.bot.CHANNEL}")
+                    logger.warning(f"Could not find channel #{self.CHANNEL}")
                     self.channel = None
             else:
                 logger.error(f"Unable to find server with id {str(self.SERVER)}")
@@ -69,7 +69,7 @@ class GwaffBot(commands.Bot):
                 if self.logging_channel is not None and isinstance(self.logging_channel, discord.TextChannel):
                     logger.info(f"Found logging channel")
                 else:
-                    logger.warning(f"Could not find logging channel #{self.bot.LOGGING_CHANNEL}")
+                    logger.warning(f"Could not find logging channel #{self.LOGGING_CHANNEL}")
                     self.logging_channel = None
             else:
                 logger.error(f"Unable to find logging server with id {str(self.LOGGING_SERVER)}")

@@ -1,15 +1,15 @@
+from datetime import datetime, timedelta, timezone
+
 import discord
 from discord import app_commands, utils, ui
 from discord.ext import commands
 
-from datetime import datetime, timedelta, timezone
-import pandas as pd
-
 from custom_logger import Logger
+from gwaff.bot import GwaffBot
+
 logger = Logger('gwaff.bot.core')
 
 from reducer import Reducer
-from plotter import Plotter
 from permissions import require_admin
 from database import DatabaseReader
 
@@ -20,87 +20,87 @@ REDUCER_TIMEOUT: int = 60       # Time in seconds before the reducer process
                                 # times out and is halted.
 
 
-class ReducerView(discord.ui.View):
-    def __init__(self, interaction: discord.Interaction):
-        super().__init__(timeout=REDUCER_TIMEOUT)
-        df = pd.read_csv("gwaff.csv", index_col=0)
-        self.reducer = Reducer(df)
-        self.started = False
-        self.interaction = interaction
-
-    async def on_timeout(self):
-        '''
-        Called when the view times out. This will deactivate the buttons.
-        '''
-        await self.interaction.edit_original_response(
-            content="Timed out"
-        )
-        await self.remove_view()
-        return
-
-    async def remove_view(self):
-        '''
-        Removes and deactivates the view.
-        '''
-        for child in self.children:
-            child.disabled = True
-        await self.interaction.edit_original_response(view=self)
-        self.stop()
-
-    @ui.button(label="Proceed", style=discord.ButtonStyle.danger)
-    async def button_one_callback(
-        self, interaction: discord.Interaction, button: ui.Button
-    ):
-        await interaction.response.defer()
-
-        if not self.started:
-            await self.interaction.edit_original_response(
-                content=f"Processing..."
-            )
-
-            msg = self.reducer.reduce_cols()
-            if not msg:
-                await self.interaction.edit_original_response(
-                    content=f"Something went wrong."
-                )
-                await self.remove_view()
-                return
-            elif int(msg.split()[1]) <= 1:
-                await self.interaction.edit_original_response(
-                    content=f"There are no columns to remove."
-                )
-                await self.remove_view()
-                return
-
-            await self.interaction.edit_original_response(
-                content=f"{msg}\nAre you really sure?"
-            )
-            self.started = True
-            return
-
-        else:
-            result = self.reducer.save()
-            if result:
-                await self.interaction.edit_original_response(
-                    content=f"Saved the changes!"
-                )
-            else:
-                await self.interaction.edit_original_response(
-                    content=f"Something went wrong."
-                )
-            await self.remove_view()
-            return
-
-    @ui.button(label="Cancel", style=discord.ButtonStyle.primary)
-    async def button_two_callback(
-        self, interaction: discord.Interaction, button: ui.Button
-    ):
-        await interaction.response.defer()
-        await self.interaction.edit_original_response(
-            content=f"Aborted!"
-        )
-        await self.remove_view()
-        return
+# class ReducerView(discord.ui.View):
+#     def __init__(self, interaction: discord.Interaction):
+#         super().__init__(timeout=REDUCER_TIMEOUT)
+#         df = pd.read_csv("gwaff.csv", index_col=0)
+#         self.reducer = Reducer(df)
+#         self.started = False
+#         self.interaction = interaction
+#
+#     async def on_timeout(self):
+#         '''
+#         Called when the view times out. This will deactivate the buttons.
+#         '''
+#         await self.interaction.edit_original_response(
+#             content="Timed out"
+#         )
+#         await self.remove_view()
+#         return
+#
+#     async def remove_view(self):
+#         '''
+#         Removes and deactivates the view.
+#         '''
+#         for child in self.children:
+#             child.disabled = True
+#         await self.interaction.edit_original_response(view=self)
+#         self.stop()
+#
+#     @ui.button(label="Proceed", style=discord.ButtonStyle.danger)
+#     async def button_one_callback(
+#         self, interaction: discord.Interaction, button: ui.Button
+#     ):
+#         await interaction.response.defer()
+#
+#         if not self.started:
+#             await self.interaction.edit_original_response(
+#                 content=f"Processing..."
+#             )
+#
+#             msg = self.reducer.reduce_cols()
+#             if not msg:
+#                 await self.interaction.edit_original_response(
+#                     content=f"Something went wrong."
+#                 )
+#                 await self.remove_view()
+#                 return
+#             elif int(msg.split()[1]) <= 1:
+#                 await self.interaction.edit_original_response(
+#                     content=f"There are no columns to remove."
+#                 )
+#                 await self.remove_view()
+#                 return
+#
+#             await self.interaction.edit_original_response(
+#                 content=f"{msg}\nAre you really sure?"
+#             )
+#             self.started = True
+#             return
+#
+#         else:
+#             result = self.reducer.save()
+#             if result:
+#                 await self.interaction.edit_original_response(
+#                     content=f"Saved the changes!"
+#                 )
+#             else:
+#                 await self.interaction.edit_original_response(
+#                     content=f"Something went wrong."
+#                 )
+#             await self.remove_view()
+#             return
+#
+#     @ui.button(label="Cancel", style=discord.ButtonStyle.primary)
+#     async def button_two_callback(
+#         self, interaction: discord.Interaction, button: ui.Button
+#     ):
+#         await interaction.response.defer()
+#         await self.interaction.edit_original_response(
+#             content=f"Aborted!"
+#         )
+#         await self.remove_view()
+#         return
 
 
 class Core_Cog(commands.Cog):
@@ -175,6 +175,12 @@ class Core_Cog(commands.Cog):
             logger.warning(f"Could not find required channel")
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: GwaffBot):
+    """
+    Sets up the SpooncraftCog and adds it to the bot.
+
+    Args:
+        bot (GwaffBot): The bot instance.
+    """
     cog = Core_Cog(bot)
     await bot.add_cog(cog, guilds=bot.guilds)

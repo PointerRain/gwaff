@@ -3,16 +3,23 @@ from discord import app_commands, utils
 from discord.ext import commands
 
 from custom_logger import Logger
+from gwaff.bot import GwaffBot
+
 logger = Logger('gwaff.bot.github')
 
 from permissions import require_admin
 
-class Github_Cog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+
+class GithubCog(commands.GroupCog, group_name='github'):
+    def __init__(self, bot: GwaffBot):
         self.bot = bot
 
         self.bot.schedule_task(
-            self.upload, trigger="cron", hour=1, timezone="Australia/Brisbane"
+            self.upload,
+            trigger="cron",
+            hour=1,
+            timezone="Australia/Brisbane",
+            day='last'
         )
 
     async def upload(self):
@@ -44,6 +51,12 @@ class Github_Cog(commands.Cog):
         await self.upload()
 
 
-async def setup(bot: commands.Bot):
-    cog = Github_Cog(bot)
+async def setup(bot: GwaffBot):
+    """
+    Sets up the GithubCog and adds it to the bot.
+
+    Args:
+        bot (GwaffBot): The bot instance.
+    """
+    cog = GithubCog(bot)
     await bot.add_cog(cog, guilds=bot.guilds)
