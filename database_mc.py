@@ -1,4 +1,3 @@
-import pandas as pd
 import json
 
 from database import BaseDatabase
@@ -7,13 +6,31 @@ from utils import request_api
 
 
 class DatabaseMinecraft(BaseDatabase):
+    """
+    A class to handle Minecraft-related database operations.
+    """
+
     def load_from_csv(self, data):
+        """
+        Loads Minecraft user data from a CSV file.
+
+        Args:
+            data (DataFrame): The data to load from the CSV file.
+        """
         for index, row in data.iterrows():
             self.add_user(row.iloc[0], row.iloc[1])
 
         self.commit()
 
     def add_user(self, discord_id, mc_uuid, mc_name=None):
+        """
+        Adds or updates a Minecraft user in the database.
+
+        Args:
+            discord_id (int): The Discord ID of the user.
+            mc_uuid (str): The Minecraft UUID of the user.
+            mc_name (str, optional): The Minecraft name of the user. Defaults to None.
+        """
         user = (self.session.query(Minecraft)
                             .filter_by(discord_id=discord_id).first())
 
@@ -27,9 +44,26 @@ class DatabaseMinecraft(BaseDatabase):
         self.session.add(new_user)
 
     def get_users(self):
+        """
+        Retrieves all Minecraft users from the database.
+
+        Returns:
+            list: A list of Minecraft users.
+        """
         return self.session.query(Minecraft).join(Profile, Minecraft.discord_id == Profile.id).all()
 
-    def find_mc_name(self, discord_id, mc_uuid, mc_name=None):
+    def update_mc_name(self, discord_id, mc_uuid, mc_name=None):
+        """
+        Updates the Minecraft name of a user.
+
+        Args:
+            discord_id (int): The Discord ID of the user.
+            mc_uuid (str): The Minecraft UUID of the user.
+            mc_name (str, optional): The Minecraft name of the user. Defaults to None.
+
+        Returns:
+            bool: True if the update was successful, False otherwise.
+        """
         try:
             data = request_api(f"https://sessionserver.mojang.com/session/minecraft/profile/{mc_uuid}")
             if data and (name := data.get('name')):
@@ -38,21 +72,33 @@ class DatabaseMinecraft(BaseDatabase):
                     self.add_user(discord_id, mc_uuid, name)
                 return True
             else:
-                print('COULDNT FIND IT')
                 return False
         except Exception as e:
-            print('AN ERROR OCCURED:', e)
             return False
 
-    def find_all_mc_names(self):
+    async def update_all_mc_names(self):
+        """
+        Asynchronously updates the Minecraft names of all users.
+
+        Returns:
+            tuple: A tuple containing the number of successful updates and the total number of users.
+        """
         users = self.session.query(Minecraft)
-        changed, kept, failed = (0,0,0)
+        success = 0
+        total = 0
         for user in users:
-            self.find_mc_name(user.discord_id, user.mc_uuid, user.mc_name)
+            success += self.update_mc_name(user.discord_id, user.mc_uuid, user.mc_name)
+            total += 1
         self.commit()
-        return (changed, kept, failed)
+        return (success, total)
 
     def to_json(self):
+        """
+        Exports Minecraft user data to a JSON file.
+
+        Returns:
+            int: The length of the JSON string.
+        """
         data = []
         users = self.session.query(Minecraft).join(Profile, Minecraft.discord_id == Profile.id).all()
         for user in users:
@@ -61,27 +107,17 @@ class DatabaseMinecraft(BaseDatabase):
 
             uuid = user.mc_uuid
             uuid = f'{uuid[0:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:32]}'
-            # colour = None
-            # if discord_id in STAFF_LIST:
-            #     colour = None
-            #     # if discord_id in ADMIN_LIST:
-            #     #     colour = '5077F5'
-            #     # elif discord_id in MOD_LIST:
-            #     #     colour = '00A31E'
-            #     # elif discord_id in HELPER_LIST:
-            #     #     colour = '00AC7E'
-            # else:
             colour = user.profile.colour.replace('#', '')
             data.append({
                 'mc_name': user.mc_name,
                 'mc_uuid': uuid,
-                # 'discord_id': user.discord_id,
                 'discord_nick': user.profile.name,
                 'colour': colour
             })
         with open('minecraft.txt', 'w', encoding='utf-8') as f:
             json.dump(data, f)
         return len(str(data))
+
 
 if __name__ == '__main__':
     dbm = DatabaseMinecraft()
@@ -90,7 +126,7 @@ if __name__ == '__main__':
     # for i in dbm.get_users():
     #     print(i.discord_id, i.profile.name, i.mc_name)
 
-    # print(dbm.find_all_mc_names())
+    # print(dbm.update_all_mc_names())
 
     # print(dbm.get_users())
 

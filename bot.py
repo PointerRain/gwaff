@@ -108,7 +108,8 @@ cogs = [
     "plotter_cog",
     "stats_cog",
     "github_cog",
-    "manage_cog"
+    "manage_cog",
+    "spooncraft_cog"
 ]
 
 
