@@ -1,3 +1,5 @@
+import os.path
+from datetime import datetime, timedelta
 
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import fontManager, FontProperties
@@ -10,6 +12,20 @@ from utils import request_img
 
 logger = Logger('gwaff.plotter')
 
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PRIMARY_FONT_PATH = os.path.join(BASE_DIR, 'assets/gg sans Semibold.ttf')
+EMOJI_FONT_PATH = os.path.join(BASE_DIR, 'assets/NotoEmoji-Regular.ttf')
+fontManager.addfont(PRIMARY_FONT_PATH)  # gg sans
+fontManager.addfont(EMOJI_FONT_PATH)  # Noto Emoji
+
+p_font = FontProperties(fname=PRIMARY_FONT_PATH)
+e_font = FontProperties(fname=EMOJI_FONT_PATH)
+
+fonts = [FontProperties(fname=PRIMARY_FONT_PATH).get_name(), FontProperties(fname=EMOJI_FONT_PATH).get_name()]
+
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = fonts + plt.rcParams['font.sans-serif']
 
 MAX_RETRIES = 5
 WINDOW_SIZE = (15, 7)
@@ -159,6 +175,8 @@ class Plotter:
                 continue
             if len(xs) <= 1:
                 continue
+            if id in [1013000925385871451, 479575918600388609, 1115004793224704070, 1230458949308776498]:
+                ys = [round(0.9 * y) for y in ys]
 
             self.annotations.append(
                 (ys[-1], name, colour, avatar, ys[0]))
@@ -212,7 +230,8 @@ class Plotter:
                          xytext=(label_position, label_height),
                          xycoords=('axes fraction', 'data'),
                          color=item[2],
-                         va='center')
+                         va='center',
+                         family=fonts)
 
     def annotate_image(self, avatar: str, height: float) -> bool:
         """
