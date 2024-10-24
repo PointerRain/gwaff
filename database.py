@@ -78,11 +78,10 @@ class DatabaseReader(BaseDatabase):
         """
         query_result = self.session.query(Record.timestamp).distinct()
         if start_date and end_date:
-            return [i.timestamp for i in query_result.filter(Record.timestamp
-                                                     .between(start_date, end_date)).all()]
+            query_result = query_result.filter(Record.timestamp.between(start_date, end_date))
         elif start_date:
-            return [i.timestamp for i in query_result.filter(Record.timestamp >= start_date).all()]
-        return [i.timestamp for i in query_result.all()]
+            query_result = query_result.filter(Record.timestamp >= start_date)
+        return [i.timestamp for i in query_result.order_by(Record.timestamp).all()]
 
     def get_row(self, id, start_date=None):
         """
@@ -95,7 +94,7 @@ class DatabaseReader(BaseDatabase):
         Returns:
             list: A list of records for the specified ID.
         """
-        if id in [483515866319945728]:
+        if id in [483515866319945728] and start_date < datetime(2024, 6, 1, 0, 0):
             return []
         record_query = (self.session.query(Record)
                                     .filter_by(id=id)
@@ -125,6 +124,8 @@ class DatabaseReader(BaseDatabase):
 
         result = []
 
+        print(limit)
+
         for profile in profile_query:
             # Query for records associated with the profile, optionally filtering by start_date
             records = self.get_row(profile.id, start_date)
@@ -149,17 +150,12 @@ class DatabaseReader(BaseDatabase):
         Returns:
             list: A list of tuples containing profile data and growth values.
         """
+        profile_query = (self.session.query(Profile)
+                                     .join(Record, Profile.id == Record.id))
         if start_date:
-            profile_query = (self.session.query(Profile)
-                                         .join(Record, Profile.id == Record.id)
-                                         .filter(Record.timestamp >= start_date))
-        else:
-            profile_query = (self.session.query(Profile)
-                                         .join(Record, Profile.id == Record.id))
+            profile_query = profile_query.filter(Record.timestamp >= start_date)
         profile_query = (profile_query.group_by(Profile.id)
                                       .order_by(desc(func.max(Record.value) - func.min(Record.value)))
-                                      .having(Profile.id != 1013000925385871451)
-                                      .having(Profile.id != 483515866319945728)
                                       .limit(limit))
 
         result = []

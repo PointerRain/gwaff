@@ -4,7 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from custom_logger import Logger
+from gwaff.custom_logger import Logger
 logger = Logger('gwaff.bot.cogs')
 
 class ManageCogs(commands.Cog):

@@ -1,13 +1,13 @@
 import discord
-from discord import app_commands, utils
+from discord import app_commands
 from discord.ext import commands
 
-from custom_logger import Logger
-from gwaff.bot import GwaffBot
+from gwaff.custom_logger import Logger
+from gwaff.bot.bot import GwaffBot
 
 logger = Logger('gwaff.bot.github')
 
-from permissions import require_admin
+from gwaff.permissions import require_admin
 
 
 class GithubCog(commands.GroupCog, group_name='github'):

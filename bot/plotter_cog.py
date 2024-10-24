@@ -1,11 +1,13 @@
+from xml.etree.ElementInclude import include
+
 import discord
 from discord import app_commands, utils
 from discord.ext import commands
 from datetime import datetime, timedelta
 
-from utils import resolve_member
-from growth import Growth
-from custom_logger import Logger
+from gwaff.utils import resolve_member
+from gwaff.growth import Growth
+from gwaff.custom_logger import Logger
 logger = Logger('gwaff.bot.plot')
 
 
@@ -20,11 +22,10 @@ def growth(days: int = GRAPH_DEFAULT_DAYS,
            member: discord.User = None,
            title: str = "Top chatters XP growth",
            special: bool = False,
-           compare: discord.User = None) -> None:
-    '''
+           compare: discord.User = None) -> str:
+    """
     Plots and saves a growth plot (aka gwaff)
-
-    '''
+    """
     if days >= GRAPH_MAX_DAYS:
         days = GRAPH_MAX_DAYS
     elif days <= 0:
@@ -43,12 +44,14 @@ def growth(days: int = GRAPH_DEFAULT_DAYS,
         include = [member.id, compare.id]
         count = 2
         plot.title = f"Comparing growth over the last {round(days)} days"
-    plot.draw(max_count=count, include=include)
+    plot.draw(limit=count, include=include)
     plot.annotate()
     plot.configure()
 
-    plot.save()
+    path = plot.save()
     plot.close()
+
+    return path
 
 
 class Plotter_Cog(commands.Cog):
@@ -78,8 +81,8 @@ class Plotter_Cog(commands.Cog):
             title = "Top chatters XP growth"
         else:
             title = f"Top chatters XP over the last {round(days)} days"
-        growth(days=days, count=count, title=title, special=True)
-        await interaction.followup.send(file=discord.File('out.png'))
+        path = growth(days=days, count=count, title=title, special=True)
+        await interaction.followup.send(file=discord.File(path))
 
     @app_commands.command(name="growth",
                           description="Plots a specific member's growth")
@@ -89,7 +92,7 @@ class Plotter_Cog(commands.Cog):
                            hidden="Hide from others in this server (default False)")
     async def plot_growth(self, interaction: discord.Interaction,
                           member: discord.User = None,
-                          days: app_commands.Range[float, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
+                          days: app_commands.Range[int, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
                           compare: discord.User = None,
                           hidden: bool = False):
         await interaction.response.defer(ephemeral=hidden)
@@ -111,15 +114,15 @@ class Plotter_Cog(commands.Cog):
                 return
 
         try:
-            growth(days=days, member=member, count=1,
-                   title=f"{member.name}'s growth over the last {round(days)} days",
-                   compare=co_member)
+            path = growth(days=days, member=member, count=1,
+                            title=f"{member.name}'s growth over the last {round(days)} days",
+                            compare=co_member)
         except IndexError:
             await interaction.followup.send(":bust_in_silhouette: "
                                             "That person has not been online "
                                             "recently enough")
             return
-        await interaction.followup.send(file=discord.File('out.png'))
+        await interaction.followup.send(file=discord.File(path))
 
     async def growth_ctx(self, interaction: discord.Interaction,
                          member: discord.Member):
@@ -131,14 +134,14 @@ class Plotter_Cog(commands.Cog):
                                             "or hasn't reached level 15")
             return
         try:
-            growth(days=GRAPH_DEFAULT_DAYS, member=member, count=1,
-                   title=f"{member.name}'s growth over the last {round(days)} days")
+            path = growth(days=GRAPH_DEFAULT_DAYS, member=member, count=1,
+                    title=f"{member.name}'s growth over the last {round(GRAPH_DEFAULT_DAYS)} days")
         except IndexError:
             await interaction.followup.send(":bust_in_silhouette: "
                                             "That person has not been online "
                                             "recently enough")
             return
-        await interaction.followup.send(file=discord.File('out.png'))
+        await interaction.followup.send(file=discord.File(path))
 
 
 async def setup(bot: commands.Bot):

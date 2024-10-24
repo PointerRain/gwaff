@@ -6,15 +6,15 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from custom_logger import Logger
+from gwaff.custom_logger import Logger
 
 logger = Logger('gwaff.bot.stats')
 
-from predictor import Prediction, xp_to_lvl
-from predictor import (NoDataError, ZeroGrowthError,
+from gwaff.predictor import Prediction, xp_to_lvl
+from gwaff.predictor import (NoDataError, ZeroGrowthError,
                        TargetBoundsError)
-from truerank import Truerank
-from utils import resolve_member, ordinal
+from gwaff.truerank import Truerank
+from gwaff.utils import resolve_member, ordinal
 
 PREDICTION_MAX_DAYS: int = 365      # The maximum days that can be averaged over
                                     # in predictions.
@@ -268,6 +268,43 @@ class Stats_Cog(commands.Cog):
                                             f"{ordinal(rank + 1)} in the server, "
                                             f"{round(other_xp - xp)} behind "
                                             f"<@{str(other_id)}> ({other_name})")
+
+    async def user_ctx(self, interaction: discord.Interaction,
+                         member: discord.Member):
+        await interaction.response.defer(ephemeral=True)
+
+        member = resolve_member(interaction, member)
+        if member is False:
+            await interaction.followup.send(":bust_in_silhouette: "
+                                            "That person in not in the server "
+                                            "or hasn't reached level 15")
+            return
+        try:
+            truerank = Truerank(threshold=RANK_DEFAULT_THRESHOLD)
+            result = truerank.find_index(member.id)
+        except IndexError:
+            await interaction.followup.send(":bust_in_silhouette: "
+                                            "That person has not been online "
+                                            "recently enough")
+            return
+
+        id = member.id
+        name = result['name']
+        xp = result['xp']
+        level = xp_to_lvl(xp)
+        colour = result['colour']
+        avatar = result['avatar']
+        rank = result['rank']
+
+        embed = discord.Embed(title=name,
+                              colour=discord.Colour.from_str(colour))
+        embed.add_field(name='User', value=f"<@{id}>")
+        embed.add_field(name='XP', value=xp)
+        embed.add_field(name='Level', value=level)
+        embed.add_field(name='Rank', value=rank)
+        embed.set_thumbnail(url=avatar)
+
+        await interaction.followup.send(embed=embed)
 
 
 async def setup(bot: commands.Bot):

@@ -1,12 +1,13 @@
 
+import matplotlib.pyplot as plt
+from matplotlib.font_manager import fontManager, FontProperties
 from matplotlib.dates import DateFormatter
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-import matplotlib.pyplot as plt
-from datetime import datetime, timedelta
 
-from utils import request_img
-from database import DatabaseReader
 from custom_logger import Logger
+from database import DatabaseReader
+from utils import request_img
+
 logger = Logger('gwaff.plotter')
 
 
@@ -20,6 +21,9 @@ RANK_DEFAULT_THRESHOLD = 30
 
 
 class Colours:
+    """
+    A class to hold color constants used in the plot.
+    """
     missing = '#505050'
     text = '#FFFFFF'
     outside = '#2B2D31'
@@ -27,10 +31,27 @@ class Colours:
 
 
 class ResponsiveDateFormat:
+    """
+    A class to determine the date format based on the range of dates.
+
+    Attributes:
+        start_date (datetime): The start date of the range.
+        end_date (datetime): The end date of the range.
+        difference (int): The difference in days between start_date and end_date.
+        formatter (DateFormatter): The date formatter based on the difference.
+    """
+
     def __init__(self, start_date, end_date):
+        """
+        Initializes the ResponsiveDateFormat with start and end dates.
+
+        Args:
+            start_date (datetime): The start date of the range.
+            end_date (datetime): The end date of the range.
+        """
         self.start_date = start_date
         self.end_date = end_date
-        self.difference = abs((end_date-start_date).days)
+        self.difference = abs((end_date - start_date).days)
 
         if self.difference <= 3:
             self.formatter = DateFormatter('%d %H')
@@ -42,6 +63,12 @@ class ResponsiveDateFormat:
             self.formatter = DateFormatter('%Y-%m')
 
     def __str__(self):
+        """
+        Returns a string representation of the date format.
+
+        Returns:
+            str: The date format as a string.
+        """
         if self.difference <= 3:
             return 'DD HH AEST'
         elif self.difference <= 7:
@@ -55,13 +82,36 @@ class ResponsiveDateFormat:
 
 
 class Plotter:
+    """
+    A class to create and manage plots of XP data over time.
+
+    Attributes:
+        fig (Figure): The matplotlib figure object.
+        ax (Axes): The matplotlib axes object.
+        active_threshold (int): The threshold for active users.
+        annotations (list): A list to store annotations.
+        start_date (datetime): The start date for the plot.
+        end_date (datetime): The end date for the plot.
+        special (bool): A flag for special plots.
+        title (str): The title of the plot.
+    """
+
     def __init__(self,
                  start_date: datetime = None,
                  end_date: datetime = None,
                  active_threshold: int = RANK_DEFAULT_THRESHOLD,
                  special: bool = False,
                  title: str = "XP Over Time"):
+        """
+        Initializes the Plotter with optional parameters.
 
+        Args:
+            start_date (datetime, optional): The start date for the plot. Defaults to None.
+            end_date (datetime, optional): The end date for the plot. Defaults to None.
+            active_threshold (int, optional): The threshold for active users. Defaults to RANK_DEFAULT_THRESHOLD.
+            special (bool, optional): A flag for special plots. Defaults to False.
+            title (str, optional): The title of the plot. Defaults to "XP Over Time".
+        """
         self.fig, self.ax = plt.subplots(figsize=WINDOW_SIZE)
 
         self.active_threshold = active_threshold
@@ -75,15 +125,33 @@ class Plotter:
         self.title = title
 
     def get_data(self, limit):
+        """
+        Retrieves data from the database within the specified range.
+
+        Args:
+            limit (int): The maximum number of data points to retrieve.
+
+        Returns:
+            list: The data retrieved from the database.
+        """
         dbr = DatabaseReader()
-        return dbr.get_data_in_range(self.start_date, limit=limit)
+        return dbr.get_data_in_range(self.start_date)
 
     def draw(self, start: int = 0,
-             max_count: int = GRAPH_DEFAULT_USERS,
+             limit: int = GRAPH_DEFAULT_USERS,
              include: list[int] = None) -> None:
-        count = 0
-        included_ids = set(include) if include else None
+        """
+        Draws the plot with the specified parameters.
 
+        Args:
+            start (int, optional): The starting index for data. Defaults to 0.
+            limit (int, optional): The maximum number of users to plot. Defaults to GRAPH_DEFAULT_USERS.
+            include (list[int], optional): A list of user IDs to include. Defaults to None.
+        """
+        included_ids = set(include) if include else None
+        max_count = limit if not include else len(included_ids)
+
+        count: int = 0
         for profile, xs, ys in self.get_data(max_count):
             id, name, colour, avatar = profile
 
@@ -103,17 +171,17 @@ class Plotter:
             logger.info(f"{count} profiles shown")
 
     def annotate(self) -> None:
-        '''
+        """
         Adds names to the graph.
-        Ensures the names are seperated by at least 'GRAPH_SEPERATOR'.
-        '''
+        Ensures the names are separated by at least 'GRAPH_SEPERATOR'.
+        Requires at least 1 annotation.
+        """
         # Determine how to convert from xp to axes fraction.
         sorted_annotations = sorted(self.annotations, key=lambda x: x[0])
         self.maxxp = sorted_annotations[-1][0]
         self.minxp = sorted_annotations[0][4]
 
         if len(self.annotations) > 1:
-
             def xp_to_axes(xp):
                 return (xp - self.minxp) / (self.maxxp - self.minxp)
 
@@ -147,27 +215,32 @@ class Plotter:
                          va='center')
 
     def annotate_image(self, avatar: str, height: float) -> bool:
-        '''
-        Add an image at the given height.
-        avatar: str url to the avatar image.
-        height: height in data units to position the image.
+        """
+        Adds an image at the given height.
 
-        Returns: bool representing if the image was added successfully.
-        '''
+        Args:
+            avatar (str): URL to the avatar image.
+            height (float): Height in data units to position the image.
+
+        Returns:
+            bool: True if the image was added successfully, False otherwise.
+        """
         image = request_img(avatar)
         if image is None:
             return False
 
         image = plt.imread(image, format='jpeg')
         image = OffsetImage(image, zoom=0.1)
-        annotation = AnnotationBbox(image, (1 + GRAPH_IMAGE_WIDTH/2, height),
+        annotation = AnnotationBbox(image, (1 + GRAPH_IMAGE_WIDTH / 2, height),
                                     xycoords=('axes fraction', 'data'),
                                     frameon=False)
         self.ax.add_artist(annotation)
         return True
 
     def configure(self) -> None:
-
+        """
+        Configures the plot with labels, colors, and other settings.
+        """
         end = self.end_date or datetime.now()
         self.ax.set_xlim([self.start_date, end])
 
@@ -177,7 +250,6 @@ class Plotter:
         self.ax.set_xlabel(f"Date ({str(dateformat)})", color=Colours.text)
         self.ax.set_ylabel("Total XP", color=Colours.text)
 
-        # self.fig.figure(facecolor='')
         self.fig.patch.set_facecolor(Colours.outside)
         self.ax.set_facecolor(Colours.inside)
         self.ax.tick_params(colors=Colours.text)
@@ -192,12 +264,26 @@ class Plotter:
             plt.title(self.title, color=Colours.text)
 
     def show(self):
+        """
+        Displays the plot.
+        """
         plt.show()
 
     def save(self, name="out.png"):
+        """
+        Saves the plot to a file.
+
+        Args:
+            name (str, optional): The name of the file. Defaults to "out.png".
+        """
+        name = os.path.join(BASE_DIR, 'generated', name)
         plt.savefig(name)
+        return name
 
     def close(self):
+        """
+        Closes the plot.
+        """
         plt.close()
 
 

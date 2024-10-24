@@ -6,14 +6,39 @@ import discord
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from discord import utils
 from discord.ext import commands
+from openpyxl.packaging.manifest import Override
 
-from custom_logger import Logger, BasicFormatter
+from gwaff.custom_logger import Logger, BasicFormatter
 
 logger = Logger('gwaff.bot')
 
 
 class GwaffBot(commands.Bot):
+    """
+    A custom Discord bot class for Gwaff.
+
+    Attributes:
+        scheduler (AsyncIOScheduler): Scheduler for asynchronous tasks.
+        start_time (datetime): The time when the bot was started.
+        SERVER (int): The ID of the main server.
+        CHANNEL (str): The name of the main channel.
+        LOGGING_SERVER (int): The ID of the logging server.
+        LOGGING_CHANNEL (str): The name of the logging channel.
+        server (discord.Guild): The main server object.
+        channel (discord.TextChannel): The main channel object.
+        logging_server (discord.Guild): The logging server object.
+        logging_channel (discord.TextChannel): The logging channel object.
+        synced (bool): Indicates whether the bot has synced commands.
+    """
+
     def __init__(self, *args: Any, **kwargs: Any):
+        """
+        Initializes the GwaffBot instance.
+
+        Args:
+            *args (Any): Variable length argument list.
+            **kwargs (Any): Arbitrary keyword arguments.
+        """
         discord.VoiceClient.warn_nacl = False
 
         intents = discord.Intents.default()
@@ -39,8 +64,20 @@ class GwaffBot(commands.Bot):
         self.synced = False
 
     async def on_ready(self) -> None:
+        """
+        Event handler for when the bot is ready.
+        Sets up logging, finds servers and channels, and syncs commands.
+        """
         if not self.synced:
             self.scheduler.start()
+
+            file_handler = handlers.TimedRotatingFileHandler(f'../discord.log',
+                                                             when='midnight',
+                                                             backupCount=2)
+            basic_formatter = BasicFormatter(datefmt='%H:%M:%S')
+            file_handler.setFormatter(basic_formatter)
+
+            utils.setup_logging(handler=file_handler, formatter=basic_formatter, root=False)
 
             if (server := self.get_guild(self.SERVER)) is not None:
                 self.server = server
@@ -93,14 +130,27 @@ class GwaffBot(commands.Bot):
         logger.info("Ready!")
 
     async def on_app_command_completion(self, interaction, command):
+        """
+        Event handler for when an application command is completed.
+
+        Args:
+            interaction (discord.Interaction): The interaction that triggered the command.
+            command (discord.ApplicationCommand): The command that was completed.
+        """
         logger.info(f"User '{interaction.user.name}' "
                     f"used command '{command.name}' "
                     f"in guild '{interaction.guild.name}'")
 
     def schedule_task(self, func: Callable, *args: Any, **kwargs: Any):
-        """Schedule a function to be run at a later time. A wrapper for apscheduler add_job."""
+        """
+        Schedule a function to be run at a later time. A wrapper for apscheduler add_job.
+
+        Args:
+            func (Callable): The function to schedule.
+            *args (Any): Variable length argument list.
+            **kwargs (Any): Arbitrary keyword arguments.
+        """
         self.scheduler.add_job(func, *args, **kwargs)
-        # pass
 
 
 cogs = [
@@ -114,15 +164,17 @@ cogs = [
 
 
 async def run_the_bot(token) -> None:
-    '''
-    Runs the bot
-    '''
+    """
+    Runs the bot.
 
+    Args:
+        token (str): The token to authenticate the bot.
+    """
     bot = GwaffBot()
 
     logger.info("Loading cogs")
     for cog in cogs:
-        await bot.load_extension(cog)
+        await bot.load_extension(f"gwaff.bot.{cog}")
         logger.info(f"- {cog}")
     logger.info("Loaded all cogs!")
 

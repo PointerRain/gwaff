@@ -17,8 +17,9 @@ from collector import collect
 collect()
 logger.info("Collecting")
 
+from gwaff.bot.bot import run_the_bot
+
 TOKEN = os.environ['BOT_TOKEN']
-from bot import run_the_bot
 asyncio.run(run_the_bot(TOKEN))
 
 logger.info("Fin!")

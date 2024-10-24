@@ -1,17 +1,16 @@
 from datetime import datetime, timedelta, timezone
 
 import discord
-from discord import app_commands, utils, ui
+from discord import app_commands, utils
 from discord.ext import commands
 
-from custom_logger import Logger
-from gwaff.bot import GwaffBot
+from gwaff.bot.bot import GwaffBot
+from gwaff.custom_logger import Logger
+from gwaff.database import DatabaseReader
+from gwaff.permissions import require_admin
 
 logger = Logger('gwaff.bot.core')
 
-from reducer import Reducer
-from permissions import require_admin
-from database import DatabaseReader
 
 
 COLLECTION_MAX_TIME: int = 120  # The time in minutes that must go by
@@ -114,16 +113,7 @@ class Core_Cog(commands.Cog):
     async def send_data(self, interaction: discord.Interaction,
                         hidden: bool = True):
         await interaction.response.defer(ephemeral=hidden)
-        await interaction.followup.send(file=discord.File('gwaff.csv'))
-
-    @app_commands.command(name="last",
-                          description="(Admin only) Sends the last plot")
-    @app_commands.describe(hidden='Hide from others in this server (default False)')
-    @require_admin
-    async def last_plot(self, interaction: discord.Interaction,
-                        hidden: bool = False):
-        await interaction.response.defer(ephemeral=hidden)
-        await interaction.followup.send(file=discord.File('out.png'), ephemeral=hidden)
+        await interaction.followup.send(file=discord.File('../gwaff.csv'))
 
     @app_commands.command(name="isalive",
                           description="When did I last collect data")
@@ -137,18 +127,22 @@ class Core_Cog(commands.Cog):
         dbr = DatabaseReader()
 
         last = dbr.get_last_timestamp()
-        laststr = utils.format_dt(last, 'R')
+        last_str = utils.format_dt(last, 'R')
 
-        prevlast = dbr.get_dates_in_range(now - timedelta(days=1))[-2]
-        prevlaststr = utils.format_dt(prevlast, 'R')
+        prev_last = dbr.get_dates_in_range(now - timedelta(days=1))
+        if len(prev_last) <= 1:
+            prev_last_str = ""
+        else:
+            prev_last_str = f"(Before that {utils.format_dt(prev_last[-2], 'R')})\n"
 
         alive: str
-        if (now - last).total_seconds() < 1.1 * COLLECTION_MAX_TIME*60:
+        if (now - last).total_seconds() < 1.1 * COLLECTION_MAX_TIME * 60:
             alive = ""
         else:
             alive = "Collection has halted!"
-        await interaction.followup.send(f"Data was last collected {laststr}\n"
-                                        f"(Before that {prevlaststr})\n{alive}")
+
+        await interaction.followup.send(f"Data was last collected {last_str}\n"
+                                        f"{prev_last_str}{alive}")
 
     # @app_commands.command(name="reduce", description="(Admin only) Clean up old datapoints")
     # @require_admin
