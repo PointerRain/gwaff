@@ -2,13 +2,13 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from gwaff.custom_logger import Logger
-from gwaff.database_mc import DatabaseMinecraft
-from gwaff.bot.bot import GwaffBot
+from bot import GwaffBot
+from custom_logger import Logger
+from database_mc import DatabaseMinecraft
 
 logger = Logger('gwaff.bot.spooncraft')
 
-from gwaff.permissions import require_admin
+from permissions import require_admin
 
 
 class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):

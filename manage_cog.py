@@ -4,8 +4,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from gwaff.custom_logger import Logger
+from custom_logger import Logger
+
 logger = Logger('gwaff.bot.cogs')
+
 
 class ManageCogs(commands.Cog):
     """
@@ -18,9 +20,9 @@ class ManageCogs(commands.Cog):
     @app_commands.command(name="managecogs")
     @app_commands.checks.has_permissions(manage_guild=True)
     async def manage_cogs(
-        self, interaction: discord.Interaction,
-        action: Literal["load", "unload", "reload"],
-        cog: str,
+            self, interaction: discord.Interaction,
+            action: Literal["load", "unload", "reload"],
+            cog: str,
     ):
         """
         Trys to unload a cog (i.e. python file).

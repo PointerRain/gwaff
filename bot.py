@@ -6,9 +6,8 @@ import discord
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from discord import utils
 from discord.ext import commands
-from openpyxl.packaging.manifest import Override
 
-from gwaff.custom_logger import Logger, BasicFormatter
+from custom_logger import Logger, BasicFormatter
 
 logger = Logger('gwaff.bot')
 
@@ -103,7 +102,8 @@ class GwaffBot(commands.Bot):
                     self.logging_server.channels,
                     name=self.LOGGING_CHANNEL
                 )
-                if self.logging_channel is not None and isinstance(self.logging_channel, discord.TextChannel):
+                if self.logging_channel is not None and isinstance(self.logging_channel,
+                                                                   discord.TextChannel):
                     logger.info(f"Found logging channel")
                 else:
                     logger.warning(f"Could not find logging channel #{self.LOGGING_CHANNEL}")
@@ -174,11 +174,12 @@ async def run_the_bot(token) -> None:
 
     logger.info("Loading cogs")
     for cog in cogs:
-        await bot.load_extension(f"gwaff.bot.{cog}")
+        await bot.load_extension(f"{cog}")
         logger.info(f"- {cog}")
     logger.info("Loaded all cogs!")
 
     await bot.start(token)
+
 
 if __name__ == '__main__':
     raise RuntimeError("Need to run through run_the_bot with the token!")

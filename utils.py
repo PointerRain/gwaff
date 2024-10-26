@@ -33,7 +33,7 @@ def retry_request(request_func, url, **kwargs):
             response.raise_for_status()  # Raises an HTTPError for bad responses
             return response
         except requests.exceptions.RequestException as e:
-            logger.warning(f"Attempt {count+1} failed: {str(e)}")
+            logger.warning(f"Attempt {count + 1} failed: {str(e)}")
             count += 1
             if count < MAX_RETRIES:
                 time.sleep(1 << count)
@@ -42,7 +42,7 @@ def retry_request(request_func, url, **kwargs):
                 return None
 
 
-def request_api(url: str, **kwargs) -> dict | None:
+def request_api(url: str, **kwargs) -> dict:
     """
     Requests JSON data from the given API.
 
@@ -105,7 +105,7 @@ def url_constructor(base: str, **kwargs: dict) -> str:
 
 
 def resolve_member(interaction: discord.Interaction,
-                   user: discord.User) -> discord.User | None:
+                   user: discord.User) -> discord.User:
     """
     Chooses the member between a specified member and the triggering member.
 
@@ -140,6 +140,7 @@ def ordinal(n: int) -> str:
     i = n if (n < 20) else (n % 10)
     suffix = suffixes.get(i, 'th')
     return str(n) + suffix
+
 
 if __name__ == '__main__':
     dbr = DatabaseReader()

@@ -1,15 +1,14 @@
-from xml.etree.ElementInclude import include
-
-import discord
-from discord import app_commands, utils
-from discord.ext import commands
 from datetime import datetime, timedelta
 
-from gwaff.utils import resolve_member
-from gwaff.growth import Growth
-from gwaff.custom_logger import Logger
-logger = Logger('gwaff.bot.plot')
+import discord
+from discord import app_commands
+from discord.ext import commands
 
+from custom_logger import Logger
+from growth import Growth
+from utils import resolve_member
+
+logger = Logger('gwaff.bot.plot')
 
 GRAPH_MAX_DAYS: int = 365       # The maximum number of days that can be plotted
 GRAPH_DEFAULT_DAYS: int = 7     # The default number of days to be plot
@@ -115,8 +114,8 @@ class Plotter_Cog(commands.Cog):
 
         try:
             path = growth(days=days, member=member, count=1,
-                            title=f"{member.name}'s growth over the last {round(days)} days",
-                            compare=co_member)
+                          title=f"{member.name}'s growth over the last {round(days)} days",
+                          compare=co_member)
         except IndexError:
             await interaction.followup.send(":bust_in_silhouette: "
                                             "That person has not been online "
@@ -135,7 +134,7 @@ class Plotter_Cog(commands.Cog):
             return
         try:
             path = growth(days=GRAPH_DEFAULT_DAYS, member=member, count=1,
-                    title=f"{member.name}'s growth over the last {round(GRAPH_DEFAULT_DAYS)} days")
+                          title=f"{member.name}'s growth over the last {round(GRAPH_DEFAULT_DAYS)} days")
         except IndexError:
             await interaction.followup.send(":bust_in_silhouette: "
                                             "That person has not been online "

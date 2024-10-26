@@ -6,15 +6,15 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from gwaff.custom_logger import Logger
+from custom_logger import Logger
 
 logger = Logger('gwaff.bot.stats')
 
-from gwaff.predictor import Prediction, xp_to_lvl
-from gwaff.predictor import (NoDataError, ZeroGrowthError,
+from predictor import Prediction, xp_to_lvl
+from predictor import (NoDataError, ZeroGrowthError,
                        TargetBoundsError)
-from gwaff.truerank import Truerank
-from gwaff.utils import resolve_member, ordinal
+from truerank import Truerank
+from utils import resolve_member, ordinal
 
 PREDICTION_MAX_DAYS: int = 365      # The maximum days that can be averaged over
                                     # in predictions.
@@ -270,7 +270,7 @@ class Stats_Cog(commands.Cog):
                                             f"<@{str(other_id)}> ({other_name})")
 
     async def user_ctx(self, interaction: discord.Interaction,
-                         member: discord.Member):
+                       member: discord.Member):
         await interaction.response.defer(ephemeral=True)
 
         member = resolve_member(interaction, member)

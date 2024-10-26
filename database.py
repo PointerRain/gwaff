@@ -17,11 +17,12 @@ class BaseDatabase:
     """
     Base class for database operations using SQLAlchemy.
     """
+
     def __init__(self):
         """
         Initializes the database engine and session.
         """
-        self.engine = create_engine(f'sqlite:///{DB_DIR}', echo=False)
+        self.engine = create_engine(f'sqlite:///{DB_DIR}?charset=utf8mb4', echo=False)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
 
@@ -42,6 +43,7 @@ class DatabaseCreator(BaseDatabase):
     """
     Class for creating and clearing the database.
     """
+
     def clear_database(self):
         """
         Drops all tables in the database.
@@ -65,6 +67,7 @@ class DatabaseReader(BaseDatabase):
     """
     Class for reading data from the database.
     """
+
     def get_dates_in_range(self, start_date=None, end_date=None):
         """
         Retrieves distinct timestamps within a specified date range.
@@ -215,6 +218,7 @@ class DatabaseSaver(BaseDatabase):
     """
     Class for saving data to the database.
     """
+
     def update_profile(self, id, name=None, colour=None, avatar=None):
         """
         Updates or creates a profile in the database.

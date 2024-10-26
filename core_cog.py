@@ -4,10 +4,10 @@ import discord
 from discord import app_commands, utils
 from discord.ext import commands
 
-from gwaff.bot.bot import GwaffBot
-from gwaff.custom_logger import Logger
-from gwaff.database import DatabaseReader
-from gwaff.permissions import require_admin
+from bot import GwaffBot
+from custom_logger import Logger
+from database import DatabaseReader
+from permissions import require_admin
 
 logger = Logger('gwaff.bot.core')
 
@@ -113,7 +113,7 @@ class Core_Cog(commands.Cog):
     async def send_data(self, interaction: discord.Interaction,
                         hidden: bool = True):
         await interaction.response.defer(ephemeral=hidden)
-        await interaction.followup.send(file=discord.File('../gwaff.csv'))
+        await interaction.followup.send(file=discord.File('gwaff.csv'))
 
     @app_commands.command(name="isalive",
                           description="When did I last collect data")
