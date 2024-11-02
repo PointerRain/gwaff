@@ -1,4 +1,5 @@
 import json
+import pandas as pd
 
 from database import BaseDatabase
 from structs import *
@@ -18,7 +19,10 @@ class DatabaseMinecraft(BaseDatabase):
             data (DataFrame): The data to load from the CSV file.
         """
         for index, row in data.iterrows():
-            self.add_user(row.iloc[0], row.iloc[1])
+            if (not pd.isna(row.iloc[0])) and (not pd.isna(row.iloc[1])):
+                self.add_user(row.iloc[0], row.iloc[1])
+            else:
+                print(row.iloc[0], row.iloc[1], row.iloc[3])
 
         self.commit()
 
@@ -32,7 +36,7 @@ class DatabaseMinecraft(BaseDatabase):
             mc_name (str, optional): The Minecraft name of the user. Defaults to None.
         """
         user = (self.session.query(Minecraft)
-                            .filter_by(discord_id=discord_id).first())
+                .filter_by(discord_id=discord_id).first())
 
         if user is not None:
             user.mc_uuid = mc_uuid or user.mc_uuid
@@ -65,7 +69,8 @@ class DatabaseMinecraft(BaseDatabase):
             bool: True if the update was successful, False otherwise.
         """
         try:
-            data = request_api(f"https://sessionserver.mojang.com/session/minecraft/profile/{mc_uuid}")
+            data = request_api(
+                f"https://sessionserver.mojang.com/session/minecraft/profile/{mc_uuid}")
             if data and (name := data.get('name')):
                 print(name)
                 if name != mc_name:
@@ -76,7 +81,7 @@ class DatabaseMinecraft(BaseDatabase):
         except Exception as e:
             return False
 
-    async def update_all_mc_names(self):
+    def update_all_mc_names(self):
         """
         Asynchronously updates the Minecraft names of all users.
 
@@ -100,7 +105,9 @@ class DatabaseMinecraft(BaseDatabase):
             int: The length of the JSON string.
         """
         data = []
-        users = self.session.query(Minecraft).join(Profile, Minecraft.discord_id == Profile.id).all()
+        users = self.session.query(Minecraft).join(Profile,
+                                                   Minecraft.discord_id == Profile.id).all()
+
         for user in users:
             if user.mc_name is None:
                 continue
@@ -123,10 +130,10 @@ if __name__ == '__main__':
     dbm = DatabaseMinecraft()
     # dbm.load_from_csv(pd.read_csv("users_withnames.csv"))
 
-    # for i in dbm.get_users():
-    #     print(i.discord_id, i.profile.name, i.mc_name)
+    for i in dbm.get_users():
+        print(i.discord_id, i.profile.name, i.mc_name)
 
-    # print(dbm.update_all_mc_names())
+    print(dbm.update_all_mc_names())
 
     # print(dbm.get_users())
 

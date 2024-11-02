@@ -1,14 +1,12 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from bot import GwaffBot
 from custom_logger import Logger
 from database_mc import DatabaseMinecraft
+from permissions import require_admin
 
 logger = Logger('gwaff.bot.spooncraft')
-
-from permissions import require_admin
 
 
 class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
@@ -20,7 +18,7 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
         Args:
             bot (GwaffBot): The bot instance.
         """
-        self.bot = bot
+        self.bot: GwaffBot = bot
 
         # Upload the data every day at midnight
         self.bot.schedule_task(
@@ -39,7 +37,7 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
             day='last'
         )
 
-    async def upload(self):
+    async def upload(self) -> None:
         """
         Asynchronously uploads Spooncraft data and logs the process.
         """
@@ -50,7 +48,7 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
             logger.warning(f"Could not find required channel")
         logger.info("Upload was not completed successfully")
 
-    async def update_names(self):
+    async def update_names(self) -> None:
         """
         Asynchronously updates Minecraft names and logs the process.
         """
@@ -70,7 +68,7 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
     @app_commands.command(name="upload",
                           description="(Admin only) Upload the Spooncraft data")
     @require_admin
-    async def command_upload(self, interaction: discord.Interaction):
+    async def command_upload(self, interaction: discord.Interaction) -> None:
         """
         Command to upload Spooncraft data.
 
@@ -78,13 +76,14 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
             interaction (discord.Interaction): The interaction object.
         """
         await interaction.response.defer(ephemeral=True)
-        await self.upload()
-        await interaction.followup.send("No such luck")
+        dbm: DatabaseMinecraft = DatabaseMinecraft()
+        dbm.to_json()
+        await interaction.followup.send(file=discord.File('minecraft.txt'))
 
     @app_commands.command(name="updateall",
                           description="(Admin only) Update Spooncraft MC names")
     @require_admin
-    async def command_updateall(self, interaction: discord.Interaction):
+    async def command_updateall(self, interaction: discord.Interaction) -> None:
         """
         Command to update all Minecraft names.
 
@@ -92,8 +91,8 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
             interaction (discord.Interaction): The interaction object.
         """
         await interaction.response.defer(ephemeral=True)
-        msg = await interaction.followup.send("Starting the update")
         dbm = DatabaseMinecraft()
+        msg: discord.WebhookMessage = await interaction.followup.send("Starting the update")
         success, total = await dbm.update_all_mc_names()
         await msg.edit(
             content=f"Finished updating names with {total - success} fails out of {total}!")
@@ -104,7 +103,7 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
     async def command_add(self, interaction: discord.Interaction,
                           member: discord.User,
                           uuid: str,
-                          name: str = None):
+                          name: str = None) -> None:
         """
         Command to add a Spooncraft player to the database.
 
@@ -125,7 +124,7 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
             await interaction.followup.send(f"Added user {member.mention} with UUID {uuid}")
 
 
-async def setup(bot: GwaffBot):
+async def setup(bot: GwaffBot) -> None:
     """
     Sets up the SpooncraftCog and adds it to the bot.
 
