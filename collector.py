@@ -50,7 +50,8 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
     for page in pages:
         data = request_api(API_URL, page=page)
         if not data:
-            return False
+            logger.error("Skipping page after max retries")
+            continue
 
         leaderboard = data.get('leaderboard', [])
 
