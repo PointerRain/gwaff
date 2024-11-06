@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from logging import handlers
 from typing import Any, Callable
@@ -19,13 +20,7 @@ class GwaffBot(commands.Bot):
     Attributes:
         scheduler (AsyncIOScheduler): Scheduler for asynchronous tasks.
         start_time (datetime): The time when the bot was started.
-        SERVER (int): The ID of the main server.
-        CHANNEL (str): The name of the main channel.
-        LOGGING_SERVER (int): The ID of the logging server.
-        LOGGING_CHANNEL (str): The name of the logging channel.
-        server (discord.Guild): The main server object.
         channel (discord.TextChannel): The main channel object.
-        logging_server (discord.Guild): The logging server object.
         logging_channel (discord.TextChannel): The logging channel object.
         synced (bool): Indicates whether the bot has synced commands.
     """
@@ -50,17 +45,37 @@ class GwaffBot(commands.Bot):
         self.scheduler = AsyncIOScheduler()
         self.start_time = datetime.now()
 
-        self.SERVER = 1077927097739247727
-        self.CHANNEL = "testing"
-        self.LOGGING_SERVER = 1077927097739247727
-        self.LOGGING_CHANNEL = "testing"
-
-        self.server: discord.Guild = None
         self.channel: discord.TextChannel = None
-        self.logging_server: discord.Guild = None
         self.logging_channel: discord.TextChannel = None
 
         self.synced = False
+
+    async def find_channel(self, server_id: str, channel_name: str) -> None:
+        """
+        Finds a channel by name.
+
+        Args:
+            server_id (str | int): The server ID or name.
+            channel_name (str): The channel name.
+
+        Returns:
+            discord.TextChannel | None: The channel object.
+        """
+        if server_id is None:
+            logger.error(f"Server is not defined in environment variables")
+            return None
+        server = self.get_guild(int(server_id))
+        if server is None:
+            logger.error(f"Unable to find server with id {str(server_id)}")
+            return None
+
+        channel = discord.utils.get(server.channels, name=channel_name)
+        if isinstance(channel, discord.TextChannel):
+            logger.info(f"Found channel")
+            return channel
+
+        logger.warning(f"Could not find channel #{channel_name}")
+        return None
 
     async def on_ready(self) -> None:
         """
@@ -78,43 +93,13 @@ class GwaffBot(commands.Bot):
 
             utils.setup_logging(handler=file_handler, formatter=basic_formatter, root=False)
 
-            if (server := self.get_guild(self.SERVER)) is not None:
-                self.server = server
-                logger.info(f"Found server")
-                self.channel = discord.utils.get(
-                    self.server.channels,
-                    name=self.CHANNEL
-                )
-                if self.channel is not None and isinstance(self.channel, discord.TextChannel):
-                    logger.info(f"Found channel")
-                else:
-                    logger.warning(f"Could not find channel #{self.CHANNEL}")
-                    self.channel = None
-            else:
-                logger.error(f"Unable to find server with id {str(self.SERVER)}")
-                self.server = None
-                self.channel = None
-
-            if (server := self.get_guild(self.LOGGING_SERVER)) is not None:
-                self.logging_server = server
-                logger.info(f"Found logging server")
-                self.logging_channel = discord.utils.get(
-                    self.logging_server.channels,
-                    name=self.LOGGING_CHANNEL
-                )
-                if self.logging_channel is not None and isinstance(self.logging_channel,
-                                                                   discord.TextChannel):
-                    logger.info(f"Found logging channel")
-                else:
-                    logger.warning(f"Could not find logging channel #{self.LOGGING_CHANNEL}")
-                    self.logging_channel = None
-            else:
-                logger.error(f"Unable to find logging server with id {str(self.LOGGING_SERVER)}")
-                self.logging_server = None
-                self.logging_channel = None
+            self.channel = await self.find_channel(os.environ.get('SERVER'),
+                                                   os.environ.get('CHANNEL'))
+            self.logging_channel = await self.find_channel(os.environ.get('LOGGING_SERVER'),
+                                                           os.environ.get('LOGGING_CHANNEL'))
 
             server_finds = sum(bool(s)
-                               for s in [self.server, self.logging_server])
+                               for s in [self.channel, self.logging_channel])
             if server_finds == 0:
                 logger.error(f"Found {server_finds} of 2 servers")
             elif server_finds == 1:
