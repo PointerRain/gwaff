@@ -12,7 +12,6 @@ from utils import request_img
 
 logger = Logger('gwaff.plotter')
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PRIMARY_FONT_PATH = os.path.join(BASE_DIR, 'assets/gg sans Semibold.ttf')
 EMOJI_FONT_PATH = os.path.join(BASE_DIR, 'assets/NotoEmoji-Regular.ttf')
@@ -22,7 +21,8 @@ fontManager.addfont(EMOJI_FONT_PATH)  # Noto Emoji
 p_font = FontProperties(fname=PRIMARY_FONT_PATH)
 e_font = FontProperties(fname=EMOJI_FONT_PATH)
 
-fonts = [FontProperties(fname=PRIMARY_FONT_PATH).get_name(), FontProperties(fname=EMOJI_FONT_PATH).get_name()]
+fonts = [FontProperties(fname=PRIMARY_FONT_PATH).get_name(),
+         FontProperties(fname=EMOJI_FONT_PATH).get_name()]
 
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.sans-serif'] = fonts + plt.rcParams['font.sans-serif']
@@ -140,22 +140,26 @@ class Plotter:
         self.special = special
         self.title = title
 
-    def get_data(self, limit):
+        self.max_xp = 0
+        self.min_xp = 0
+
+    def get_data(self, limit: int, include: set[int] = None) -> list:
         """
         Retrieves data from the database within the specified range.
 
         Args:
             limit (int): The maximum number of data points to retrieve.
+            include (list[int], optional): A list of user IDs to include. Defaults to None.
 
         Returns:
             list: The data retrieved from the database.
         """
         dbr = DatabaseReader()
-        return dbr.get_data_in_range(self.start_date)
+        return dbr.get_data_in_range(self.start_date, limit, include)
 
     def draw(self, start: int = 0,
              limit: int = GRAPH_DEFAULT_USERS,
-             include: list[int] = None) -> None:
+             include: set[int] = None) -> None:
         """
         Draws the plot with the specified parameters.
 
@@ -164,18 +168,18 @@ class Plotter:
             limit (int, optional): The maximum number of users to plot. Defaults to GRAPH_DEFAULT_USERS.
             include (list[int], optional): A list of user IDs to include. Defaults to None.
         """
-        included_ids = set(include) if include else None
-        max_count = limit if not include else len(included_ids)
+        max_count = limit if not include else len(include)
 
         count: int = 0
-        for profile, xs, ys in self.get_data(max_count):
+        for profile, xs, ys in self.get_data(max_count, include):
             id, name, colour, avatar = profile
 
-            if included_ids and id not in included_ids:
+            if include and id not in include:
                 continue
             if len(xs) <= 1:
                 continue
-            if id in [1013000925385871451, 479575918600388609, 1115004793224704070, 1230458949308776498]:
+            if id in {1013000925385871451, 479575918600388609, 1115004793224704070,
+                      1230458949308776498}:
                 ys = [round(0.9 * y) for y in ys]
 
             self.annotations.append(
@@ -196,15 +200,15 @@ class Plotter:
         """
         # Determine how to convert from xp to axes fraction.
         sorted_annotations = sorted(self.annotations, key=lambda x: x[0])
-        self.maxxp = sorted_annotations[-1][0]
-        self.minxp = sorted_annotations[0][4]
+        self.max_xp = sorted_annotations[-1][0]
+        self.min_xp = sorted_annotations[0][4]
 
         if len(self.annotations) > 1:
             def xp_to_axes(xp):
-                return (xp - self.minxp) / (self.maxxp - self.minxp)
+                return (xp - self.min_xp) / (self.max_xp - self.min_xp)
 
             def axes_to_data(h):
-                return h * (self.maxxp - self.minxp) + self.minxp
+                return h * (self.max_xp - self.min_xp) + self.min_xp
 
         # Each point defaults to next to line.
         # Moves up to avoid lower labels.

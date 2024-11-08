@@ -6,12 +6,16 @@ from sqlalchemy.orm import sessionmaker
 
 from structs import *
 
-MAX_RETRIES = 5
-
 import os.path
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_DIR = os.path.join(BASE_DIR, 'gwaff.db')
+
+
+# logging.getLogger('sqlalchemy').disabled = True
+# logging.getLogger('sqlalchemy.orm.mapper.Mapper').disabled = True
+# logging.getLogger('sqlalchemy.engine.Engine').disabled = True
+
 
 class BaseDatabase:
     """
@@ -86,7 +90,7 @@ class DatabaseReader(BaseDatabase):
             query_result = query_result.filter(Record.timestamp >= start_date)
         return [i.timestamp for i in query_result.order_by(Record.timestamp).all()]
 
-    def get_row(self, id, start_date=None):
+    def get_row(self, id: int, start_date: datetime = None) -> list:
         """
         Retrieves records for a specific ID, optionally filtering by start date.
 
@@ -100,38 +104,41 @@ class DatabaseReader(BaseDatabase):
         if id in [483515866319945728] and start_date < datetime(2024, 6, 1, 0, 0):
             return []
         record_query = (self.session.query(Record)
-                                    .filter_by(id=id)
-                                    .order_by(Record.timestamp))
+                        .filter_by(id=id)
+                        .order_by(Record.timestamp))
         if start_date:
             record_query = record_query.filter(Record.timestamp >= start_date)
 
         # Execute the query for records
         return record_query.all()
 
-    def get_data_in_range(self, start_date=None, limit=15):
+    def get_data_in_range(self, start_date: datetime = None, limit: int = 15,
+                          include: set[int] = None) -> list[tuple]:
         """
         Retrieves profile data and associated records within a specified date range.
 
         Args:
             start_date (datetime, optional): The start date for filtering records.
             limit (int, optional): The maximum number of profiles to retrieve. Defaults to 15.
+            include (set, optional): A list of profile IDs to include. Defaults to None.
 
         Returns:
             list: A list of tuples containing profile data and associated records.
         """
         profile_query = (self.session.query(Profile)
-                                     .join(Record, Profile.id == Record.id)
-                                     .group_by(Profile.id)
-                                     .order_by(desc(func.max(Record.value)))
-                                     .limit(limit))
+                         .join(Record, Profile.id == Record.id)
+                         .group_by(Profile.id)
+                         .order_by(desc(func.max(Record.value))))
+        if include and hasattr(include, '__iter__'):
+            profile_query = profile_query.filter(Profile.id.in_(include))
+        if limit:
+            profile_query = profile_query.limit(limit)
 
         result = []
 
-        print(limit)
-
         for profile in profile_query:
             # Query for records associated with the profile, optionally filtering by start_date
-            records = self.get_row(profile.id, start_date)
+            records = self.get_row(int(profile.id), start_date)
 
             # Append the data to the result list
             result.append((
@@ -142,24 +149,28 @@ class DatabaseReader(BaseDatabase):
 
         return result
 
-    def get_growth_in_range(self, start_date=None, limit=15):
+    def get_growth_in_range(self, start_date: datetime = None, limit: int = 15,
+                            include: set[int] = None) -> list[tuple]:
         """
         Retrieves profile data and growth within a specified date range.
 
         Args:
             start_date (datetime, optional): The start date for filtering records.
             limit (int, optional): The maximum number of profiles to retrieve. Defaults to 15.
-
+            include (set, optional): A list of profile IDs to include. Defaults to None.
         Returns:
             list: A list of tuples containing profile data and growth values.
         """
         profile_query = (self.session.query(Profile)
-                                     .join(Record, Profile.id == Record.id))
+                         .join(Record, Profile.id == Record.id))
         if start_date:
             profile_query = profile_query.filter(Record.timestamp >= start_date)
         profile_query = (profile_query.group_by(Profile.id)
-                                      .order_by(desc(func.max(Record.value) - func.min(Record.value)))
-                                      .limit(limit))
+                         .order_by(desc(func.max(Record.value) - func.min(Record.value))))
+        if include and hasattr(include, '__iter__'):
+            profile_query = profile_query.filter(Profile.id.in_(include))
+        if limit:
+            profile_query = profile_query.limit(limit)
 
         result = []
 
@@ -193,9 +204,9 @@ class DatabaseReader(BaseDatabase):
             list: A list of tuples containing profile data and the maximum record value.
         """
         profile_query = (self.session.query(Profile, func.max(Record.value))
-                                     .join(Record, Profile.id == Record.id)
-                                     .group_by(Profile.id)
-                                     .order_by(desc(func.max(Record.value))).all())
+                         .join(Record, Profile.id == Record.id)
+                         .group_by(Profile.id)
+                         .order_by(desc(func.max(Record.value))).all())
         # return [(i, i.records[-1]) for i in profile_query]
         return profile_query
 
@@ -219,7 +230,7 @@ class DatabaseSaver(BaseDatabase):
     Class for saving data to the database.
     """
 
-    def update_profile(self, id, name=None, colour=None, avatar=None):
+    def update_profile(self, id, name: str = None, colour: str = None, avatar: str = None) -> None:
         """
         Updates or creates a profile in the database.
 

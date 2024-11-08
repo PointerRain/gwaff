@@ -35,14 +35,12 @@ def growth(days: int = GRAPH_DEFAULT_DAYS,
                   title=title)
     if member is None:
         include = None
-        count = count
     else:
-        include = [member.id]
-        count = 1
+        include = {member.id}
     if compare is not None:
-        include = [member.id, compare.id]
-        count = 2
+        include = {member.id, compare.id}
         plot.title = f"Comparing growth over the last {round(days)} days"
+
     plot.draw(limit=count, include=include)
     plot.annotate()
     plot.configure()
