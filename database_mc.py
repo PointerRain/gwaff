@@ -1,4 +1,3 @@
-import json
 import pandas as pd
 
 from database import BaseDatabase
@@ -21,8 +20,6 @@ class DatabaseMinecraft(BaseDatabase):
         for index, row in data.iterrows():
             if (not pd.isna(row.iloc[0])) and (not pd.isna(row.iloc[1])):
                 self.add_user(row.iloc[0], row.iloc[1])
-            else:
-                print(row.iloc[0], row.iloc[1], row.iloc[3])
 
         self.commit()
 
@@ -56,7 +53,7 @@ class DatabaseMinecraft(BaseDatabase):
         """
         return self.session.query(Minecraft).join(Profile, Minecraft.discord_id == Profile.id).all()
 
-    def update_mc_name(self, discord_id, mc_uuid, mc_name=None):
+    async def update_mc_name(self, discord_id, mc_uuid, mc_name=None):
         """
         Updates the Minecraft name of a user.
 
@@ -69,19 +66,18 @@ class DatabaseMinecraft(BaseDatabase):
             bool: True if the update was successful, False otherwise.
         """
         try:
-            data = request_api(
+            data = await request_api(
                 f"https://sessionserver.mojang.com/session/minecraft/profile/{mc_uuid}")
             if data and (name := data.get('name')):
-                print(name)
                 if name != mc_name:
                     self.add_user(discord_id, mc_uuid, name)
                 return True
             else:
                 return False
-        except Exception as e:
+        except Exception:
             return False
 
-    def update_all_mc_names(self):
+    async def update_all_mc_names(self):
         """
         Asynchronously updates the Minecraft names of all users.
 
@@ -92,10 +88,10 @@ class DatabaseMinecraft(BaseDatabase):
         success = 0
         total = 0
         for user in users:
-            success += self.update_mc_name(user.discord_id, user.mc_uuid, user.mc_name)
+            success += await self.update_mc_name(user.discord_id, user.mc_uuid, user.mc_name)
             total += 1
         self.commit()
-        return (success, total)
+        return success, total
 
     def to_json(self):
         """
@@ -121,9 +117,7 @@ class DatabaseMinecraft(BaseDatabase):
                 'discord_nick': user.profile.name,
                 'colour': colour
             })
-        with open('minecraft.txt', 'w', encoding='utf-8') as f:
-            json.dump(data, f)
-        return len(str(data))
+        return data
 
 
 if __name__ == '__main__':
@@ -133,7 +127,7 @@ if __name__ == '__main__':
     for i in dbm.get_users():
         print(i.discord_id, i.profile.name, i.mc_name)
 
-    print(dbm.update_all_mc_names())
+    # print(dbm.update_all_mc_names())
 
     # print(dbm.get_users())
 

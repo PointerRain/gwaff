@@ -1,12 +1,25 @@
 import discord
+import requests
 from discord import app_commands
 from discord.ext import commands
+
 from bot import GwaffBot
 from custom_logger import Logger
 from database_mc import DatabaseMinecraft
 from permissions import require_admin
 
 logger = Logger('gwaff.bot.spooncraft')
+
+
+def update_data(url, new_data):
+    headers = {'Content-Type': 'application/json', "User-Agent": "Mozilla/5.0"}
+    response = requests.post(url, json=new_data, headers=headers)
+    if response.status_code == 200:
+        logger.info(f"Data updated successfully: {response.json()}")
+        return True
+    else:
+        logger.info(f"Failed to update data: {response.status_code, response.text}")
+        return False
 
 
 class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
@@ -37,16 +50,23 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
             day='last'
         )
 
-    async def upload(self) -> None:
+    async def upload(self) -> bool:
         """
         Asynchronously uploads Spooncraft data and logs the process.
         """
+        dbm = DatabaseMinecraft()
         logger.info("Starting upload")
         if self.bot.logging_channel:
-            await self.bot.logging_channel.send("Upload SC data here!")
+            data = dbm.to_json()
+            result = update_data("https://gwaff.uqcloud.net/api/spooncraft", data)
+            if result:
+                logger.info("Upload completed successfully!")
+                return True
         else:
             logger.warning(f"Could not find required channel")
-        logger.info("Upload was not completed successfully")
+        await self.bot.logging_channel.send("SC data upload failed")
+        logger.warning(f"Upload failed!")
+        return False
 
     async def update_names(self) -> None:
         """
@@ -58,6 +78,8 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
             await self.bot.logging_channel.send("Updating names now!")
         else:
             logger.warning(f"Could not find required channel")
+            return
+
         dbm = DatabaseMinecraft()
         success, total = await dbm.update_all_mc_names()
         if self.bot.logging_channel:
@@ -76,9 +98,12 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
             interaction (discord.Interaction): The interaction object.
         """
         await interaction.response.defer(ephemeral=True)
-        dbm: DatabaseMinecraft = DatabaseMinecraft()
-        dbm.to_json()
-        await interaction.followup.send(file=discord.File('minecraft.txt'))
+        # dbm: DatabaseMinecraft = DatabaseMinecraft()
+        result = await self.upload()
+        if result:
+            await interaction.followup.send("Data uploaded successfully!")
+        else:
+            await interaction.followup.send("Data upload failed!")
 
     @app_commands.command(name="updateall",
                           description="(Admin only) Update Spooncraft MC names")
@@ -90,6 +115,7 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
         Args:
             interaction (discord.Interaction): The interaction object.
         """
+        # TODO: Fix blocking
         await interaction.response.defer(ephemeral=True)
         dbm = DatabaseMinecraft()
         msg: discord.WebhookMessage = await interaction.followup.send("Starting the update")
