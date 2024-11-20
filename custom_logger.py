@@ -61,6 +61,7 @@ class CustomLogger(logging.Logger):
         self.addHandler(file_handler)
 
 
+# TODO: Fix the logger to not output garbage
 logging.setLoggerClass(CustomLogger)
 
 

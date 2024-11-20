@@ -9,17 +9,15 @@ from utils import request_api
 
 logger = Logger('gwaff.collect')
 
-MAX_RETRIES: int = 5        # How many times to attempt to collect and save data
-WAIT_SUCCESS: int = 60      # How many minutes to wait after a success
-WAIT_FAIL: int = 30         # How many minutes to wait after a failure
-MIN_SEPARATION: int = 30    # Do not store new data if the last collection was
-                            #  less than this many minutes ago
-COLLECTION_SMALL: int = 3   # Collect data from up to this page every
-                            #  collection event
-COLLECTION_LARGE: int = 8   # Collect data from up to this page every second
-                            #  collection event
+MAX_RETRIES: int = 5  # How many times to attempt to collect and save data
+WAIT_SUCCESS: int = 60  # How many minutes to wait after a success
+WAIT_FAIL: int = 30  # How many minutes to wait after a failure
+MIN_SEPARATION: int = 30  # Do not store new data if the last collection was less than this many minutes ago
+COLLECTION_SMALL: int = 2  # Collect data from up to this page every collection event
+COLLECTION_LARGE: int = 6  # Collect data from up to this page every second collection event
 SERVER_ID = "377946908783673344"
-API_URL = f"https://gdcolon.com/polaris/api/leaderboard/{SERVER_ID}"
+API_URL = f"https://joegaming.duckdns.org/polaris/api/leaderboard/{SERVER_ID}"
+
 
 def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
                 min_time: int = MIN_SEPARATION) -> bool:
@@ -41,7 +39,8 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
 
     difference = now - lasttime
     if difference.total_seconds() < min_time * 60:
-        logger.info(f"Too soon - {int(difference.total_seconds() / 60)}/{min_time} minutes required")
+        logger.info(
+            f"Too soon - {int(difference.total_seconds() / 60)}/{min_time} minutes required")
         return False
 
     dbi = DatabaseSaver()
@@ -75,7 +74,7 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
                         success += 1
                         break  # Exit retry loop on success
                     except Exception as e:
-                        logger.warning(f"Failed to save record (attempt {count+1}): {str(e)}")
+                        logger.warning(f"Failed to save record (attempt {count + 1}): {str(e)}")
                         if count < MAX_RETRIES:
                             count += 1
                         else:
@@ -94,24 +93,26 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
         logger.error("Considerable record save failures!")
         return False
 
+
 def run() -> None:
     """
     Periodically collects data.
     """
     while True:
-        success = record_data(pages=range(1, COLLECTION_LARGE))
+        success = record_data(pages=range(1, COLLECTION_LARGE + 1))
         wait = WAIT_SUCCESS if success else WAIT_FAIL
 
         for i in range(wait // 10):
             logger.debug(f"Slept {i * 10}/{wait} minutes")
             time.sleep(10 * 60)
 
-        success = record_data(pages=range(1, COLLECTION_SMALL))
+        success = record_data(pages=range(1, COLLECTION_SMALL + 1))
         wait = WAIT_SUCCESS if success else WAIT_FAIL
 
         for i in range(wait // 10):
             logger.debug(f"Slept {i * 10}/{wait} minutes")
             time.sleep(10 * 60)
+
 
 def collect() -> None:
     """
@@ -119,6 +120,7 @@ def collect() -> None:
     """
     t = Thread(target=run)
     t.start()
+
 
 if __name__ == '__main__':
     collect()
