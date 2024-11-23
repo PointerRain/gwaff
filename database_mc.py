@@ -1,3 +1,5 @@
+import re
+
 import pandas as pd
 
 from database import BaseDatabase
@@ -111,6 +113,16 @@ class DatabaseMinecraft(BaseDatabase):
             uuid = user.mc_uuid
             uuid = f'{uuid[0:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:32]}'
             colour = user.profile.colour.replace('#', '')
+            mc_name = user.mc_name
+            discord_nick = user.profile.name
+            if colour in ['95a5a6', '000000']:
+                if re.sub('[ _.]', '', mc_name).lower() == re.sub('[ _.]', '',
+                                                                  discord_nick).lower():
+                    print(f"Skipping {user.mc_name}")
+                    continue
+            if colour == '000000':
+                print(f"Skipping {user.mc_name}")
+                continue
             data.append({
                 'mc_name': user.mc_name,
                 'mc_uuid': uuid,

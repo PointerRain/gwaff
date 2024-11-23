@@ -1,0 +1,61 @@
+from datetime import datetime, timedelta
+
+from database import BaseDatabase
+from structs import *
+
+
+class DatabaseEvents(BaseDatabase):
+    def get_current_event(self) -> Event | None:
+        '''
+        Returns the current event.
+        '''
+        return self.session.query(Event).filter_by(end_time=None).first()
+
+    def create_event(self, start_time, end_time=None, multiplier: float = None) -> None:
+        '''
+        Creates a new event with the given start_time, end_time, and multiplier.
+        '''
+        if self.get_current_event():
+            raise Exception("There is already an event in progress.")
+
+        new_event = Event(start_time=start_time, end_time=end_time, multiplier=multiplier)
+        self.session.add(new_event)
+        self.session.commit()
+
+    def end_event(self, end_time) -> None:
+        '''
+        Ends the oldest event
+        '''
+        event = self.get_current_event()
+        event.end_time = end_time
+        self.session.commit()
+
+    def get_events(self):
+        return self.session.query(Event).all()
+
+    def get_events_in_range(self, start_date, end_date=None):
+        if end_date is None:
+            end_date = datetime.now()
+            
+        return (self.session.query(Event)
+                .filter(Event.start_time >= start_date, Event.end_time <= end_date)
+                .filter(Event.end_time - Event.start_time <= 0.05 * (end_date - start_date))
+                .all())
+
+
+if __name__ == '__main__':
+    dbe = DatabaseEvents()
+
+    # dbe.create_event(datetime.now() - timedelta(hours=1), None, 1.5)
+    # dbe.create_event(datetime.now(), None, 2)
+    #
+    # # print(dbe.get_events())
+    #
+    # print(dbe.get_current_event())
+    # dbe.end_event(datetime.now())
+    # print(dbe.get_current_event())
+    events = dbe.get_events_in_range(datetime.now() - timedelta(days=1), datetime.now())
+
+    for event in events:
+        # print(event.start_time, event.end_time, event.multiplier)
+        print(event.end_time - event.start_time)

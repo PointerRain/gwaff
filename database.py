@@ -55,6 +55,7 @@ class DatabaseCreator(BaseDatabase):
         Profile.__table__.drop(self.engine, checkfirst=True)
         Record.__table__.drop(self.engine, checkfirst=True)
         Minecraft.__table__.drop(self.engine, checkfirst=True)
+        Event.__table__.drop(self.engine, checkfirst=True)
 
         self.session.commit()
 

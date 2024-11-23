@@ -8,6 +8,7 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
 from custom_logger import Logger
 from database import DatabaseReader
+from gwaff.database_events import DatabaseEvents
 from utils import request_img
 
 logger = Logger('gwaff.plotter')
@@ -27,7 +28,6 @@ fonts = [FontProperties(fname=PRIMARY_FONT_PATH).get_name(),
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.sans-serif'] = fonts + plt.rcParams['font.sans-serif']
 
-MAX_RETRIES = 5
 WINDOW_SIZE = (15, 7)
 GAP_MIN_SIZE = 3
 GRAPH_DEFAULT_USERS = 15
@@ -44,6 +44,7 @@ class Colours:
     text = '#FFFFFF'
     outside = '#2B2D31'
     inside = '#313338'
+    highlight = '#3D3F46'
 
 
 class ResponsiveDateFormat:
@@ -192,6 +193,23 @@ class Plotter:
         if count < max_count:
             logger.info(f"{count} profiles shown")
 
+    def draw_events(self):
+        dbe = DatabaseEvents()
+        events = dbe.get_events_in_range(self.start_date, self.end_date)
+        for event in events:
+            start = event.start_time
+            end = event.end_time
+            mult = event.multiplier
+
+            plt.axvspan(start, end, color=Colours.highlight, alpha=0.75)
+
+            plt.annotate(f"{mult}x", (start + (end - start) / 2, 1),
+                         xycoords=('data', 'axes fraction'),
+                         color=Colours.text,
+                         ha='center',
+                         va='top',
+                         family=fonts)
+
     def annotate(self) -> None:
         """
         Adds names to the graph.
@@ -311,8 +329,9 @@ class Plotter:
 
 
 if __name__ == '__main__':
-    plot = Plotter(start_date=datetime.now() - timedelta(days=365))
+    plot = Plotter(start_date=datetime.now() - timedelta(days=1))
     plot.draw()
+    plot.draw_events()
     plot.annotate()
     plot.configure()
 

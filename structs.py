@@ -1,8 +1,9 @@
 from sqlalchemy import (Column, Integer, String, DateTime,
-                        ForeignKey, PrimaryKeyConstraint)
+                        ForeignKey, PrimaryKeyConstraint, Float)
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
+
 
 class Profile(Base):
     """
@@ -20,6 +21,10 @@ class Profile(Base):
     name = Column(String, nullable=False)
     colour = Column(String)
     avatar = Column(String)
+
+    def __repr__(self):
+        return f'<Profile {self.id}, {self.name}, {self.colour}>'
+
 
 class Record(Base):
     """
@@ -44,8 +49,13 @@ class Record(Base):
     # Relationship to Profile
     profile = relationship('Profile', back_populates='records')
 
+    def __repr__(self):
+        return f'<Record {self.id}, {self.timestamp}, {self.value}>'
+
+
 Profile.records = relationship(
     'Record', order_by=Record.timestamp, back_populates='profile')
+
 
 class Minecraft(Base):
     """
@@ -66,4 +76,22 @@ class Minecraft(Base):
     # Relationship to Profile
     profile = relationship('Profile', back_populates='minecraft')
 
+    def __repr__(self):
+        return f'<Minecraft {self.discord_id}, {self.mc_uuid}, {self.mc_name}>'
+
+
 Profile.minecraft = relationship('Minecraft', back_populates='profile')
+
+
+class Event(Base):
+    """
+    """
+    __tablename__ = 'events'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    start_time = Column(DateTime, nullable=False)
+    end_time = Column(DateTime)
+    multiplier = Column(Float)
+
+    def __repr__(self):
+        return f'<Event {self.id}, {self.start_time}, {self.end_time}, {self.multiplier}>'

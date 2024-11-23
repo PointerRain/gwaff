@@ -10,10 +10,10 @@ from utils import resolve_member
 
 logger = Logger('gwaff.bot.plot')
 
-GRAPH_MAX_DAYS: int = 365       # The maximum number of days that can be plotted
-GRAPH_DEFAULT_DAYS: int = 7     # The default number of days to be plot
-GRAPH_MAX_USERS: int = 30       # The maximum number of users that can be plotted
-GRAPH_DEFAULT_USERS: int = 15   # The default number of users to be plot
+GRAPH_MAX_DAYS: int = 365  # The maximum number of days that can be plotted
+GRAPH_DEFAULT_DAYS: int = 7  # The default number of days to be plot
+GRAPH_MAX_USERS: int = 30  # The maximum number of users that can be plotted
+GRAPH_DEFAULT_USERS: int = 15  # The default number of users to be plot
 
 
 def growth(days: int = GRAPH_DEFAULT_DAYS,
@@ -42,6 +42,7 @@ def growth(days: int = GRAPH_DEFAULT_DAYS,
         plot.title = f"Comparing growth over the last {round(days)} days"
 
     plot.draw(limit=count, include=include)
+    plot.draw_events()
     plot.annotate()
     plot.configure()
 
@@ -100,7 +101,7 @@ class Plotter_Cog(commands.Cog):
                                             "or hasn't reached level 15")
             return
 
-        co_member: discord.User = None
+        co_member: discord.User | None = None
         if compare:
             co_member = resolve_member(None, compare)
             if co_member is False:
