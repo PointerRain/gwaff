@@ -179,9 +179,6 @@ class Plotter:
                 continue
             if len(xs) <= 1:
                 continue
-            if id in {1013000925385871451, 479575918600388609, 1115004793224704070,
-                      1230458949308776498}:
-                ys = [round(0.9 * y) for y in ys]
 
             self.annotations.append(
                 (ys[-1], name, colour, avatar, ys[0]))
@@ -198,7 +195,7 @@ class Plotter:
         events = dbe.get_events_in_range(self.start_date, self.end_date)
         for event in events:
             start = event.start_time
-            end = event.end_time
+            end = event.end_time or datetime.now()
             mult = event.multiplier
 
             plt.axvspan(start, end, color=Colours.highlight, alpha=0.75)
@@ -329,7 +326,7 @@ class Plotter:
 
 
 if __name__ == '__main__':
-    plot = Plotter(start_date=datetime.now() - timedelta(days=1))
+    plot = Plotter(start_date=datetime.now() - timedelta(days=7))
     plot.draw()
     plot.draw_events()
     plot.annotate()

@@ -2,6 +2,7 @@ import os
 import asyncio
 
 from custom_logger import Logger
+from database import DatabaseCreator
 
 # Initialize the logger for the main module
 logger = Logger('gwaff.main')
@@ -16,10 +17,13 @@ filterwarnings("ignore", category=UserWarning, module="matplotlib\..*", lineno=0
 
 logger.info("Filtering warnings")
 
-from collector import collect
+dbc = DatabaseCreator()
+dbc.create_database()
+
+# from collector import collect
 
 # Collect data using the collect function from the collector module
-collect()
+# collect()
 logger.info("Collecting")
 
 from bot import run_the_bot
