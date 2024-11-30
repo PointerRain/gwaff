@@ -14,7 +14,7 @@ class EventExistsError(Exception):
 
 
 class DatabaseEvents(BaseDatabase):
-    def get_current_event(self) -> Event | None:
+    def get_current_event(self) -> Event:
         """
         Returns the current event.
         """
@@ -52,10 +52,10 @@ class DatabaseEvents(BaseDatabase):
         if end_date is None:
             end_date = datetime.now()
 
-        events = self.session.query(Event).filter(Event.start_time >= start_date).all()
+        events = self.session.query(Event).filter(Event.start_time <= end_date).all()
         output = []
         for event in events:
-            if event.end_time is not None and event.end_time < end_date:
+            if event.end_time is not None and event.end_time < start_date:
                 continue
 
             if (event.end_time is not None and

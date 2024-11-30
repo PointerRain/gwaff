@@ -2,8 +2,8 @@ import os.path
 from datetime import datetime, timedelta
 
 import matplotlib.pyplot as plt
-from matplotlib.font_manager import fontManager, FontProperties
 from matplotlib.dates import DateFormatter
+from matplotlib.font_manager import fontManager, FontProperties
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
 from custom_logger import Logger
@@ -156,18 +156,16 @@ class Plotter:
             list: The data retrieved from the database.
         """
         dbr = DatabaseReader()
-        return dbr.get_data_in_range(self.start_date, limit, include)
+        return dbr.get_data_in_range(self.start_date, self.end_date, limit=limit, include=include)
 
-    def draw(self, start: int = 0,
-             limit: int = GRAPH_DEFAULT_USERS,
+    def draw(self, limit: int = GRAPH_DEFAULT_USERS,
              include: set[int] = None) -> None:
         """
         Draws the plot with the specified parameters.
 
         Args:
-            start (int, optional): The starting index for data. Defaults to 0.
             limit (int, optional): The maximum number of users to plot. Defaults to GRAPH_DEFAULT_USERS.
-            include (list[int], optional): A list of user IDs to include. Defaults to None.
+            include (set[int], optional): If specified, only includes the specified user IDs. Defaults to None.
         """
         max_count = limit if not include else len(include)
 
@@ -190,15 +188,21 @@ class Plotter:
         if count < max_count:
             logger.info(f"{count} profiles shown")
 
-    def draw_events(self):
+    def draw_events(self) -> None:
+        """
+        Draws event spans on the plot.
+        """
+        now = datetime.now()
         dbe = DatabaseEvents()
         events = dbe.get_events_in_range(self.start_date, self.end_date)
         for event in events:
-            start = event.start_time
-            end = event.end_time or datetime.now()
+            start = max(event.start_time, self.start_date)
+            end = min(event.end_time or now, self.end_date or now)
             mult = event.multiplier
 
-            plt.axvspan(start, end, color=Colours.highlight, alpha=0.75)
+            alpha = max(min(mult - 1, 1), 0)
+
+            plt.axvspan(start, end, color=Colours.highlight, alpha=alpha)
 
             plt.annotate(f"{mult}x", (start + (end - start) / 2, 1),
                          xycoords=('data', 'axes fraction'),

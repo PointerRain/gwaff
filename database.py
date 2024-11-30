@@ -91,35 +91,42 @@ class DatabaseReader(BaseDatabase):
             query_result = query_result.filter(Record.timestamp >= start_date)
         return [i.timestamp for i in query_result.order_by(Record.timestamp).all()]
 
-    def get_row(self, id: int, start_date: datetime = None) -> list:
+    def get_row(self, id: int, start_date: datetime = None, end_date: datetime = None) -> list:
         """
         Retrieves records for a specific ID, optionally filtering by start date.
 
         Args:
             id (int): The ID of the record.
             start_date (datetime, optional): The start date for filtering records.
+            end_date (datetime, optional): The end date for filtering records.
 
         Returns:
             list: A list of records for the specified ID.
         """
-        if id in [483515866319945728] and start_date < datetime(2024, 6, 1, 0, 0):
-            return []
+        if id in {483515866319945728} and start_date < datetime(2024, 6, 1, 0, 0):
+            if end_date is None:
+                return []
+            if datetime(2024, 6, 1, 0, 0) < end_date:
+                return []
         record_query = (self.session.query(Record)
                         .filter_by(id=id)
                         .order_by(Record.timestamp))
         if start_date:
             record_query = record_query.filter(Record.timestamp >= start_date)
+        if end_date:
+            record_query = record_query.filter(Record.timestamp <= end_date)
 
         # Execute the query for records
         return record_query.all()
 
-    def get_data_in_range(self, start_date: datetime = None, limit: int = 15,
-                          include: set[int] = None) -> list[tuple]:
+    def get_data_in_range(self, start_date: datetime = None, end_date: datetime = None,
+                          limit: int = 15, include: set[int] = None) -> list[tuple]:
         """
         Retrieves profile data and associated records within a specified date range.
 
         Args:
             start_date (datetime, optional): The start date for filtering records.
+            end_date (datetime, optional): The end date for filtering records.
             limit (int, optional): The maximum number of profiles to retrieve. Defaults to 15.
             include (set, optional): A list of profile IDs to include. Defaults to None.
 
@@ -139,7 +146,7 @@ class DatabaseReader(BaseDatabase):
 
         for profile in profile_query:
             # Query for records associated with the profile, optionally filtering by start_date
-            records = self.get_row(int(profile.id), start_date)
+            records = self.get_row(int(profile.id), start_date, end_date)
 
             # Append the data to the result list
             result.append((
@@ -150,13 +157,14 @@ class DatabaseReader(BaseDatabase):
 
         return result
 
-    def get_growth_in_range(self, start_date: datetime = None, limit: int = 15,
-                            include: set[int] = None) -> list[tuple]:
+    def get_growth_in_range(self, start_date: datetime = None, end_date: datetime = None,
+                            limit: int = 15, include: set[int] = None) -> list[tuple]:
         """
         Retrieves profile data and growth within a specified date range.
 
         Args:
             start_date (datetime, optional): The start date for filtering records.
+            end_date (datetime, optional): The end date for filtering records.
             limit (int, optional): The maximum number of profiles to retrieve. Defaults to 15.
             include (set, optional): A list of profile IDs to include. Defaults to None.
         Returns:
@@ -166,6 +174,8 @@ class DatabaseReader(BaseDatabase):
                          .join(Record, Profile.id == Record.id))
         if start_date:
             profile_query = profile_query.filter(Record.timestamp >= start_date)
+        if end_date:
+            profile_query = profile_query.filter(Record.timestamp <= end_date)
         profile_query = (profile_query.group_by(Profile.id)
                          .order_by(desc(func.max(Record.value) - func.min(Record.value))))
         if include and hasattr(include, '__iter__'):
@@ -177,7 +187,7 @@ class DatabaseReader(BaseDatabase):
 
         for profile in profile_query:
             # Query for records associated with the profile, optionally filtering by start_date
-            records = self.get_row(profile.id, start_date)
+            records = self.get_row(profile.id, start_date, end_date)
 
             # Append the data to the result list
             result.append((
@@ -253,14 +263,14 @@ class DatabaseSaver(BaseDatabase):
         profile.colour = colour or profile.colour
         profile.avatar = avatar or profile.avatar
 
-    def insert_record(self, id, timestamp, value):
+    def insert_record(self, id: int, timestamp: datetime, value: int) -> None:
         """
         Inserts a new record into the database.
 
         Args:
             id (int): The ID of the profile.
             timestamp (datetime): The timestamp of the record.
-            value (int): The value of the record.
+            value (int): The xp value at the timestamp.
 
         Raises:
             ValueError: If id, timestamp, or value is None.
@@ -320,9 +330,9 @@ if __name__ == '__main__':
         print(i)
 
     # for i in dbr.get_growth_in_range():
-        # print(i)
-        # print(i[0], i[2][-1])
-        # print(len(i[1]))
+    # print(i)
+    # print(i[0], i[2][-1])
+    # print(len(i[1]))
 
     # for i in dbr.get_profile_data():
     #     print(i.__dict__)

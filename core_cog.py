@@ -11,12 +11,12 @@ from permissions import require_admin
 
 logger = Logger('gwaff.bot.core')
 
-
-
 COLLECTION_MAX_TIME: int = 120  # The time in minutes that must go by
-                                # before collection is said to be stopped.
-REDUCER_TIMEOUT: int = 60       # Time in seconds before the reducer process
-                                # times out and is halted.
+# before collection is said to be stopped.
+REDUCER_TIMEOUT: int = 60  # Time in seconds before the reducer process
+
+
+# times out and is halted.
 
 
 # class ReducerView(discord.ui.View):
@@ -113,7 +113,7 @@ class Core_Cog(commands.Cog):
     async def send_data(self, interaction: discord.Interaction,
                         hidden: bool = True):
         await interaction.response.defer(ephemeral=hidden)
-        await interaction.followup.send(file=discord.File('gwaff.csv'))
+        await interaction.followup.send(file=discord.File('gwaff.db'))
 
     @app_commands.command(name="isalive",
                           description="When did I last collect data")
