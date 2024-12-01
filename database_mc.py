@@ -36,13 +36,16 @@ class DatabaseMinecraft(BaseDatabase):
         """
         user = (self.session.query(Minecraft)
                 .filter_by(discord_id=discord_id).first())
-
         if user is not None:
             user.mc_uuid = mc_uuid or user.mc_uuid
             user.mc_name = mc_name or user.mc_name
             return
 
-        print('Making new')
+        existing_user = (self.session.query(Minecraft)
+                         .filter_by(discord_id=discord_id).first())
+        if existing_user:
+            self.session.delete(existing_user)
+
         new_user = Minecraft(discord_id=discord_id, mc_uuid=mc_uuid, mc_name=mc_name)
         self.session.add(new_user)
 
@@ -68,7 +71,7 @@ class DatabaseMinecraft(BaseDatabase):
             bool: True if the update was successful, False otherwise.
         """
         try:
-            data = await request_api(
+            data = request_api(
                 f"https://sessionserver.mojang.com/session/minecraft/profile/{mc_uuid}")
             if data and (name := data.get('name')):
                 if name != mc_name:
@@ -114,21 +117,22 @@ class DatabaseMinecraft(BaseDatabase):
             uuid = f'{uuid[0:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:32]}'
             colour = user.profile.colour.replace('#', '')
             mc_name = user.mc_name
-            discord_nick = user.profile.name
-            if colour in ['95a5a6', '000000']:
-                if re.sub('[ _.]', '', mc_name).lower() == re.sub('[ _.]', '',
-                                                                  discord_nick).lower():
-                    print(f"Skipping {user.mc_name}")
-                    continue
-            if colour == '000000':
-                print(f"Skipping {user.mc_name}")
-                continue
-            data.append({
-                'mc_name': user.mc_name,
+            discord_nick = re.sub(' *\[.+]', '', user.profile.name)
+
+            entry = {
+                'mc_name': mc_name,
                 'mc_uuid': uuid,
-                'discord_nick': user.profile.name,
-                'colour': colour
-            })
+            }
+
+            if (re.sub('[ _.]', '', mc_name).lower() !=
+                    re.sub('[ _.]', '', discord_nick).lower()
+                    and len(discord_nick) >= 3):
+                entry['discord_nick'] = discord_nick
+
+            if colour not in {'95a5a6', '000000', 'ffffff'}:
+                entry['colour'] = colour
+            if len(entry) > 2:
+                data.append(entry)
         return data
 
 
@@ -136,8 +140,8 @@ if __name__ == '__main__':
     dbm = DatabaseMinecraft()
     # dbm.load_from_csv(pd.read_csv("users_withnames.csv"))
 
-    for i in dbm.get_users():
-        print(i.discord_id, i.profile.name, i.mc_name)
+    # for i in dbm.get_users():
+    #     print(i.discord_id, i.profile.name, i.mc_name)
 
     # print(dbm.update_all_mc_names())
 
