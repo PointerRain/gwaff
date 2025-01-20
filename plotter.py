@@ -8,7 +8,7 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
 from custom_logger import Logger
 from database import DatabaseReader
-from gwaff.database_events import DatabaseEvents
+from database_events import DatabaseEvents
 from utils import request_img
 
 logger = Logger('gwaff.plotter')

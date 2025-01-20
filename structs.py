@@ -57,7 +57,7 @@ Profile.records = relationship(
     'Record', order_by=Record.timestamp, back_populates='profile')
 
 
-class Minecraft(Base):
+class MinecraftUser(Base):
     """
     Represents a Minecraft user associated with a Discord profile in the database.
 
@@ -80,7 +80,7 @@ class Minecraft(Base):
         return f'<Minecraft {self.discord_id}, {self.mc_uuid}, {self.mc_name}>'
 
 
-Profile.minecraft = relationship('Minecraft', back_populates='profile')
+Profile.minecraft = relationship('MinecraftUser', back_populates='profile')
 
 
 class Event(Base):

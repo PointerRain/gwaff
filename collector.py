@@ -15,6 +15,7 @@ WAIT_FAIL: int = 30  # How many minutes to wait after a failure
 MIN_SEPARATION: int = 30  # Do not store new data if the last collection was less than this many minutes ago
 COLLECTION_SMALL: int = 2  # Collect data from up to this page every collection event
 COLLECTION_LARGE: int = 6  # Collect data from up to this page every second collection event
+COLLECTION_LARGEST: int = 10  # Update names up to this page when updating names
 SERVER_ID = "377946908783673344"
 API_URL = f"https://joegaming.duckdns.org/polaris/api/leaderboard/{SERVER_ID}"
 
@@ -55,17 +56,23 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
         leaderboard = data.get('leaderboard', [])
 
         for member in leaderboard:
-            if 'missing' not in member and member['color'] != '#000000':
+            if 'missing' not in member and member.get('color', '#000000') != '#000000':
                 count = 0
                 while count < MAX_RETRIES:
                     try:
                         # Extract member data
-                        member_id = int(member['id'])
-                        xp = member['xp']
-                        name = member.get('nickname') or member.get(
-                            'displayName') or member.get('username')
-                        colour = member['color']
-                        avatar = member['avatar']
+                        member_id = int(member.get('id'))
+                        xp = int(member.get('xp'))
+                        name = (member.get('nickname')
+                                or member.get('displayName')
+                                or member.get('username'))
+                        colour = member.get('color')
+                        avatar = member.get('avatar')
+
+                        if any(x is None for x in (member_id, xp)):
+                            logger.warning(f"Skipping record with missing data")
+                            failure += 1
+                            break
 
                         # Update profile and record
                         dbi.update_profile(member_id, name, colour, avatar)

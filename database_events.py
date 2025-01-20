@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from database import BaseDatabase
 from structs import *
 
-EVENT_SIZE_THRESHOLD = 0.05
+EVENT_SIZE_THRESHOLD = 0.01
 
 
 class EventExistsError(Exception):

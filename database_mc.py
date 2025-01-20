@@ -34,29 +34,51 @@ class DatabaseMinecraft(BaseDatabase):
             mc_uuid (str): The Minecraft UUID of the user.
             mc_name (str, optional): The Minecraft name of the user. Defaults to None.
         """
-        user = (self.session.query(Minecraft)
+        user = (self.session.query(MinecraftUser)
                 .filter_by(discord_id=discord_id).first())
         if user is not None:
             user.mc_uuid = mc_uuid or user.mc_uuid
             user.mc_name = mc_name or user.mc_name
             return
 
-        existing_user = (self.session.query(Minecraft)
-                         .filter_by(discord_id=discord_id).first())
+        existing_user = (self.session.query(MinecraftUser)
+                         .filter_by(mc_uuid=mc_uuid).first())
         if existing_user:
-            self.session.delete(existing_user)
+            print(f"User with mc_uuid {mc_uuid} already exists")
+        #     self.session.delete(existing_user)
 
-        new_user = Minecraft(discord_id=discord_id, mc_uuid=mc_uuid, mc_name=mc_name)
+        new_user = MinecraftUser(discord_id=discord_id, mc_uuid=mc_uuid, mc_name=mc_name)
         self.session.add(new_user)
 
-    def get_users(self):
+    def get_user(self, discord_id: int = None, mc_uuid: str = None) -> MinecraftUser:
+        """
+        Retrieves a Minecraft user from the database.
+
+        Args:
+            discord_id (int): The Discord ID of the user.
+            mc_uuid (str): The Minecraft UUID of the user.
+
+        Returns:
+            MinecraftUser: The Minecraft user.
+        """
+        if all(not i for i in [discord_id, mc_uuid]):
+            return None
+        user = self.session.query(MinecraftUser)
+        if discord_id:
+            user = user.filter_by(discord_id=discord_id)
+        if mc_uuid:
+            user = user.filter_by(mc_uuid=mc_uuid)
+        return user.first()
+
+    def get_users(self) -> list[MinecraftUser]:
         """
         Retrieves all Minecraft users from the database.
 
         Returns:
             list: A list of Minecraft users.
         """
-        return self.session.query(Minecraft).join(Profile, Minecraft.discord_id == Profile.id).all()
+        return (self.session.query(MinecraftUser)
+                .join(Profile, MinecraftUser.discord_id == Profile.id).all())
 
     async def update_mc_name(self, discord_id, mc_uuid, mc_name=None):
         """
@@ -89,7 +111,7 @@ class DatabaseMinecraft(BaseDatabase):
         Returns:
             tuple: A tuple containing the number of successful updates and the total number of users.
         """
-        users = self.session.query(Minecraft)
+        users = self.session.query(MinecraftUser)
         success = 0
         total = 0
         for user in users:
@@ -98,18 +120,16 @@ class DatabaseMinecraft(BaseDatabase):
         self.commit()
         return success, total
 
-    def to_json(self):
+    def to_json(self) -> list[dict]:
         """
         Exports Minecraft user data to a JSON file.
 
         Returns:
-            int: The length of the JSON string.
+            list: A list of Minecraft user data.
         """
         data = []
-        users = self.session.query(Minecraft).join(Profile,
-                                                   Minecraft.discord_id == Profile.id).all()
 
-        for user in users:
+        for user in self.get_users():
             if user.mc_name is None:
                 continue
 
@@ -121,7 +141,7 @@ class DatabaseMinecraft(BaseDatabase):
 
             entry = {
                 'mc_name': mc_name,
-                'mc_uuid': uuid,
+                'mc_uuid': uuid
             }
 
             if (re.sub('[ _.]', '', mc_name).lower() !=
@@ -138,13 +158,14 @@ class DatabaseMinecraft(BaseDatabase):
 
 if __name__ == '__main__':
     dbm = DatabaseMinecraft()
-    # dbm.load_from_csv(pd.read_csv("users_withnames.csv"))
+    dbm.load_from_csv(pd.read_csv("players.csv"))
 
-    # for i in dbm.get_users():
-    #     print(i.discord_id, i.profile.name, i.mc_name)
+    for i in dbm.get_users():
+        print(i.discord_id, i.profile.name, i.mc_name)
 
     # print(dbm.update_all_mc_names())
 
     # print(dbm.get_users())
 
     print(dbm.to_json())
+    print(len(dbm.to_json()))
