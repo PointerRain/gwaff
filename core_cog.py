@@ -31,10 +31,7 @@ class Core_Cog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        if self.bot.logging_channel:
-            await self.bot.logging_channel.send("I have rebooted!")
-        else:
-            logger.warning(f"Could not find required channel")
+        await self.bot.send_message("I have rebooted!")
 
 
 async def setup(bot: GwaffBot):

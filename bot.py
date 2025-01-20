@@ -50,7 +50,7 @@ class GwaffBot(commands.Bot):
 
         self.synced = False
 
-    async def find_channel(self, server_id: str, channel_name: str) -> None:
+    async def find_channel(self, server_id: str, channel_name: str):
         """
         Finds a channel by name.
 
@@ -76,6 +76,23 @@ class GwaffBot(commands.Bot):
 
         logger.warning(f"Could not find channel #{channel_name}")
         return None
+
+    async def send_message(self, message: str, log: bool = False) -> None:
+        """
+        Sends a message to a channel.
+
+        Args:
+            message (str): The message to send.
+            log (bool, optional): Whether to send to logging channel instead. Defaults to False.
+        """
+        if not log and self.channel:
+            await self.channel.send(message)
+        elif log and self.logging_channel:
+            await self.logging_channel.send(message)
+        else:
+            logger.warning(f"Could not find required channel")
+            if not log:
+                await self.send_message(f"Could not find required channel", log=True)
 
     async def on_ready(self) -> None:
         """

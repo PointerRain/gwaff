@@ -39,10 +39,8 @@ class ManageCogs(commands.Cog):
                 raise Exception("Unknown Operation")
         except Exception as error:
             # Many errors can be caught during loading/unloading/reloading the bot, so it would be painful to separate by exception type
-            await interaction.response.send_message(
-                f"Error occured {action}ing {cog}: {error}"
-            )
-            logger.error(f"Error occured {action}ing {cog}: {error}")
+            await interaction.response.send_message(f"Error occurred {action}ing {cog}: {error}")
+            logger.error(f"Error occurred {action}ing {cog}: {error}")
             return
         await interaction.response.send_message(f"Successfully {action}ed {cog}")
         logger.info(f"Successfully {action}ed {cog}")

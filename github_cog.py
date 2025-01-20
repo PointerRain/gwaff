@@ -23,10 +23,7 @@ class GithubCog(commands.GroupCog, group_name='github'):
 
     async def upload(self):
         logger.info("Starting upload")
-        if self.bot.logging_channel:
-            await self.bot.logging_channel.send("Hello!")
-        else:
-            logger.warning(f"Could not find required channel")
+        await self.bot.send_message("Hello!")
         logger.info("Upload was not completed successfully")
 
     @app_commands.command(name="upload",
