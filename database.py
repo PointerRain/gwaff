@@ -103,10 +103,15 @@ class DatabaseReader(BaseDatabase):
         Returns:
             list: A list of records for the specified ID.
         """
-        if id in {483515866319945728} and start_date < datetime(2024, 6, 1, 0, 0):
+        if id in {483515866319945728} and start_date < datetime(2024, 6, 1):
             if end_date is None:
                 return []
-            if datetime(2024, 6, 1, 0, 0) < end_date:
+            if datetime(2024, 6, 2) < end_date:
+                return []
+        elif id in {457989277322838016} and start_date < datetime(2025, 1, 19):
+            if end_date is None:
+                return []
+            if datetime(2025, 1, 20) < end_date:
                 return []
         record_query = (self.session.query(Record)
                         .filter_by(id=id)
