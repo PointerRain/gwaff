@@ -33,21 +33,19 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
         """
         self.bot: GwaffBot = bot
 
-        # Upload the data every day at midnight
-        self.bot.schedule_task(
-            self.upload,
-            trigger="cron",
-            hour=0,
-            timezone="Australia/Brisbane"
-        )
-
         # Update names every month
         self.bot.schedule_task(
             self.update_names,
-            trigger="cron",
-            hour=23,
-            timezone="Australia/Brisbane",
+            hour=0,
+            minute=20,
             day='last'
+        )
+
+        # Upload the data every day at midnight
+        self.bot.schedule_task(
+            self.upload,
+            hour=0,
+            minute=30
         )
 
     async def upload(self) -> bool:
@@ -70,7 +68,7 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
 
     async def update_names(self) -> None:
         """
-        Asynchronously updates Minecraft names and logs the process.
+        Asynchronously updates Minecraft names.
         """
         # TODO: Fix blocking
         logger.info("Starting update")
@@ -145,9 +143,9 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
         dbm.commit()
         if name:
             await interaction.followup.send(
-                f"Added user {member.mention} with UUID {uuid} and name {name}")
+                f"Added user {member.mention} with UUID `{uuid}` and name `{name}`")
         else:
-            await interaction.followup.send(f"Added user {member.mention} with UUID {uuid}")
+            await interaction.followup.send(f"Added user {member.mention} with UUID `{uuid}`")
 
 
 async def setup(bot: GwaffBot) -> None:

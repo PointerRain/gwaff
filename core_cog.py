@@ -161,6 +161,12 @@ class Core_Cog(commands.Cog):
         await interaction.response.send_message(f"Pong!\n{round(ping)} ms",
                                                 ephemeral=True)
 
+    @app_commands.command(name="jobs", description="List all scheduled jobs")
+    async def list_jobs(self, interaction: discord.Interaction):
+        jobs = self.bot.scheduler.get_jobs()
+        job_str = "\n".join([f"{job.name:>30}: next run at {job.next_run_time}" for job in jobs])
+        await interaction.response.send_message(f"```{job_str}```", ephemeral=True)
+
     @commands.Cog.listener()
     async def on_ready(self):
         if self.bot.logging_channel:

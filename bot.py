@@ -135,7 +135,14 @@ class GwaffBot(commands.Bot):
             *args (Any): Variable length argument list.
             **kwargs (Any): Arbitrary keyword arguments.
         """
-        self.scheduler.add_job(func, *args, **kwargs)
+        self.scheduler.add_job(func,
+                               trigger="cron",
+                               timezone="Australia/Brisbane",
+                               misfire_grace_time=599,
+                               coalesce=True,
+                               max_instances=1,
+                               *args,
+                               **kwargs)
 
 
 cogs = [

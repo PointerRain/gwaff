@@ -16,9 +16,8 @@ class GithubCog(commands.GroupCog, group_name='github'):
 
         self.bot.schedule_task(
             self.upload,
-            trigger="cron",
-            hour=1,
-            timezone="Australia/Brisbane",
+            hour=0,
+            minute=40,
             day='last'
         )
 
