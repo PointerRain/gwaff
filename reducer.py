@@ -1,96 +1,95 @@
-import pandas as pd
-from datetime import datetime, timedelta
+import datetime
 
-from custom_logger import Logger
-logger = Logger('gwaff.reduce')
+from database import BaseDatabase
+from structs import Profile, Record
+
+XP_SAFE_THRESHOLD = 500
 
 
-class Reducer:
-    def __init__(self, data: pd.DataFrame):
-        self.data = data
-        self.dates = data.columns
-        self.dates = list(self.dates)[4:]
+class DatabaseReducer(BaseDatabase):
+    """
+    Class used to reduce the number of date entries in the database.
+    """
 
-    def sort(self) -> None:
-        # Find final value for xp using the read_row function
-        data = [self.read_row(row)[1] for index, row in self.data.iterrows()]
-        self.data['Final'] = [row[-1] for row in data]
-        self.data.sort_values(by='Final', inplace=True, ascending=False)
+    def reduce(self):
+        """
+        Reduces the number of records in the database.
 
-    def read_row(self, row: pd.Series,
-                 start_date: datetime = None) -> tuple[list[datetime], list[int]]:
-        xs = []
-        values = []
-        for i in self.dates:
-            date = datetime.fromisoformat(i)
-            # if self.start_date and date < self.start_date:
-            #     continue
-            if row[i] is None:
+        For each user, iterates over all their records and removes any row
+        with a timestamp that is less than two hours from the previous and
+        next timestamp.
+        """
+        profile_query = self.session.query(Profile).all()
+
+        delete_count: int = 0
+
+        now = datetime.datetime.now()
+
+        for user in profile_query:
+            records = (self.session.query(Record)
+                       .filter_by(id=user.id)
+                       .order_by(Record.timestamp).all())
+
+            if len(records) <= 3:
                 continue
 
-            values.append(row[i])
-            xs.append(date)
-        xs.append(self.dates[-1])
-        values.append(values[-1])
+            to_delete = set()
 
-        return xs, values
+            i = 1
+            prev_record = records[0]
+            while i < len(records) - 1:
+                curr_record = records[i]
+                next_record = records[i + 1]
 
-    def reduce_cols(self) -> None:
-        # If something goes wrong, abort the change
-        try:
-            self.sort()
-            new_columns = [column for column in self.data][:4]
-            dates = [datetime.fromisoformat(date) for date in self.dates]
-            now = datetime.now()
+                # if any(record in to_delete for record in {prev_record, curr_record, next_record}):
+                #     print("Skipping due to previous deletion")
+                #     continue
 
-            index = 1
-            self.del_count = 0
-            while index < len(dates)-1:
-                column = dates[index]
+                timediff = next_record.timestamp - prev_record.timestamp
+                valdiff = next_record.value - prev_record.value
+                age = now - curr_record.timestamp
 
-                diff = dates[index+1] - dates[index-1]
-                age = now - column
+                if valdiff < 0:
+                    print(
+                        f"user: {user.name}, prev: {prev_record.value}, curr: {curr_record.value}, next: {next_record.value}")
 
-                if any([age > timedelta(days=1) and diff/2 < timedelta(hours=2),
-                    age > timedelta(days=7) and diff/2 < timedelta(hours=6),
-                    age > timedelta(days=30) and diff/2 < timedelta(hours=12),
-                    age > timedelta(days=100) and diff/2 < timedelta(hours=24)
-                ]):
-                    self.del_count += 1
-                    dates.remove(column)
+                if (timediff < datetime.timedelta(hours=3)
+                        and valdiff < XP_SAFE_THRESHOLD
+                        and age > datetime.timedelta(days=30)):
+                    to_delete.add(curr_record)
+                elif (timediff < datetime.timedelta(hours=6)
+                      and valdiff < XP_SAFE_THRESHOLD
+                      and age > datetime.timedelta(days=365)):
+                    to_delete.add(curr_record)
+                elif (valdiff == 0
+                      and timediff < datetime.timedelta(hours=12)
+                      and age > datetime.timedelta(days=7)):
+                    to_delete.add(curr_record)
                 else:
-                    index += 1
-            new_columns = new_columns + [str(date) for date in dates]
-            # new_columns.delete('Final')
-            self.data = self.data[new_columns]
-            logger.warning(f'Deleting {self.del_count} columns')
-            return f'Deleting {self.del_count} columns'
-        except Exception as e:
-            logger.error(f'Could not reduce columns\n{e}')
-            return False
+                    prev_record = curr_record
+                i += 1
 
+            delete_count += len(to_delete)
+            for record in to_delete:
+                self.session.delete(record)
+        return delete_count
 
-    def save(self) -> None:
-        # self.data.drop(['Final'], axis=1, inplace=True)
-        try:
-            self.data.to_csv('gwaff.csv', encoding='utf-8')
-            logger.warning(f'Deleted {self.del_count} columns')
-            return True
-        except Exception as e:
-            logger.error(f'Could not save deleted columns\n{e}')
-            return e
 
 if __name__ == '__main__':
-    df = pd.read_csv("gwaff.csv", index_col=0)
-    reducer = Reducer(df)
+    dr = DatabaseReducer()
+
     confirm = input('Do you want to run the reducer? (Y or n)\n')
     # confirm = 'Y'
     if confirm == 'Y':
-        reducer.reduce_cols()
-    else:
-        print('Aborted')
-    confirm = input('Are you really sure? (Y or n)\n')
-    if confirm == 'Y':
-        reducer.save()
+        count = dr.reduce()
+        if count > 0:
+            print(f'Deleting {count} records')
+            confirm = input('Are you really sure? (Y or n)\n')
+            if confirm == 'Y':
+                dr.commit()
+            else:
+                print('Aborted')
+        else:
+            print('0 records deleted')
     else:
         print('Aborted')

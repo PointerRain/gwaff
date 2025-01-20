@@ -152,7 +152,8 @@ cogs = [
     "github_cog",
     "manage_cog",
     "spooncraft_cog",
-    "event_cog"
+    "event_cog",
+    "collector_cog",
 ]
 
 

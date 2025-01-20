@@ -94,6 +94,57 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
         return False
 
 
+def update_profiles(pages: Iterable[int] = range(1, COLLECTION_LARGEST)) -> None:
+    logger.info("Starting profile collection")
+
+    dbi = DatabaseSaver()
+    success, failure = (0, 0)
+
+    for page in pages:
+        data = request_api(API_URL, page=page)
+        if not data:
+            logger.error("Skipping page after max retries")
+            continue
+
+        leaderboard = data.get('leaderboard', [])
+
+        for member in leaderboard:
+            if 'missing' not in member and member.get('color', '#000000') != '#000000':
+                count = 0
+                while count < MAX_RETRIES:
+                    try:
+                        # Extract member data
+                        member_id = int(member.get('id'))
+                        name = (member.get('nickname')
+                                or member.get('displayName')
+                                or member.get('username'))
+                        colour = member.get('color')
+                        avatar = member.get('avatar')
+
+                        if member_id is None:
+                            logger.warning(f"Skipping profile with missing data")
+                            failure += 1
+                            break
+
+                        # Update profile
+                        dbi.update_profile(member_id, name, colour, avatar)
+
+                        success += 1
+                        break  # Exit retry loop on success
+                    except Exception as e:
+                        logger.warning(f"Failed to save record (attempt {count + 1}): {str(e)}")
+                        if count < MAX_RETRIES:
+                            count += 1
+                        else:
+                            logger.error("Skipping record after max retries")
+                            failure += 1
+                            break
+
+        logger.debug(f"Page {page} updated")
+
+    dbi.commit()
+
+
 def run() -> None:
     """
     Periodically collects data.

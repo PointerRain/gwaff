@@ -20,12 +20,6 @@ logger.info("Filtering warnings")
 dbc = DatabaseCreator()
 dbc.create_database()
 
-# from collector import collect
-
-# Collect data using the collect function from the collector module
-# collect()
-logger.info("Collecting")
-
 from bot import run_the_bot
 
 # Retrieve the bot token from environment variables
