@@ -54,16 +54,13 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
         """
         dbm = DatabaseMinecraft()
         logger.info("Starting upload")
-        if self.bot.logging_channel:
-            data = dbm.to_json()
-            result = update_data("https://gwaff.uqcloud.net/api/spooncraft", data)
-            if result:
-                logger.info("Upload completed successfully!")
-                return True
-        else:
-            logger.warning(f"Could not find required channel")
-        await self.bot.logging_channel.send("SC data upload failed")
+        data = dbm.to_json()
+        result = update_data("https://gwaff.uqcloud.net/api/spooncraft", data)
+        if result:
+            logger.info("Upload completed successfully!")
+            return True
         logger.warning(f"Upload failed!")
+        await self.bot.send_message("SC data upload failed", log=True)
         return False
 
     async def update_names(self) -> None:
@@ -72,17 +69,13 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
         """
         # TODO: Fix blocking
         logger.info("Starting update")
-        if self.bot.logging_channel:
-            await self.bot.logging_channel.send("Updating names now!")
-        else:
-            logger.warning(f"Could not find required channel")
-            return
+        await self.bot.send_message("Updating names now", log=True)
 
         dbm = DatabaseMinecraft()
         success, total = await dbm.update_all_mc_names()
-        if self.bot.logging_channel:
-            await self.bot.logging_channel.send(
-                f"Finished updating names with {total - success} fails out of {total}!")
+        await self.bot.send_message(
+            f"Finished updating names with {total - success} fails out of {total}!",
+            log=True)
         logger.info(f"Finished updating names with {total - success} fails out of {total}!")
 
     @app_commands.command(name="upload",
