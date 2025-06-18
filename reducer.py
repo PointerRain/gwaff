@@ -1,9 +1,12 @@
 import datetime
+import os
+
+from sqlalchemy import func
 
 from database import BaseDatabase
 from structs import Profile, Record
 
-XP_SAFE_THRESHOLD = 500
+XP_SAFE_THRESHOLD = int(os.environ.get("XP_SAFE_THRESHOLD", 200))
 
 
 class DatabaseReducer(BaseDatabase):

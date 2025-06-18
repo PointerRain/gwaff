@@ -9,7 +9,8 @@ from structs import *
 import os.path
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_DIR = os.path.join(BASE_DIR, 'gwaff.db')
+DB_NAME = os.environ.get('DB_NAME', 'gwaff.db')
+DB_DIR = os.path.join(BASE_DIR, DB_NAME)
 
 
 # logging.getLogger('sqlalchemy').disabled = True
@@ -22,11 +23,11 @@ class BaseDatabase:
     Base class for database operations using SQLAlchemy.
     """
 
-    def __init__(self):
+    def __init__(self, db_dir=DB_DIR):
         """
         Initializes the database engine and session.
         """
-        self.engine = create_engine(f'sqlite:///{DB_DIR}?charset=utf8mb4', echo=False)
+        self.engine = create_engine(f'sqlite:///{db_dir}?charset=utf8mb4', echo=False)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
 

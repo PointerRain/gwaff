@@ -50,15 +50,13 @@ class CustomLogger(logging.Logger):
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(ColouredFormatter(datefmt='%H:%M:%S'))
 
-        today = date.today().isoformat()
-
-        file_handler = handlers.TimedRotatingFileHandler(f'gwaff.log',
-                                                         when='midnight',
-                                                         backupCount=2)
-        file_handler.setFormatter(BasicFormatter(datefmt='%H:%M:%S'))
+        # file_handler = handlers.TimedRotatingFileHandler(f'gwaff.log',
+        #                                                  when='midnight',
+        #                                                  backupCount=2)
+        # file_handler.setFormatter(BasicFormatter(datefmt='%H:%M:%S'))
 
         self.addHandler(console_handler)
-        self.addHandler(file_handler)
+        # self.addHandler(file_handler)
 
 
 # TODO: Fix the logger to not output garbage
@@ -76,4 +74,4 @@ if __name__ == '__main__':
     logger.info("Info message")
     logger.warning("Warning message")
     logger.error("Error message")
-    logger.critical("Crticial message")
+    logger.critical("Critical message")

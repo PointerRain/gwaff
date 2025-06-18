@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 
 import discord
@@ -5,21 +6,20 @@ from discord import app_commands, utils, ui
 from discord.ext import commands
 
 from bot import GwaffBot
+from collector import record_data, update_profiles
 from custom_logger import Logger
 from database import DatabaseReader
 from permissions import require_admin
-
-from collector import record_data, update_profiles
 from reducer import DatabaseReducer
 
 logger = Logger('gwaff.bot.collector')
 
-COLLECTION_MAX_TIME: int = 120  # The time in minutes that must go by before collection is said to be stopped.
+COLLECTION_MAX_TIME: int = int(os.environ.get("MAX_SEPARATION", 120))
 REDUCER_TIMEOUT: int = 60  # Time in seconds before the reducer process times out and is halted.
 
-COLLECTION_SMALL: int = 2  # Collect data from up to this page every collection event
-COLLECTION_LARGE: int = 6  # Collect data from up to this page every second collection event
-COLLECTION_LARGEST: int = 10  # Update names up to this page when updating names
+COLLECTION_SMALL: int = int(os.environ.get("COLLECTION_SMALL", 2))
+COLLECTION_LARGE: int = int(os.environ.get("COLLECTION_LARGE", 6))
+COLLECTION_LARGEST: int = int(os.environ.get("COLLECTION_LARGEST", 10))
 
 
 class ReducerView(discord.ui.View):
@@ -100,7 +100,7 @@ class ReducerView(discord.ui.View):
 
 
 class CollectorCog(commands.GroupCog, group_name='collector'):
-    def __init__(self, bot: GwaffBot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
         self.bot.schedule_task(
@@ -165,19 +165,45 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
             ephemeral=True
         )
 
+
     async def collect_short(self):
+        """
+        Collects data from a small range of pages.
+        """
         logger.info("Starting short data collection")
-        record_data(pages=range(1, COLLECTION_SMALL))
+        try:
+            record_data(pages=range(1, COLLECTION_SMALL))
+        except Exception as e:
+            self.bot.send_message(f"Data collection failed! {str(e)}")
+
 
     async def collect_long(self):
+        """
+        Collects data from a larger range of pages.
+        """
         logger.info("Starting long data collection")
-        record_data(pages=range(1, COLLECTION_LARGE))
+        try:
+            record_data(pages=range(1, COLLECTION_LARGE))
+        except Exception as e:
+            self.bot.send_message(f"Data collection failed! {str(e)}")
+
 
     async def update_profiles(self):
+        """
+        Updates the profiles of all users.
+        """
         logger.info("Starting profile update")
-        update_profiles()
+        try:
+            update_profiles()
+        except Exception as e:
+            self.bot.send_message(f"Data collection failed! {str(e)}")
 
-    async def reduce(self):
+
+    async def reduce():
+        """
+        Reduces the database by removing old records.
+        WARNING: This is a destructive operation and cannot be undone. It does not ask for confirmation.
+        """
         logger.info("Starting data reduction")
         dr = DatabaseReducer()
         count = dr.reduce()

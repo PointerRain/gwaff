@@ -1,10 +1,11 @@
+import os
 from functools import wraps
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-ADMIN_LIST: list[int] = [344731282095472641]
+ADMIN_LIST: set[int] = {int(os.environ.get('OWNER_ID'))} # Set of discord ids of admin users.
 
 
 def require_admin(func: app_commands.AppCommand):

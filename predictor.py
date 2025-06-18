@@ -1,10 +1,11 @@
+import os
 from datetime import datetime, timedelta
 from math import floor
 
 from database import DatabaseReader
 
-PREDICTION_DEFAULT_DAYS: int = 30  # The default number of days to be used in a prediction.
-MAX_TARGET_DISTANCE: int = 100 * 365  # The number of days before a target is too far away.
+PREDICTOR_DEFAULT_DAYS: int = int(os.environ.get("PREDICTOR_DEFAULT_DAYS", 30))
+MAX_TARGET_DISTANCE: int = int(os.environ.get("MAX_TARGET_DISTANCE", 100*365))
 
 
 class NoDataError(Exception):
@@ -54,7 +55,7 @@ def xp_to_lvl(xp: int) -> int:
         A, B, C = 6.204, 2.724, 2079
     else:
         # If xp is relatively high (>lvl39) use separate approximation
-        A, B, C = 3.266, 2.881, 12017
+        A, B, C = 3.207, 2.885, 12727
 
     return floor(((xp - C) / A) ** (1 / B))
 
@@ -113,7 +114,7 @@ class Prediction:
 
     def __init__(self, member: int,
                  target: str,
-                 period: int = PREDICTION_DEFAULT_DAYS,
+                 period: int = PREDICTOR_DEFAULT_DAYS,
                  growth: int = None):
         self.member = member
         self.period = period

@@ -29,11 +29,10 @@ plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.sans-serif'] = fonts + plt.rcParams['font.sans-serif']
 
 WINDOW_SIZE = (15, 7)
-GAP_MIN_SIZE = 3
-GRAPH_DEFAULT_USERS = 15
+GRAPH_DEFAULT_USERS = int(os.environ.get("GRAPH_DEFAULT_USERS", 15))
 GRAPH_SEPERATOR = 0.03
 GRAPH_IMAGE_WIDTH = 0.018
-RANK_DEFAULT_THRESHOLD = 30
+RANK_DEFAULT_THRESHOLD = int(os.environ.get("RANK_DEFAULT_THRESHOLD", 30))
 
 
 class Colours:
@@ -318,7 +317,7 @@ class Plotter:
         Args:
             name (str, optional): The name of the file. Defaults to "out.png".
         """
-        name = os.path.join(BASE_DIR, 'generated', name)
+        name = os.path.join(BASE_DIR, 'generated', name or 'out.png')
         plt.savefig(name)
         return name
 

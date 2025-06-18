@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from math import ceil
 from time import mktime
@@ -16,10 +17,9 @@ from predictor import (NoDataError, ZeroGrowthError,
 from truerank import Truerank
 from utils import resolve_member, ordinal
 
-PREDICTION_MAX_DAYS: int = 365      # The maximum days that can be averaged over
-                                    # in predictions.
-PREDICTION_DEFAULT_DAYS: int = 30
-RANK_DEFAULT_THRESHOLD: int = 30
+GRAPH_MAX_DAYS: int = int(os.environ.get("GRAPH_MAX_DAYS", 365))
+PREDICTOR_DEFAULT_DAYS: int = int(os.environ.get("PREDICTOR_DEFAULT_DAYS", 30))
+RANK_DEFAULT_THRESHOLD: int = int(os.environ.get("RANK_DEFAULT_THRESHOLD", 30))
 RANK_MAX_PAGE: int = 5
 RANK_PAGE_SIZE: int = 25
 ACCENT_COLOUR: str = '#ea625e'
@@ -49,7 +49,7 @@ class Stats_Cog(commands.Cog):
                       target: str,
                       member: discord.User = None,
                       period: app_commands.Range[
-                          int, 1, PREDICTION_MAX_DAYS] = PREDICTION_DEFAULT_DAYS,
+                          int, 1, GRAPH_MAX_DAYS] = PREDICTOR_DEFAULT_DAYS,
                       growth: int = None,
                       hidden: bool = False):
         await interaction.response.defer(ephemeral=hidden)
@@ -178,8 +178,7 @@ class Stats_Cog(commands.Cog):
         page_end = page * RANK_PAGE_SIZE
         for index, item in enumerate(truerank.values[page_start:page_end]):
             description += f"\n**{index + 1 + page_start})**" \
-                           f"<@{item['ID']}> ({item['name']})" \
-                           f"({round(item['xp'])} XP)"
+                           f"<@{item['ID']}> - {round(item['xp'])} XP"
         if len(description) <= 0:
             await interaction.followup.send(":1234: This page does not exist")
             return

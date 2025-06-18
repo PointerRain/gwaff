@@ -1,19 +1,21 @@
+import os
 from datetime import datetime, timedelta
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
+from bot import GwaffBot
 from custom_logger import Logger
 from growth import Growth
 from utils import resolve_member
 
 logger = Logger('gwaff.bot.plot')
 
-GRAPH_MAX_DAYS: int = 365  # The maximum number of days that can be plotted
-GRAPH_DEFAULT_DAYS: int = 7  # The default number of days to be plot
-GRAPH_MAX_USERS: int = 30  # The maximum number of users that can be plotted
-GRAPH_DEFAULT_USERS: int = 15  # The default number of users to be plot
+GRAPH_MAX_DAYS: int = int(os.environ.get("GRAPH_MAX_DAYS", 365))
+GRAPH_DEFAULT_DAYS: int = int(os.environ.get("GRAPH_DEFAULT_DAYS", 7))
+GRAPH_MAX_USERS: int = int(os.environ.get("GRAPH_MAX_USERS", 30))
+GRAPH_DEFAULT_USERS: int = int(os.environ.get("GRAPH_DEFAULT_USERS", 15))
 
 
 def growth(days: int = GRAPH_DEFAULT_DAYS,
@@ -46,14 +48,14 @@ def growth(days: int = GRAPH_DEFAULT_DAYS,
     plot.annotate()
     plot.configure()
 
-    path = plot.save()
+    path = plot.save(name)
     plot.close()
 
     return path
 
 
-class Plotter_Cog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+class PlotterCog(commands.Cog):
+    def __init__(self, bot: GwaffBot):
         self.bot = bot
 
         self.growth_ctxmenu = app_commands.ContextMenu(
@@ -61,6 +63,13 @@ class Plotter_Cog(commands.Cog):
             callback=self.growth_ctx
         )
         self.bot.tree.add_command(self.growth_ctxmenu)
+
+    async def regular(self):
+        try:
+            growth(name='regular')
+        except Exception as e:
+            logger.error("Regular graph plotting failed!")
+            await self.bot.send_message("Regular graph plotting failed!", log=True)
 
     @app_commands.command(name="gwaff",
                           description="Plots top users growth")
@@ -142,6 +151,6 @@ class Plotter_Cog(commands.Cog):
         await interaction.followup.send(file=discord.File(path))
 
 
-async def setup(bot: commands.Bot):
-    cog = Plotter_Cog(bot)
+async def setup(bot: GwaffBot):
+    cog = PlotterCog(bot)
     await bot.add_cog(cog, guilds=bot.guilds)

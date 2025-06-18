@@ -45,8 +45,11 @@ class GwaffBot(commands.Bot):
         self.scheduler = AsyncIOScheduler()
         self.start_time = datetime.now()
 
-        self.channel: discord.TextChannel = None
-        self.logging_channel: discord.TextChannel = None
+        self.channel: discord.TextChannel | None = None
+        self.logging_channel: discord.TextChannel | None = None
+
+        self.reboot_time = None
+        self.start_time = None
 
         self.synced = False
 
@@ -77,7 +80,7 @@ class GwaffBot(commands.Bot):
         logger.warning(f"Could not find channel #{channel_name}")
         return None
 
-    async def send_message(self, message: str, log: bool = False) -> None:
+    async def send_message(self, message: str, log: bool = False, *args, **kwargs) -> None:
         """
         Sends a message to a channel.
 
@@ -86,13 +89,14 @@ class GwaffBot(commands.Bot):
             log (bool, optional): Whether to send to logging channel instead. Defaults to False.
         """
         if not log and self.channel:
-            await self.channel.send(message)
+            await self.channel.send(message, *args, **kwargs)
         elif log and self.logging_channel:
-            await self.logging_channel.send(message)
+            await self.logging_channel.send(message, *args, **kwargs)
         else:
-            logger.warning(f"Could not find required channel")
+            logger.warning(f"Could not find required channel to send a message")
             if not log:
-                await self.send_message(f"Could not find required channel", log=True)
+                await self.send_message(f"Could not find required channel to send a message",
+                                        log=True)
 
     async def on_ready(self) -> None:
         """
@@ -128,6 +132,9 @@ class GwaffBot(commands.Bot):
             for server in self.guilds:
                 await self.tree.sync(guild=discord.Object(id=server.id))
                 logger.info("- " + server.name)
+
+            self.start_time = datetime.now().timestamp()
+
             self.synced = True
         logger.info("Ready!")
 
@@ -185,7 +192,7 @@ async def run_the_bot(token) -> None:
 
     logger.info("Loading cogs")
     for cog in cogs:
-        await bot.load_extension(f"{cog}")
+        await bot.load_extension(cog)
         logger.info(f"- {cog}")
     logger.info("Loaded all cogs!")
 

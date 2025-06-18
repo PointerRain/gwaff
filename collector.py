@@ -1,3 +1,4 @@
+import os
 import time
 from datetime import datetime
 from threading import Thread
@@ -10,14 +11,17 @@ from utils import request_api
 logger = Logger('gwaff.collect')
 
 MAX_RETRIES: int = 5  # How many times to attempt to collect and save data
-WAIT_SUCCESS: int = 60  # How many minutes to wait after a success
-WAIT_FAIL: int = 30  # How many minutes to wait after a failure
-MIN_SEPARATION: int = 30  # Do not store new data if the last collection was less than this many minutes ago
-COLLECTION_SMALL: int = 2  # Collect data from up to this page every collection event
-COLLECTION_LARGE: int = 6  # Collect data from up to this page every second collection event
-COLLECTION_LARGEST: int = 10  # Update names up to this page when updating names
-SERVER_ID = "377946908783673344"
-API_URL = f"https://joegaming.duckdns.org/polaris/api/leaderboard/{SERVER_ID}"
+
+WAIT_SUCCESS: int = 60  # How many minutes to wait after a success. Deprecated.
+WAIT_FAIL: int = 30  # How many minutes to wait after a failure. Deprecated.
+
+MIN_SEPARATION: int = int(os.environ.get("MIN_SEPARATION", 30))
+COLLECTION_SMALL: int = int(os.environ.get("COLLECTION_SMALL", 2))
+COLLECTION_LARGE: int = int(os.environ.get("COLLECTION_LARGE", 6))
+COLLECTION_LARGEST: int = int(os.environ.get("COLLECTION_LARGEST", 10))
+
+SERVER_ID = os.environ.get("TRACKING_SERVER")
+API_URL = os.environ.get("API_URL")
 
 
 def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),

@@ -1,14 +1,15 @@
+import os
 from datetime import datetime, timedelta
 from typing import Any
 
 from database import DatabaseReader
 
-PREDICTION_DEFAULT_DAYS = 30
-RANK_DEFAULT_THRESHOLD = 30
+PREDICTOR_DEFAULT_DAYS: int = int(os.environ.get("PREDICTOR_DEFAULT_DAYS", 30))
+RANK_DEFAULT_THRESHOLD: int = int(os.environ.get("RANK_DEFAULT_THRESHOLD", 30))
 
 
 class Truerank:
-    def __init__(self, period: int = PREDICTION_DEFAULT_DAYS,
+    def __init__(self, period: int = PREDICTOR_DEFAULT_DAYS,
                  threshold: int = RANK_DEFAULT_THRESHOLD):
         self.period = period
         if period <= 0:
