@@ -24,8 +24,22 @@ SERVER_ID = os.environ.get("TRACKING_SERVER")
 API_URL = os.environ.get("API_URL")
 
 
+class TooSoonException(Exception):
+    """
+    Exception raised when the data collection is attempted too soon after the last collection.
+    """
+    pass
+
+
+class ManyFailuresException(Exception):
+    """
+    Exception raised when there are many failures during data collection.
+    """
+    pass
+
+
 def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
-                min_time: int = MIN_SEPARATION) -> bool:
+                min_time: int = MIN_SEPARATION) -> None:
     """
     Record the current XP data and ensure records are separated by at least min_time minutes.
 
@@ -33,8 +47,10 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
         pages (Iterable[int]): The pages to collect data from. Defaults to range(1, COLLECTION_LARGE).
         min_time (int): Minimum time in minutes between data collections. Defaults to MIN_SEPARATION.
 
-    Returns:
-        bool: True if data was successfully gathered, False otherwise.
+    Throws:
+        TooSoonException: If the collection time was too close to previous time
+        ManyFailuresException: If there were many errors when updating records.
+        Exception (db.commit): If there was an error while commiting the data to the db.
     """
     logger.info("Starting data collection")
 
@@ -46,7 +62,8 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
     if difference.total_seconds() < min_time * 60:
         logger.info(
             f"Too soon - {int(difference.total_seconds() / 60)}/{min_time} minutes required")
-        return False
+        raise TooSoonException(
+            f"Too soon - {int(difference.total_seconds() / 60)}/{min_time} minutes required")
 
     dbi = DatabaseSaver()
     success, failure = (0, 0)
@@ -55,54 +72,66 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
         data = request_api(API_URL, page=page)
         if not data:
             logger.error("Skipping page after max retries")
+            failure += 100
             continue
 
         leaderboard = data.get('leaderboard', [])
 
         for member in leaderboard:
-            if 'missing' not in member and member.get('color', '#000000') != '#000000':
-                count = 0
-                while count < MAX_RETRIES:
-                    try:
-                        # Extract member data
-                        member_id = int(member.get('id'))
-                        xp = int(member.get('xp'))
-                        name = (member.get('nickname')
-                                or member.get('displayName')
-                                or member.get('username'))
-                        colour = member.get('color')
-                        avatar = member.get('avatar')
+            if 'missing' in member or member.get('color', '#000000') == '#000000':
+                continue
 
-                        if any(x is None for x in (member_id, xp)):
-                            logger.warning(f"Skipping record with missing data")
-                            failure += 1
-                            break
+            # Extract member data
+            member_id = member.get('id')
+            xp = member.get('xp')
+            name = (member.get('nickname')
+                    or member.get('displayName')
+                    or member.get('username'))
+            colour = member.get('color')
+            avatar = member.get('avatar')
+            if any(x is None for x in (member_id, xp)):
+                logger.warning(f"Skipping record with missing data")
+                failure += 1
+                continue
 
-                        # Update profile and record
-                        dbi.update_profile(member_id, name, colour, avatar)
-                        dbi.insert_record(member_id, now, xp)
+            count = 0
+            while count < MAX_RETRIES:
+                try:
+                    # Update profile and record
+                    dbi.update_profile(int(member_id), name, colour, avatar)
+                    dbi.insert_record(int(member_id), now, int(xp))
 
-                        success += 1
-                        break  # Exit retry loop on success
-                    except Exception as e:
-                        logger.warning(f"Failed to save record (attempt {count + 1}): {str(e)}")
-                        if count < MAX_RETRIES:
-                            count += 1
-                        else:
-                            logger.error("Skipping record after max retries")
-                            failure += 1
-                            break
+                    success += 1
+                    break  # Exit retry loop on success
+                except Exception as e:
+                    logger.warning(f"Failed to add record (attempt {count + 1}): {str(e)}")
+                    if count < MAX_RETRIES:
+                        count += 1
+                    else:
+                        logger.error("Skipping record after max retries")
+                        failure += 1
+                        break
 
         logger.debug(f"Page {page} collected")
 
-    dbi.commit()
+    count = 0
+    while count < MAX_RETRIES:
+        try:
+            dbi.commit()
+        except Exception as e:
+            logger.warning(f"Failed to commit database (attempt {count + 1}): {str(e)}")
+            if count < MAX_RETRIES:
+                count += 1
+            else:
+                logger.error("Skipping commit after max retries")
+                raise e
 
     if success > failure:
         logger.info("Successfully saved the latest data!")
-        return True
+        return
     else:
         logger.error("Considerable record save failures!")
-        return False
+        raise ManyFailuresException(f"Considerable record save failures!")
 
 
 def update_profiles(pages: Iterable[int] = range(1, COLLECTION_LARGEST)) -> None:
@@ -158,17 +187,27 @@ def update_profiles(pages: Iterable[int] = range(1, COLLECTION_LARGEST)) -> None
 
 def run() -> None:
     """
-    Periodically collects data.
+    Periodically collects data. Should not be used if the bot is running.
     """
     while True:
-        success = record_data(pages=range(1, COLLECTION_LARGE + 1))
+        try:
+            record_data(pages=range(1, COLLECTION_LARGE + 1))
+        except Exception:
+            success = False
+        else:
+            success = True
         wait = WAIT_SUCCESS if success else WAIT_FAIL
 
         for i in range(wait // 10):
             logger.debug(f"Slept {i * 10}/{wait} minutes")
             time.sleep(10 * 60)
 
-        success = record_data(pages=range(1, COLLECTION_SMALL + 1))
+        try:
+            record_data(pages=range(1, COLLECTION_SMALL + 1))
+        except Exception:
+            success = False
+        else:
+            success = True
         wait = WAIT_SUCCESS if success else WAIT_FAIL
 
         for i in range(wait // 10):
@@ -178,7 +217,7 @@ def run() -> None:
 
 def collect() -> None:
     """
-    Creates a thread to periodically collect data.
+    Creates a thread to periodically collect data. Should not be used if bot is running.
     """
     t = Thread(target=run)
     t.start()
