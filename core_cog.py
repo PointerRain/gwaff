@@ -30,9 +30,20 @@ class CoreCog(commands.Cog):
         job_str = "\n".join([f"{job.name:>30}: next run at {job.next_run_time}" for job in jobs])
         await interaction.response.send_message(f"```{job_str}```", ephemeral=True)
 
+    @app_commands.command(name="uptime", description="Get the bot's uptime")
+    async def uptime(self, interaction: discord.Interaction):
+        await interaction.response.send_message(
+            f"Last rebooted: <t:{round(self.bot.reboot_time)}>"
+            f" (<t:{round(self.bot.reboot_time)}:R>)",
+            ephemeral=True)
+
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.send_message("I have rebooted!")
+        self.bot.reboot_time = datetime.now().timestamp()
+        if random.randint(1, 50) == 1:
+            await self.bot.send_message("Oopsie, I webooted uwu >_<")
+        else:
+            await self.bot.send_message("I have rebooted!")
 
 
 async def setup(bot: GwaffBot):
