@@ -76,5 +76,11 @@ class EventCog(commands.GroupCog, group_name='event'):
 
 
 async def setup(bot: commands.Bot):
+    """
+    Sets up the EventCog and adds it to the bot.
+
+    Args:
+        bot (commands.Bot): The bot instance.
+    """
     cog = EventCog(bot)
     await bot.add_cog(cog, guilds=bot.guilds)

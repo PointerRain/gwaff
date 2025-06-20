@@ -25,7 +25,7 @@ RANK_PAGE_SIZE: int = 25
 ACCENT_COLOUR: str = '#ea625e'
 
 
-class Stats_Cog(commands.Cog):
+class StatsCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -307,5 +307,11 @@ class Stats_Cog(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
-    cog = Stats_Cog(bot)
+    """
+    Sets up the StatsCog and adds it to the bot.
+
+    Args:
+        bot (commands.Bot): The bot instance.
+    """
+    cog = StatsCog(bot)
     await bot.add_cog(cog, guilds=bot.guilds)

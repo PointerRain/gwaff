@@ -100,7 +100,7 @@ class ReducerView(discord.ui.View):
 
 
 class CollectorCog(commands.GroupCog, group_name='collector'):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: GwaffBot):
         self.bot = bot
 
         self.bot.schedule_task(
@@ -165,7 +165,6 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
             ephemeral=True
         )
 
-
     async def collect_short(self):
         """
         Collects data from a small range of pages.
@@ -176,7 +175,6 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
         except Exception as e:
             self.bot.send_message(f"Data collection failed! {str(e)}")
 
-
     async def collect_long(self):
         """
         Collects data from a larger range of pages.
@@ -186,7 +184,6 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
             record_data(pages=range(1, COLLECTION_LARGE))
         except Exception as e:
             self.bot.send_message(f"Data collection failed! {str(e)}")
-
 
     async def update_profiles(self):
         """

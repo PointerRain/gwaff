@@ -9,7 +9,7 @@ from custom_logger import Logger
 logger = Logger('gwaff.bot.cogs')
 
 
-class ManageCogs(commands.Cog):
+class ManageCog(commands.Cog):
     """
     Note that most of these commands can make the bot load files to execute. Care should be made to ensure only entrusted users have access.
     """
@@ -48,4 +48,11 @@ class ManageCogs(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(ManageCogs(bot))
+    """
+    Sets up the ManageCog and adds it to the bot.
+
+    Args:
+        bot (commands.Bot): The bot instance.
+    """
+    cog = ManageCog(bot)
+    await bot.add_cog(cog, guilds=bot.guilds)

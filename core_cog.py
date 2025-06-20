@@ -1,3 +1,4 @@
+import random
 from datetime import datetime, timezone
 
 import discord
@@ -10,8 +11,8 @@ from custom_logger import Logger
 logger = Logger('gwaff.bot.core')
 
 
-class Core_Cog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+class CoreCog(commands.Cog):
+    def __init__(self, bot: GwaffBot):
         self.bot = bot
 
     @app_commands.command(name="ping", description="Pong!")
@@ -36,10 +37,10 @@ class Core_Cog(commands.Cog):
 
 async def setup(bot: GwaffBot):
     """
-    Sets up the SpooncraftCog and adds it to the bot.
+    Sets up the CoreCog and adds it to the bot.
 
     Args:
         bot (GwaffBot): The bot instance.
     """
-    cog = Core_Cog(bot)
+    cog = CoreCog(bot)
     await bot.add_cog(cog, guilds=bot.guilds)

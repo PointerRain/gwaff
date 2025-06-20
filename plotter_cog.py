@@ -5,7 +5,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from bot import GwaffBot
 from custom_logger import Logger
 from growth import Growth
 from utils import resolve_member
@@ -55,7 +54,7 @@ def growth(days: int = GRAPH_DEFAULT_DAYS,
 
 
 class PlotterCog(commands.Cog):
-    def __init__(self, bot: GwaffBot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
         self.growth_ctxmenu = app_commands.ContextMenu(
@@ -151,6 +150,12 @@ class PlotterCog(commands.Cog):
         await interaction.followup.send(file=discord.File(path))
 
 
-async def setup(bot: GwaffBot):
+async def setup(bot: commands.Bot):
+    """
+    Sets up the PlotterCog and adds it to the bot.
+    
+    Args:
+        bot (commands.Bot): The bot instance.
+    """
     cog = PlotterCog(bot)
     await bot.add_cog(cog, guilds=bot.guilds)

@@ -12,6 +12,9 @@ logger = Logger('gwaff.bot.spooncraft')
 
 
 def update_data(url, new_data):
+    """
+    Updates the data on the Spooncraft API.
+    """
     headers = {'Content-Type': 'application/json', "User-Agent": "Mozilla/5.0"}
     response = requests.post(url, json=new_data, headers=headers)
     if response.status_code == 200:
@@ -77,6 +80,7 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
             f"Finished updating names with {total - success} fails out of {total}!",
             log=True)
         logger.info(f"Finished updating names with {total - success} fails out of {total}!")
+        return success, total
 
     @app_commands.command(name="upload",
                           description="(Admin only) Upload the Spooncraft data")
@@ -96,23 +100,20 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
         else:
             await interaction.followup.send("Data upload failed!")
 
-    @app_commands.command(name="updateall",
-                          description="(Admin only) Update Spooncraft MC names")
-    @require_admin
-    async def command_updateall(self, interaction: discord.Interaction) -> None:
-        """
-        Command to update all Minecraft names.
-
-        Args:
-            interaction (discord.Interaction): The interaction object.
-        """
-        # TODO: Fix blocking
-        await interaction.response.defer(ephemeral=True)
-        dbm = DatabaseMinecraft()
-        msg: discord.WebhookMessage = await interaction.followup.send("Starting the update")
-        success, total = await dbm.update_all_mc_names()
-        await msg.edit(
-            content=f"Finished updating names with {total - success} fails out of {total}!")
+    # @app_commands.command(name="updateall",
+    #                       description="(Admin only) Update Spooncraft MC names")
+    # @require_admin
+    # async def command_update_names(self, interaction: discord.Interaction) -> None:
+    #     """
+    #     Command to update all Minecraft names.
+    #
+    #     Args:
+    #         interaction (discord.Interaction): The interaction object.
+    #     """
+    #     # TODO: Fix blocking
+    #     await interaction.response.defer(ephemeral=True)
+    #     success, total = await self.update_names()
+    #     await interaction.followup.send(f"Finished updating names with {total - success} fails out of {total}!")
 
     @app_commands.command(name="add",
                           description="(Admin only) Add a Spooncraft player")
