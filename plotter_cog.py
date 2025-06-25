@@ -22,9 +22,21 @@ def growth(days: int = GRAPH_DEFAULT_DAYS,
            member: discord.User = None,
            title: str = "Top chatters XP growth",
            special: bool = False,
-           compare: discord.User = None) -> str:
+           compare: discord.User = None,
+           name='out.png') -> str:
     """
     Plots and saves a growth plot (aka gwaff)
+    
+    Args:
+        days (int): Number of days to plot (default GRAPH_DEFAULT_DAYS).
+        count (int): Number of users to plot (default GRAPH_DEFAULT_USERS).
+        member (discord.User): Specific member to plot (default None).
+        title (str): Title of the plot (default "Top chatters XP growth").
+        special (bool): Whether to use special plotting settings (default False).
+        compare (discord.User): A second user to compare with (default None).
+        name (str): Name of the output file (default 'out.png').
+    Returns:
+        str: Path to the saved plot image.
     """
     if days >= GRAPH_MAX_DAYS:
         days = GRAPH_MAX_DAYS
@@ -65,7 +77,7 @@ class PlotterCog(commands.Cog):
 
     async def regular(self):
         try:
-            growth(name='regular')
+            growth(name='regular.png')
         except Exception as e:
             logger.error("Regular graph plotting failed!")
             await self.bot.send_message("Regular graph plotting failed!", log=True)
