@@ -125,6 +125,8 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
             else:
                 logger.error("Skipping commit after max retries")
                 raise e
+        else:
+            break
 
     if success > failure:
         logger.info("Successfully saved the latest data!")

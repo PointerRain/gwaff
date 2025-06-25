@@ -173,7 +173,7 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
         try:
             record_data(pages=range(1, COLLECTION_SMALL))
         except Exception as e:
-            self.bot.send_message(f"Data collection failed! {str(e)}")
+            await self.bot.send_message(f"Data collection failed! {str(e)}", log=True)
 
     async def collect_long(self):
         """
@@ -183,7 +183,7 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
         try:
             record_data(pages=range(1, COLLECTION_LARGE))
         except Exception as e:
-            self.bot.send_message(f"Data collection failed! {str(e)}")
+            await self.bot.send_message(f"Data collection failed! {str(e)}", log=True)
 
     async def update_profiles(self):
         """
@@ -193,7 +193,6 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
         try:
             update_profiles()
         except Exception as e:
-            self.bot.send_message(f"Data collection failed! {str(e)}")
 
 
     async def reduce():
@@ -206,6 +205,7 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
         count = dr.reduce()
         if count > 1:
             logger.info(f"Reduced {count} records")
+            await self.bot.send_message(f"Data collection failed! {str(e)}", log=True)
 
 
 async def setup(bot: GwaffBot):
