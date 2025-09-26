@@ -5,9 +5,9 @@ from discord import app_commands
 from discord.ext import commands
 from discord.utils import format_dt
 
-from custom_logger import Logger
-from database_events import DatabaseEvents, EventExistsError
-from permissions import require_admin
+from gwaff.custom_logger import Logger
+from gwaff.database.db_events import DatabaseEvents, EventExistsError
+from gwaff.cogs.permissions import require_admin
 
 logger = Logger('gwaff.bot.event')
 

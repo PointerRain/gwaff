@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Any
 
-from database import DatabaseReader
+from gwaff.database.db_base import DatabaseReader
 
 PREDICTOR_DEFAULT_DAYS: int = int(os.environ.get("PREDICTOR_DEFAULT_DAYS", 30))
 RANK_DEFAULT_THRESHOLD: int = int(os.environ.get("RANK_DEFAULT_THRESHOLD", 30))

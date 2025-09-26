@@ -1,10 +1,8 @@
 import datetime
 import os
 
-from sqlalchemy import func
-
-from database import BaseDatabase
-from structs import Profile, Record
+from gwaff.database.db_base import BaseDatabase
+from gwaff.database.structs import Profile, Record
 
 XP_SAFE_THRESHOLD = int(os.environ.get("XP_SAFE_THRESHOLD", 200))
 

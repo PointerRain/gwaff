@@ -3,10 +3,10 @@ import requests
 from discord import app_commands
 from discord.ext import commands
 
-from bot import GwaffBot
-from custom_logger import Logger
-from database_mc import DatabaseMinecraft
-from permissions import require_admin
+from gwaff.bot import GwaffBot
+from gwaff.custom_logger import Logger
+from gwaff.database.db_spooncraft import DatabaseMinecraft
+from gwaff.cogs.permissions import require_admin
 
 logger = Logger('gwaff.bot.spooncraft')
 
@@ -57,14 +57,24 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
         """
         dbm = DatabaseMinecraft()
         logger.info("Starting upload")
+
         data = dbm.to_json()
         result = update_data("https://gwaff.uqcloud.net/api/spooncraft", data)
         if result:
             logger.info("Upload completed successfully!")
-            return True
-        logger.warning(f"Upload failed!")
-        await self.bot.send_message("SC data upload failed", log=True)
-        return False
+        else:
+            logger.warning(f"Upload failed!")
+            await self.bot.send_message("SC data upload failed", log=True)
+
+        data = dbm.to_json_dict()
+        result = update_data("https://gwaff.uqcloud.net/scnicknamer/", data)
+        if result:
+            logger.info("Upload completed successfully!")
+        else:
+            logger.warning(f"Upload failed!")
+            await self.bot.send_message("SC data upload failed", log=True)
+
+        return True
 
     async def update_names(self) -> None:
         """

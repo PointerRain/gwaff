@@ -2,10 +2,10 @@ import os
 from datetime import datetime, timedelta
 from math import floor
 
-from database import DatabaseReader
+from gwaff.database.db_base import DatabaseReader
 
 PREDICTOR_DEFAULT_DAYS: int = int(os.environ.get("PREDICTOR_DEFAULT_DAYS", 30))
-MAX_TARGET_DISTANCE: int = int(os.environ.get("MAX_TARGET_DISTANCE", 100*365))
+MAX_TARGET_DISTANCE: int = int(os.environ.get("MAX_TARGET_DISTANCE", 100 * 365))
 
 
 class NoDataError(Exception):

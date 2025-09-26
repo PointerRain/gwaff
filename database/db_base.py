@@ -4,13 +4,17 @@ import pandas as pd
 from sqlalchemy import create_engine, func, desc
 from sqlalchemy.orm import sessionmaker
 
-from structs import *
+from gwaff.database.structs import *
 
 import os.path
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_NAME = os.environ.get('DB_NAME', 'gwaff.db')
 DB_DIR = os.path.join(BASE_DIR, DB_NAME)
+
+print(BASE_DIR)
+print(DB_NAME)
+print(DB_DIR)
 
 
 # logging.getLogger('sqlalchemy').disabled = True
@@ -74,7 +78,7 @@ class DatabaseReader(BaseDatabase):
     Class for reading data from the database.
     """
 
-    def get_dates_in_range(self, start_date=None, end_date=None):
+    def get_dates_in_range(self, start_date=None, end_date=None) -> list[datetime]:
         """
         Retrieves distinct timestamps within a specified date range.
 
@@ -92,7 +96,8 @@ class DatabaseReader(BaseDatabase):
             query_result = query_result.filter(Record.timestamp >= start_date)
         return [i.timestamp for i in query_result.order_by(Record.timestamp).all()]
 
-    def get_row(self, id: int, start_date: datetime = None, end_date: datetime = None) -> list:
+    def get_row(self, id: int,
+                start_date: datetime = None, end_date: datetime = None) -> list[Record]:
         """
         Retrieves records for a specific ID, optionally filtering by start date.
 
@@ -104,15 +109,11 @@ class DatabaseReader(BaseDatabase):
         Returns:
             list: A list of records for the specified ID.
         """
-        if id in {483515866319945728} and start_date < datetime(2024, 6, 1):
-            if end_date is None:
+        if id == 483515866319945728 and start_date < datetime(2024, 6, 2):
+            if end_date is None or datetime(2024, 6, 1) < end_date:
                 return []
-            if datetime(2024, 6, 2) < end_date:
-                return []
-        elif id in {457989277322838016} and start_date < datetime(2025, 1, 19):
-            if end_date is None:
-                return []
-            if datetime(2025, 1, 20) < end_date:
+        elif id == 457989277322838016 and start_date < datetime(2025, 1, 20):
+            if end_date is None or datetime(2025, 1, 19) < end_date:
                 return []
         record_query = (self.session.query(Record)
                         .filter_by(id=id)
@@ -305,40 +306,78 @@ class DatabaseSaver(BaseDatabase):
 
         self.commit()
 
+    def merge_database(self, other):
+        """
+        Merges another database into the current database.
+
+        Args:
+            other (DatabaseSaver): The other database to merge.
+        """
+        current = [p.id for p in self.session.query(Profile).all()]
+        # print(current)
+        for profile in other.session.query(Profile).all():
+            if profile.id not in current:
+                print(profile)
+                self.session.merge(profile)
+
+        current = [(record.id, record.timestamp) for record in self.session.query(Record).all()]
+        # print(current)
+        for record in other.session.query(Record).where(
+                Record.timestamp > datetime(year=2025, month=1, day=10)).all():
+            if (record.id, record.timestamp) not in current:
+                print(record)
+                self.session.merge(record)
+
+        self.commit()
+
 
 if __name__ == '__main__':
     # dbc = DatabaseCreator()
-    dbr = DatabaseReader()
+    dbr = DatabaseReader(os.path.join(BASE_DIR, 'gwaff.db'))
     # dbi = DatabaseSaver()
-
-    # dbc.clear_database()
-    # dbc.create_database()
-
-    # dbi.load_from_csv(pd.read_csv("gwaff.csv", index_col=0))
-
-    print(dbr.get_profile_data())
-    print(dbr.get_profile_data()[0].__dict__)
-    print(dbr.get_profile_data(92029863090728960).__dict__)
-
-    print(dbr.get_last_timestamp())
-    print(len(dbr.get_last_record()))
-    for p, v in dbr.get_last_record():
-        print(p.name, v)
-    # print(dbr.get_data_in_range(limit=1))
-
-    threshold = datetime.now() - timedelta(days=7)
-    # dates = dbr.get_dates_in_range(threshold)
-    # print(len(dates))
-    # for i in dates:
+    #
+    # # dbc.clear_database()
+    # # dbc.create_database()
+    #
+    # # dbi.load_from_csv(pd.read_csv("gwaff.csv", index_col=0))
+    #
+    # print(dbr.get_profile_data())
+    # print(dbr.get_profile_data()[0].__dict__)
+    # print(dbr.get_profile_data(92029863090728960).__dict__)
+    #
+    # print(dbr.get_last_timestamp())
+    # print(len(dbr.get_last_record()))
+    # for p, v in dbr.get_last_record():
+    #     print(p.name, v)
+    # # print(dbr.get_data_in_range(limit=1))
+    #
+    # threshold = datetime.now() - timedelta(days=7)
+    # # dates = dbr.get_dates_in_range(threshold)
+    # # print(len(dates))
+    # # for i in dates:
+    # #     print(i)
+    #
+    # for i in dbr.get_data_in_range(threshold, limit=1):
     #     print(i)
+    #
+    # # for i in dbr.get_growth_in_range():
+    # # print(i)
+    # # print(i[0], i[2][-1])
+    # # print(len(i[1]))
+    #
+    from gwaff.predictor import xp_to_lvl
+    import json
 
-    for i in dbr.get_data_in_range(threshold, limit=1):
-        print(i)
+    levels = {}
+    for i in dbr.get_last_record():
+        if i[1] <= 12017:
+            continue
+        # print(f'    "{i[0].id}": {xp_to_lvl(i[1])},')
+        levels[str(i[0].id)] = xp_to_lvl(i[1])
+    json.dump(levels, open(os.path.join(BASE_DIR, 'levels.json'), 'w'))
+    print(str(levels).replace("'", '"'))
 
-    # for i in dbr.get_growth_in_range():
-    # print(i)
-    # print(i[0], i[2][-1])
-    # print(len(i[1]))
-
-    # for i in dbr.get_profile_data():
-    #     print(i.__dict__)
+    # # MERGING DATABASES
+    # dbs = DatabaseSaver(os.path.join(BASE_DIR, 'gwaff_uqcloud.db'))
+    # other = DatabaseReader(os.path.join(BASE_DIR, 'gwaff_rpi.db'))
+    # dbs.merge_database(other)

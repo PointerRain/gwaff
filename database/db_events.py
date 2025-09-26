@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
-from database import BaseDatabase
-from structs import *
+from gwaff.database.db_base import BaseDatabase
+from gwaff.database.structs import *
 
 EVENT_SIZE_THRESHOLD = 0.01
 

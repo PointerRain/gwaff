@@ -8,7 +8,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from discord import utils
 from discord.ext import commands
 
-from custom_logger import Logger, BasicFormatter
+from gwaff.custom_logger import Logger, BasicFormatter
 
 logger = Logger('gwaff.bot')
 
@@ -170,14 +170,14 @@ class GwaffBot(commands.Bot):
 
 
 cogs = [
-    "core_cog",
-    "plotter_cog",
-    "stats_cog",
-    "github_cog",
-    "manage_cog",
-    "spooncraft_cog",
-    "event_cog",
-    "collector_cog",
+    "gwaff.cogs.core_cog",
+    "gwaff.cogs.plotter_cog",
+    "gwaff.cogs.stats_cog",
+    # "gwaff.cogs.github_cog",
+    "gwaff.cogs.manage_cog",
+    "gwaff.cogs.spooncraft_cog",
+    "gwaff.cogs.event_cog",
+    "gwaff.cogs.collector_cog",
 ]
 
 

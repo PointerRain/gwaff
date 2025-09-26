@@ -9,6 +9,10 @@ ADMIN_LIST: set[int] = {int(os.environ.get('OWNER_ID'))} # Set of discord ids of
 
 
 def require_admin(func: app_commands.AppCommand):
+    """
+    Restricts command usage to admin users only.
+    """
+
     @wraps(func)
     async def wrapper(
         cog: commands.Cog,

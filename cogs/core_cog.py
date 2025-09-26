@@ -5,8 +5,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from bot import GwaffBot
-from custom_logger import Logger
+from gwaff.bot import GwaffBot
+from gwaff.custom_logger import Logger
 
 logger = Logger('gwaff.bot.core')
 

@@ -4,7 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from custom_logger import Logger
+from gwaff.custom_logger import Logger
 
 logger = Logger('gwaff.bot.cogs')
 
@@ -17,7 +17,8 @@ class ManageCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name="managecogs")
+    @app_commands.command(name="managecogs",
+                          description="(Admin only) Load, unload or reload a cog")
     @app_commands.checks.has_permissions(manage_guild=True)
     async def manage_cogs(
             self, interaction: discord.Interaction,

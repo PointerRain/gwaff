@@ -4,9 +4,9 @@ from datetime import datetime
 from threading import Thread
 from typing import Iterable
 
-from database import DatabaseReader, DatabaseSaver
-from custom_logger import Logger
-from utils import request_api
+from gwaff.database.db_base import DatabaseReader, DatabaseSaver
+from gwaff.custom_logger import Logger
+from gwaff.utils import request_api
 
 logger = Logger('gwaff.collect')
 

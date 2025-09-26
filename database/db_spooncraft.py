@@ -2,9 +2,9 @@ import re
 
 import pandas as pd
 
-from database import BaseDatabase
-from structs import *
-from utils import request_api
+from gwaff.database.db_base import BaseDatabase
+from gwaff.database.structs import *
+from gwaff.utils import request_api
 
 
 class DatabaseMinecraft(BaseDatabase):
@@ -122,7 +122,9 @@ class DatabaseMinecraft(BaseDatabase):
 
     def to_json(self) -> list[dict]:
         """
-        Exports Minecraft user data to a JSON file.
+        Exports Minecraft user data to a JSON object. Series of objects with keys
+        'mc_name' and 'mc_uuid', and optional keys 'discord_nick' and 'colour'.
+        'discord_nick' is included only if the Discord name is different from the Minecraft name.
 
         Returns:
             list: A list of Minecraft user data.
@@ -137,7 +139,7 @@ class DatabaseMinecraft(BaseDatabase):
             uuid = f'{uuid[0:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:32]}'
             colour = user.profile.colour.replace('#', '')
             mc_name = user.mc_name
-            discord_nick = re.sub(' *\[.+]', '', user.profile.name)
+            discord_nick = re.sub(' *\[.+]$', '', user.profile.name)
 
             entry = {
                 'mc_name': mc_name,
@@ -155,13 +157,50 @@ class DatabaseMinecraft(BaseDatabase):
                 data.append(entry)
         return data
 
+    def to_json_dict(self) -> dict[str, dict]:
+        """
+        Exports Minecraft user data to a JSON object. Dictionary with UUID keys and values
+        containing keys 'mc_name' and 'mc_uuid', and optional keys 'discord_nick' and 'colour'.
+        'discord_nick' is included only if the Discord name is different from the Minecraft name.
+
+        Returns:
+            dict: A dictionary of Minecraft user data.
+        """
+        data = {}
+
+        for user in self.get_users():
+            if user.mc_name is None:
+                continue
+
+            uuid = user.mc_uuid
+            uuid = f'{uuid[0:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:32]}'
+            colour = user.profile.colour.replace('#', '')
+            mc_name = user.mc_name
+            discord_nick = re.sub(' *\[.+]$', '', user.profile.name)
+
+            entry = {
+                'mc_name': mc_name,
+                'mc_uuid': uuid
+            }
+
+            if (re.sub('[ _.]', '', mc_name).lower() !=
+                    re.sub('[ _.]', '', discord_nick).lower()
+                    and len(discord_nick) >= 3):
+                entry['discord_nick'] = discord_nick
+
+            if colour not in {'95a5a6', '000000', 'ffffff'}:
+                entry['colour'] = colour
+            if len(entry) > 2:
+                data[uuid] = entry
+        return data
+
 
 if __name__ == '__main__':
     dbm = DatabaseMinecraft()
-    dbm.load_from_csv(pd.read_csv("players.csv"))
+    # dbm.load_from_csv(pd.read_csv("players.csv"))
 
-    for i in dbm.get_users():
-        print(i.discord_id, i.profile.name, i.mc_name)
+    # for i in dbm.get_users():
+    #     print(i.discord_id, i.profile.name, i.mc_name)
 
     # print(dbm.update_all_mc_names())
 
@@ -169,3 +208,5 @@ if __name__ == '__main__':
 
     print(dbm.to_json())
     print(len(dbm.to_json()))
+    print(dbm.to_json_dict())
+    print(len(dbm.to_json_dict()))

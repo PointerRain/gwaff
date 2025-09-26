@@ -7,15 +7,13 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from custom_logger import Logger
+from gwaff.custom_logger import Logger
+from gwaff.predictor import Prediction, xp_to_lvl
+from gwaff.predictor import NoDataError, ZeroGrowthError, TargetBoundsError
+from gwaff.truerank import Truerank
+from gwaff.utils import resolve_member, ordinal
 
 logger = Logger('gwaff.bot.stats')
-
-from predictor import Prediction, xp_to_lvl
-from predictor import (NoDataError, ZeroGrowthError,
-                       TargetBoundsError)
-from truerank import Truerank
-from utils import resolve_member, ordinal
 
 GRAPH_MAX_DAYS: int = int(os.environ.get("GRAPH_MAX_DAYS", 365))
 PREDICTOR_DEFAULT_DAYS: int = int(os.environ.get("PREDICTOR_DEFAULT_DAYS", 30))

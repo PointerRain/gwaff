@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
-from database import DatabaseReader
-from plotter import Plotter
+from gwaff.database.db_base import DatabaseReader
+from gwaff.plotter.plotter import Plotter
 
 
 class Growth(Plotter):

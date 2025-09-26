@@ -6,8 +6,8 @@ from urllib.parse import urlencode
 import discord
 import requests
 
-from custom_logger import Logger
-from database import DatabaseReader
+from gwaff.custom_logger import Logger
+from gwaff.database.db_base import DatabaseReader
 
 logger = Logger('gwaff.utils')
 

@@ -5,12 +5,12 @@ import discord
 from discord import app_commands, utils, ui
 from discord.ext import commands
 
-from bot import GwaffBot
-from collector import record_data, update_profiles
-from custom_logger import Logger
-from database import DatabaseReader
-from permissions import require_admin
-from reducer import DatabaseReducer
+from gwaff.bot import GwaffBot
+from gwaff.collector import record_data, update_profiles
+from gwaff.custom_logger import Logger
+from gwaff.database.db_base import DatabaseReader
+from gwaff.cogs.permissions import require_admin
+from gwaff.database.db_reducer import DatabaseReducer
 
 logger = Logger('gwaff.bot.collector')
 
@@ -99,6 +99,18 @@ class ReducerView(discord.ui.View):
         return
 
 
+async def reduce():
+    """
+    Reduces the database by removing old records.
+    WARNING: This is a destructive operation and cannot be undone. It does not ask for confirmation.
+    """
+    logger.info("Starting data reduction")
+    dr = DatabaseReducer()
+    count = dr.reduce()
+    if count > 1:
+        logger.info(f"Reduced {count} records")
+
+
 class CollectorCog(commands.GroupCog, group_name='collector'):
     def __init__(self, bot: GwaffBot):
         self.bot = bot
@@ -118,6 +130,12 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
             hour=0,
             minute=10
         )
+        # self.bot.schedule_task(
+        #     reduce,
+        #     hour=0,
+        #     minute=50,
+        #     day='last'
+        # )
 
     # @app_commands.command(name="data",
     #                       description="(Admin only) Gets the entire gwaff data as a csv")
@@ -193,18 +211,6 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
         try:
             update_profiles()
         except Exception as e:
-
-
-    async def reduce():
-        """
-        Reduces the database by removing old records.
-        WARNING: This is a destructive operation and cannot be undone. It does not ask for confirmation.
-        """
-        logger.info("Starting data reduction")
-        dr = DatabaseReducer()
-        count = dr.reduce()
-        if count > 1:
-            logger.info(f"Reduced {count} records")
             await self.bot.send_message(f"Data collection failed! {str(e)}", log=True)
 
 

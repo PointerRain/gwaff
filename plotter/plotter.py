@@ -6,14 +6,14 @@ from matplotlib.dates import DateFormatter
 from matplotlib.font_manager import fontManager, FontProperties
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
-from custom_logger import Logger
-from database import DatabaseReader
-from database_events import DatabaseEvents
-from utils import request_img
+from gwaff.custom_logger import Logger
+from gwaff.database.db_base import DatabaseReader
+from gwaff.database.db_events import DatabaseEvents
+from gwaff.utils import request_img
 
 logger = Logger('gwaff.plotter')
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PRIMARY_FONT_PATH = os.path.join(BASE_DIR, 'assets/gg sans Semibold.ttf')
 EMOJI_FONT_PATH = os.path.join(BASE_DIR, 'assets/NotoEmoji-Regular.ttf')
 fontManager.addfont(PRIMARY_FONT_PATH)  # gg sans

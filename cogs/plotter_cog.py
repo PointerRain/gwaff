@@ -5,9 +5,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from custom_logger import Logger
-from growth import Growth
-from utils import resolve_member
+from gwaff.custom_logger import Logger
+from gwaff.plotter.growth import Growth
+from gwaff.utils import resolve_member
 
 logger = Logger('gwaff.bot.plot')
 

@@ -1,8 +1,8 @@
 import os
 import asyncio
 
-from custom_logger import Logger
-from database import DatabaseCreator
+from gwaff.custom_logger import Logger
+from gwaff.database.db_base import DatabaseCreator
 
 # Initialize the logger for the main module
 logger = Logger('gwaff.main')
@@ -20,7 +20,7 @@ logger.info("Filtering warnings")
 dbc = DatabaseCreator()
 dbc.create_database()
 
-from bot import run_the_bot
+from gwaff.bot import run_the_bot
 
 # Retrieve the bot token from environment variables
 TOKEN = os.environ.get('BOT_TOKEN')
