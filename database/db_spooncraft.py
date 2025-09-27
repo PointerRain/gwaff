@@ -174,7 +174,8 @@ class DatabaseMinecraft(BaseDatabase):
 
             uuid = user.mc_uuid
             uuid = f'{uuid[0:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:32]}'
-            colour = user.profile.colour.replace('#', '')
+            colour = user.profile.colour.removeprefix('#')
+            colours = user.profile.colours.split(',') if user.profile.colours else []
             mc_name = user.mc_name
             discord_nick = re.sub(' *\[.+]$', '', user.profile.name)
 
@@ -190,6 +191,9 @@ class DatabaseMinecraft(BaseDatabase):
 
             if colour not in {'95a5a6', '000000', 'ffffff'}:
                 entry['colour'] = colour
+
+            if len(colours) >= 2:
+                entry['colours'] = [c.removeprefix('#') for c in colours]
             if len(entry) > 2:
                 data[uuid] = entry
         return data
@@ -206,7 +210,9 @@ if __name__ == '__main__':
 
     # print(dbm.get_users())
 
-    print(dbm.to_json())
-    print(len(dbm.to_json()))
-    print(dbm.to_json_dict())
-    print(len(dbm.to_json_dict()))
+    as_json = dbm.to_json()
+    as_json_dict = dbm.to_json_dict()
+    print(as_json)
+    print(len(as_json))
+    print(as_json_dict)
+    print(len(as_json_dict))

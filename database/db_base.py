@@ -248,7 +248,8 @@ class DatabaseSaver(BaseDatabase):
     Class for saving data to the database.
     """
 
-    def update_profile(self, id, name: str = None, colour: str = None, avatar: str = None) -> None:
+    def update_profile(self, id, name: str = None, colour: str = None, avatar: str = None,
+                       colours: list[str] = None) -> None:
         """
         Updates or creates a profile in the database.
 
@@ -257,6 +258,7 @@ class DatabaseSaver(BaseDatabase):
             name (str, optional): The name of the profile. Defaults to None.
             colour (str, optional): The colour of the profile. Defaults to None.
             avatar (str, optional): The avatar of the profile. Defaults to None.
+            colours (list[str], optional): A list of colours of the profile. Defaults to None.
         """
         profile = self.session.query(Profile).filter_by(id=id).first()
 
@@ -269,6 +271,7 @@ class DatabaseSaver(BaseDatabase):
         profile.name = name or profile.name
         profile.colour = colour or profile.colour
         profile.avatar = avatar or profile.avatar
+        profile.colours = ','.join(colours) if colours else profile.colours
 
     def insert_record(self, id: int, timestamp: datetime, value: int) -> None:
         """

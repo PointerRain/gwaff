@@ -21,6 +21,7 @@ class Profile(Base):
     name = Column(String, nullable=False)
     colour = Column(String)
     avatar = Column(String)
+    colours = Column(String)
 
     def __repr__(self):
         return f'<Profile {self.id}, {self.name}, {self.colour}>'

@@ -39,13 +39,14 @@ class ManyFailuresException(Exception):
 
 
 def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
-                min_time: int = MIN_SEPARATION) -> None:
+                min_time: int = MIN_SEPARATION, add_records=True) -> None:
     """
     Record the current XP data and ensure records are separated by at least min_time minutes.
 
     Args:
         pages (Iterable[int]): The pages to collect data from. Defaults to range(1, COLLECTION_LARGE).
         min_time (int): Minimum time in minutes between data collections. Defaults to MIN_SEPARATION.
+        add_records (bool): Whether to add records to the database. Defaults to True.
 
     Throws:
         TooSoonException: If the collection time was too close to previous time
@@ -54,20 +55,17 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
     """
     logger.info("Starting data collection")
 
-    dbr = DatabaseReader()
-    lasttime = dbr.get_last_timestamp()
+    # Check if enough time has passed since the last collection
+    lasttime = DatabaseReader().get_last_timestamp()
     now = datetime.now()
-
-    difference = now - lasttime
-    if difference.total_seconds() < min_time * 60:
-        logger.info(
-            f"Too soon - {int(difference.total_seconds() / 60)}/{min_time} minutes required")
-        raise TooSoonException(
-            f"Too soon - {int(difference.total_seconds() / 60)}/{min_time} minutes required")
+    if (now - lasttime).total_seconds() < min_time * 60:
+        logger.info(f"Too soon - {int((now - lasttime).total_seconds() / 60)}/{min_time} minutes required")
+        raise TooSoonException(f"Too soon - {int((now - lasttime).total_seconds() / 60)}/{min_time} minutes required")
 
     dbi = DatabaseSaver()
-    success, failure = (0, 0)
+    success, failure = 0, 0
 
+    # Collect data from pages
     for page in pages:
         data = request_api(API_URL, page=page)
         if not data:
@@ -75,116 +73,49 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
             failure += 100
             continue
 
-        leaderboard = data.get('leaderboard', [])
-
-        for member in leaderboard:
+        for member in data.get('leaderboard', []):
             if 'missing' in member or member.get('color', '#000000') == '#000000':
                 continue
 
-            # Extract member data
-            member_id = member.get('id')
-            xp = member.get('xp')
-            name = (member.get('nickname')
-                    or member.get('displayName')
-                    or member.get('username'))
-            colour = member.get('color')
-            avatar = member.get('avatar')
-            if any(x is None for x in (member_id, xp)):
+            member_id, xp = member.get('id'), member.get('xp')
+            name = member.get('nickname') or member.get('displayName') or member.get('username')
+            if not all([member_id, xp]):
                 logger.warning(f"Skipping record with missing data")
                 failure += 1
                 continue
 
-            count = 0
-            while count < MAX_RETRIES:
+            # Retry updating profile and inserting record
+            for attempt in range(MAX_RETRIES):
                 try:
-                    # Update profile and record
-                    dbi.update_profile(int(member_id), name, colour, avatar)
-                    dbi.insert_record(int(member_id), now, int(xp))
-
+                    if add_records:
+                        dbi.insert_record(int(member_id), now, int(xp))
+                    dbi.update_profile(int(member_id), name, member.get('color'), member.get('avatar'),
+                                       member.get('colors', None))
                     success += 1
-                    break  # Exit retry loop on success
+                    break
                 except Exception as e:
-                    logger.warning(f"Failed to add record (attempt {count + 1}): {str(e)}")
-                    if count < MAX_RETRIES:
-                        count += 1
-                    else:
-                        logger.error("Skipping record after max retries")
-                        failure += 1
-                        break
+                    logger.warning(f"Failed to add record (attempt {attempt + 1}): {str(e)}")
+                    failure += 1
+                    break
+            else:
+                logger.error(f"Skipping record after max retries")
 
-        logger.debug(f"Page {page} collected")
-
-    count = 0
-    while count < MAX_RETRIES:
+    # Commit changes with retries
+    for attempt in range(MAX_RETRIES):
         try:
             dbi.commit()
-        except Exception as e:
-            logger.warning(f"Failed to commit database (attempt {count + 1}): {str(e)}")
-            if count < MAX_RETRIES:
-                count += 1
-            else:
-                logger.error("Skipping commit after max retries")
-                raise e
-        else:
             break
+        except Exception as e:
+            logger.warning(f"Failed to commit database (attempt {attempt + 1}): {str(e)}")
+            continue
+    else:
+        raise Exception("Failed to commit database after retries")
 
     if success > failure:
         logger.info("Successfully saved the latest data!")
-        return
     else:
         logger.error("Considerable record save failures!")
-        raise ManyFailuresException(f"Considerable record save failures!")
-
-
-def update_profiles(pages: Iterable[int] = range(1, COLLECTION_LARGEST)) -> None:
-    logger.info("Starting profile collection")
-
-    dbi = DatabaseSaver()
-    success, failure = (0, 0)
-
-    for page in pages:
-        data = request_api(API_URL, page=page)
-        if not data:
-            logger.error("Skipping page after max retries")
-            continue
-
-        leaderboard = data.get('leaderboard', [])
-
-        for member in leaderboard:
-            if 'missing' not in member and member.get('color', '#000000') != '#000000':
-                count = 0
-                while count < MAX_RETRIES:
-                    try:
-                        # Extract member data
-                        member_id = int(member.get('id'))
-                        name = (member.get('nickname')
-                                or member.get('displayName')
-                                or member.get('username'))
-                        colour = member.get('color')
-                        avatar = member.get('avatar')
-
-                        if member_id is None:
-                            logger.warning(f"Skipping profile with missing data")
-                            failure += 1
-                            break
-
-                        # Update profile
-                        dbi.update_profile(member_id, name, colour, avatar)
-
-                        success += 1
-                        break  # Exit retry loop on success
-                    except Exception as e:
-                        logger.warning(f"Failed to save record (attempt {count + 1}): {str(e)}")
-                        if count < MAX_RETRIES:
-                            count += 1
-                        else:
-                            logger.error("Skipping record after max retries")
-                            failure += 1
-                            break
-
-        logger.debug(f"Page {page} updated")
-
-    dbi.commit()
+        raise ManyFailuresException("Considerable record save failures!")
 
 
 def run() -> None:

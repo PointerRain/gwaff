@@ -6,7 +6,7 @@ from discord import app_commands, utils, ui
 from discord.ext import commands
 
 from gwaff.bot import GwaffBot
-from gwaff.collector import record_data, update_profiles
+from gwaff.collector import record_data
 from gwaff.custom_logger import Logger
 from gwaff.database.db_base import DatabaseReader
 from gwaff.cogs.permissions import require_admin
@@ -209,7 +209,7 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
         """
         logger.info("Starting profile update")
         try:
-            update_profiles()
+            record_data(range(1, COLLECTION_LARGEST), min_time=0, add_records=False)
         except Exception as e:
             await self.bot.send_message(f"Data collection failed! {str(e)}", log=True)
 
