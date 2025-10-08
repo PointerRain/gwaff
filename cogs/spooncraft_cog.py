@@ -1,3 +1,5 @@
+from typing import Any
+
 import discord
 import requests
 from discord import app_commands
@@ -11,9 +13,13 @@ from gwaff.cogs.permissions import require_admin
 logger = Logger('gwaff.bot.spooncraft')
 
 
-def update_data(url, new_data):
+def update_data(url: str, new_data: dict[str, Any]) -> bool:
     """
     Updates the data on the Spooncraft API.
+
+    Args:
+        url (str): URL to upload the data to.
+        new_data (dict): The new data to update.
     """
     headers = {'Content-Type': 'application/json', "User-Agent": "Mozilla/5.0"}
     response = requests.post(url, json=new_data, headers=headers)
@@ -66,7 +72,13 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
             logger.warning(f"Upload failed!")
             await self.bot.send_message("SC data upload failed", log=True)
 
-        data = dbm.to_json_dict()
+        data = {
+            'version': 2,
+            'mappings': dbm.to_json_dict(),
+            'whitelist': ['mc.thatmumbojumbo.com', 'creative.thatmumbojumbo.com', 'play.thatmumbojumbo.com',
+                          '173.233.142.94', '173.233.142.2'],
+            'blacklist': ['uhc.thatmumbojumbo.com', '173.233.142.10', 'cytooxien.de', 'cytooxien.net']
+        }
         result = update_data("https://gwaff.uqcloud.net/scnicknamer/", data)
         if result:
             logger.info("Upload completed successfully!")
@@ -76,7 +88,7 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
 
         return True
 
-    async def update_names(self) -> None:
+    async def update_names(self) -> tuple[int, int]:
         """
         Asynchronously updates Minecraft names.
         """

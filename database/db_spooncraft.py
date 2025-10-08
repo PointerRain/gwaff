@@ -1,4 +1,5 @@
 import re
+from typing import Any
 
 import pandas as pd
 
@@ -25,7 +26,7 @@ class DatabaseMinecraft(BaseDatabase):
 
         self.commit()
 
-    def add_user(self, discord_id, mc_uuid, mc_name=None):
+    def add_user(self, discord_id: int, mc_uuid: str, mc_name: str | None = None) -> None:
         """
         Adds or updates a Minecraft user in the database.
 
@@ -37,8 +38,8 @@ class DatabaseMinecraft(BaseDatabase):
         user = (self.session.query(MinecraftUser)
                 .filter_by(discord_id=discord_id).first())
         if user is not None:
-            user.mc_uuid = mc_uuid or user.mc_uuid
-            user.mc_name = mc_name or user.mc_name
+            user.mc_uuid = mc_uuid or user.mc_uuid  # pyright: ignore [reportAttributeAccessIssue]
+            user.mc_name = mc_name or user.mc_name  # pyright: ignore [reportAttributeAccessIssue]
             return
 
         existing_user = (self.session.query(MinecraftUser)
@@ -50,7 +51,7 @@ class DatabaseMinecraft(BaseDatabase):
         new_user = MinecraftUser(discord_id=discord_id, mc_uuid=mc_uuid, mc_name=mc_name)
         self.session.add(new_user)
 
-    def get_user(self, discord_id: int = None, mc_uuid: str = None) -> MinecraftUser:
+    def get_user(self, discord_id: int | None = None, mc_uuid: str | None = None) -> MinecraftUser | None:
         """
         Retrieves a Minecraft user from the database.
 
@@ -61,7 +62,7 @@ class DatabaseMinecraft(BaseDatabase):
         Returns:
             MinecraftUser: The Minecraft user.
         """
-        if all(not i for i in [discord_id, mc_uuid]):
+        if not (discord_id or mc_uuid):
             return None
         user = self.session.query(MinecraftUser)
         if discord_id:
@@ -129,7 +130,7 @@ class DatabaseMinecraft(BaseDatabase):
         Returns:
             list: A list of Minecraft user data.
         """
-        data = []
+        data: list[dict] = []
 
         for user in self.get_users():
             if user.mc_name is None:
@@ -137,11 +138,12 @@ class DatabaseMinecraft(BaseDatabase):
 
             uuid = user.mc_uuid
             uuid = f'{uuid[0:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:32]}'
-            colour = user.profile.colour.replace('#', '')
-            mc_name = user.mc_name
+            colour: str = user.profile.colour.removeprefix('#')
+            colours: list[str] = user.profile.colours.split(',') if user.profile.colours else []
+            mc_name: str = str(user.mc_name)
             discord_nick = re.sub(' *\[.+]$', '', user.profile.name)
 
-            entry = {
+            entry: dict[str, Any] = {
                 'mc_name': mc_name,
                 'mc_uuid': uuid
             }
@@ -151,8 +153,12 @@ class DatabaseMinecraft(BaseDatabase):
                     and len(discord_nick) >= 3):
                 entry['discord_nick'] = discord_nick
 
-            if colour not in {'95a5a6', '000000', 'ffffff'}:
+            if colour not in {'95a5a6', '000000', 'ffffff', ''}:
                 entry['colour'] = colour
+
+            if len(colours) >= 2:
+                entry['colours'] = [c.removeprefix('#') for c in colours]
+
             if len(entry) > 2:
                 data.append(entry)
         return data
@@ -174,12 +180,12 @@ class DatabaseMinecraft(BaseDatabase):
 
             uuid = user.mc_uuid
             uuid = f'{uuid[0:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:32]}'
-            colour = user.profile.colour.removeprefix('#')
-            colours = user.profile.colours.split(',') if user.profile.colours else []
-            mc_name = user.mc_name
+            colour: str = user.profile.colour.removeprefix('#')
+            colours: list[str] = user.profile.colours.split(',') if user.profile.colours else []
+            mc_name: str = str(user.mc_name)
             discord_nick = re.sub(' *\[.+]$', '', user.profile.name)
 
-            entry = {
+            entry: dict[str, Any] = {
                 'mc_name': mc_name,
                 'mc_uuid': uuid
             }
@@ -187,13 +193,14 @@ class DatabaseMinecraft(BaseDatabase):
             if (re.sub('[ _.]', '', mc_name).lower() !=
                     re.sub('[ _.]', '', discord_nick).lower()
                     and len(discord_nick) >= 3):
-                entry['discord_nick'] = discord_nick
+                entry['nickname'] = discord_nick
 
             if colour not in {'95a5a6', '000000', 'ffffff'}:
                 entry['colour'] = colour
 
             if len(colours) >= 2:
                 entry['colours'] = [c.removeprefix('#') for c in colours]
+
             if len(entry) > 2:
                 data[uuid] = entry
         return data
