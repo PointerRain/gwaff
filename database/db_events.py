@@ -45,7 +45,8 @@ class DatabaseEvents(BaseDatabase):
         """
         return self.session.query(Event).all()
 
-    def get_events_in_range(self, start_date, end_date=None):
+    def get_events_in_range(self, start_date: datetime | None = None,
+                            end_date: datetime | None = None):
         """
         Gets all events in the given date range.
         """
@@ -55,12 +56,11 @@ class DatabaseEvents(BaseDatabase):
         events = self.session.query(Event).filter(Event.start_time <= end_date).all()
         output = []
         for event in events:
-            if event.end_time is not None and event.end_time < start_date:
+            if event.end_time is not None and start_date is not None and event.end_time < start_date:
                 continue
 
             if (event.end_time is not None and
-                    event.end_time - event.start_time <= EVENT_SIZE_THRESHOLD * (
-                            end_date - start_date)):
+                    event.end_time - event.start_time <= EVENT_SIZE_THRESHOLD * (end_date - start_date)):
                 continue
             output.append(event)
         return output
