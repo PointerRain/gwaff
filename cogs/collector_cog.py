@@ -2,14 +2,14 @@ import os
 from datetime import datetime, timedelta
 
 import discord
-from discord import app_commands, utils, ui
+from discord import app_commands, utils, ui, Member
 from discord.ext import commands
 
 from gwaff.bot import GwaffBot
+from gwaff.cogs.permissions import require_admin
 from gwaff.collector import record_data
 from gwaff.custom_logger import Logger
-from gwaff.database.db_base import DatabaseReader
-from gwaff.cogs.permissions import require_admin
+from gwaff.database.db_base import DatabaseReader, DatabaseSaver
 from gwaff.database.db_reducer import DatabaseReducer
 
 logger = Logger('gwaff.bot.collector')
@@ -183,6 +183,35 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
             ephemeral=True
         )
 
+    @app_commands.command(name="updatemember", description="(Admin only) Manually update a member's profile")
+    @app_commands.describe(member='The ID of the user to update',
+                           nickname='The new nickname for the user',
+                           avatar='The new avatar URL for the user',
+                           colour='The new primary colour for the user (hex format, e.g. #FF5733)',
+                           colours='A comma-separated list of colours for the user (hex format, e.g. #FF5733, #33FF57)')
+    @require_admin
+    async def update_user(self, interaction: discord.Interaction,
+                          member: Member,
+                          nickname: str = None,
+                          avatar: str = None,
+                          colour: str = None,
+                          colours: str = None):
+        await interaction.response.defer(ephemeral=True)
+        dbs = DatabaseSaver()
+        if colour is not None and not colour.startswith('#') and len(colour) != 7:
+            await interaction.followup.send("Colour must be in hex format, e.g. #FF5733", ephemeral=True)
+            return
+        if colours is not None:
+            colour_list = colours.split(',')
+            for i in range(len(colour_list)):
+                colour_list[i] = colour_list[i].strip()
+                if not colour_list[i].startswith('#') or len(colour_list[i]) != 7:
+                    await interaction.followup.send("Colours must be in hex format, e.g. #FF5733", ephemeral=True)
+                    return
+        dbs.update_profile(member.id, name=nickname, avatar=avatar, colour=colour, colours=colours)
+        dbs.commit()
+        await interaction.followup.send(f"Updated profile for <@{member.id}>", ephemeral=True)
+
     async def collect_short(self):
         """
         Collects data from a small range of pages.
@@ -209,7 +238,7 @@ class CollectorCog(commands.GroupCog, group_name='collector'):
         """
         logger.info("Starting profile update")
         try:
-            record_data(range(1, COLLECTION_LARGEST), min_time=0, add_records=False)
+            record_data(range(1, COLLECTION_LARGEST), min_time=0)
         except Exception as e:
             await self.bot.send_message(f"Data collection failed! {str(e)}", log=True)
 
