@@ -73,12 +73,10 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
             failure += 100
             continue
 
-        for member in data.get('leaderboard', []):
-            if 'missing' in member or member.get('color', '#000000') == '#000000':
-                continue
+        for member in data.get('members', []):
 
             member_id, xp = member.get('id'), member.get('xp')
-            name = member.get('nickname') or member.get('displayName') or member.get('username')
+            name = member.get('displayname') or member.get('username')
             if not all([member_id, xp]):
                 logger.warning(f"Skipping record with missing data")
                 failure += 1
