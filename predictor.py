@@ -107,34 +107,22 @@ def parse_target(target: str) -> tuple:
     return target_type, target_value, relative
 
 
-class Prediction:
+class Predictor:
     """
-    Class to process and evaluate predictions
+    Class that gets average growth data.
     """
 
     def __init__(self, member: int,
-                 target: str,
                  period: int = PREDICTOR_DEFAULT_DAYS,
-                 growth: int = None):
+                 growth: int = None) -> None:
         self.member = member
         self.period = period
         self.start_date = datetime.now() - timedelta(days=period)
-
-        # Validate and process the target
-        self.target_type, self.target, self.relative = parse_target(target)
 
         # Get growth data for the member
         self.value, self.growth = self.get_data(member)
         if growth is not None:
             self.growth = growth
-
-        # If it is a relative prediction, set the target according to their
-        #  current stats.
-        if self.relative:
-            if self.target_type == 'xp':
-                self.target = self.value + self.target
-            if self.target_type == 'level':
-                self.target = xp_to_lvl(self.value) + self.target
 
     def get_data(self, user: int) -> tuple:
         dbr = DatabaseReader()
@@ -155,6 +143,29 @@ class Prediction:
         actual_period = (final_date - start_date) / timedelta(days=1)
 
         return final_xp, final_growth / actual_period
+
+
+class TargetPrediction(Predictor):
+    """
+    Class to process and evaluate predictions
+    """
+
+    def __init__(self, member: int,
+                 target: str,
+                 period: int = PREDICTOR_DEFAULT_DAYS,
+                 growth: int = None):
+        super().__init__(member, period, growth)
+
+        # Validate and process the target
+        self.target_type, self.target, self.relative = parse_target(target)
+
+        # If it is a relative prediction, set the target according to their
+        #  current stats.
+        if self.relative:
+            if self.target_type == 'xp':
+                self.target = self.value + self.target
+            if self.target_type == 'level':
+                self.target = xp_to_lvl(self.value) + self.target
 
     def simple_target(self, target: int) -> float:
         """
@@ -190,6 +201,39 @@ class Prediction:
         return days
 
 
+class Forecast(Predictor):
+    def __init__(self, member: int, days: int,
+                 period: int = PREDICTOR_DEFAULT_DAYS,
+                 growth: int = None):
+        super().__init__(member, period, growth)
+        self.days = days
+
+    def evaluate(self) -> int:
+        return round(self.value + self.growth * self.days)
+
+
+class Threats(Predictor):
+    def evaluate(self) -> list[tuple[int, float]]:
+        dbr = DatabaseReader()
+        for user in dbr.get_last_record():
+            if user == self.member:
+                pass
+            try:
+                prediction = TargetPrediction(self.member, f"<@{user[0].id}>").evaluate()
+                if prediction > 0:
+                    print(prediction)
+                    results.append((user[0], prediction))
+            except ZeroGrowthError:
+                pass
+            except TargetBoundsError:
+                pass
+            except NoDataError:
+                pass
+            except ZeroDivisionError:
+                pass
+        return results
+
+
 if __name__ == '__main__':
     # Some test cases
     assert xp_to_lvl(183734) == 43
@@ -197,4 +241,29 @@ if __name__ == '__main__':
     assert xp_to_lvl(180000) == 43
     assert xp_to_lvl(189870) == 44
 
-    print(Prediction(344731282095472641, '100').evaluate())
+    print(TargetPrediction(344731282095472641, '100').evaluate())
+
+    from database.db_base import DatabaseReader
+
+    results = []
+
+    dbr = DatabaseReader()
+    for user in dbr.get_last_record():
+        # if user[1] >= 2122121:
+        #     continue
+        try:
+            prediction = TargetPrediction(298294667219435521, f"<@{user[0].id}>").evaluate()
+            if prediction > 0:
+                print(prediction)
+                results.append((user[0], prediction))
+        except ZeroGrowthError:
+            pass
+        except TargetBoundsError:
+            pass
+        except NoDataError:
+            pass
+        except ZeroDivisionError:
+            pass
+    results.sort(key=lambda x: x[1])
+    for user, prediction in results[0:100]:
+        print(f'{user.name}: {round(prediction)}')

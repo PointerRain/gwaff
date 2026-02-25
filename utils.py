@@ -142,6 +142,26 @@ def ordinal(n: int) -> str:
     return str(n) + suffix
 
 
+def to_suffixed_number(n: int) -> str:
+    """
+    Converts an integer to a string with a suffix (e.g., 1K, 2M).
+
+    Args:
+        n (int): The integer to convert.
+
+    Returns:
+        str: The suffixed representation of the integer.
+    """
+    if n >= 10_000_000_000:
+        return f"{n / 1_000_000_000:.1f}B"
+    elif n >= 10_000_000:
+        return f"{n / 1_000_000:.1f}M"
+    elif n >= 10_000:
+        return f"{n / 1_000:.1f}k"
+    else:
+        return str(round(n))
+
+
 if __name__ == '__main__':
     dbr = DatabaseReader()
     print(dbr.get_profile_data(92029863090728960))

@@ -178,6 +178,7 @@ cogs = [
     "gwaff.cogs.spooncraft_cog",
     "gwaff.cogs.event_cog",
     "gwaff.cogs.collector_cog",
+    "gwaff.cogs.predict_cog",
 ]
 
 
