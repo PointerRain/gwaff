@@ -37,6 +37,10 @@ class CoreCog(commands.Cog):
             f" (<t:{round(self.bot.reboot_time)}:R>)",
             ephemeral=True)
 
+    @app_commands.command(name="gaff", description="You made an error")
+    async def gaff(self, interaction: discord.Interaction):
+        await interaction.response.send_message(f"https://en.wiktionary.org/wiki/gaffe#English", ephemeral=False)
+
     @commands.Cog.listener()
     async def on_ready(self):
         self.bot.reboot_time = datetime.now()
