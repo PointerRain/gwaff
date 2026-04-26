@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from gwaff.database.db_base import BaseDatabase
 from gwaff.database.structs import *
 
-EVENT_SIZE_THRESHOLD = 0.01
+EVENT_SIZE_THRESHOLD = 0.005
 
 
 class EventExistsError(Exception):

@@ -39,7 +39,7 @@ class CoreCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.bot.reboot_time = datetime.now().timestamp()
+        self.bot.reboot_time = datetime.now()
         if random.randint(1, 50) == 1:
             await self.bot.send_message("Oopsie, I webooted uwu >_<")
         else:

@@ -115,6 +115,9 @@ class DatabaseReader(BaseDatabase):
         elif id == 457989277322838016 and start_date < datetime(2025, 1, 20):
             if end_date is None or datetime(2025, 1, 19) < end_date:
                 return []
+        elif id == 930180605612810310 and start_date < datetime(2025, 11, 30):
+            if end_date is None or datetime(2025, 11, 29) < end_date:
+                return []
         record_query = (self.session.query(Record)
                         .filter_by(id=id)
                         .order_by(Record.timestamp))

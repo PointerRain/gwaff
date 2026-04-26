@@ -107,8 +107,8 @@ class PredictCog(commands.GroupCog, group_name='predict'):
                                         f"xp per day")
 
     @app_commands.command(name="forecast",
-                          description="Predict what xp and level you will be at")
-    @app_commands.describe(days="The days forward to predict",
+                          description="Predict what xp and level you will be at in the future")
+    @app_commands.describe(days="The number of days in the future to predict for",
                            member='The member to do the prediction for'
                                   ' (default you)',
                            period='The period to average your growth over'
