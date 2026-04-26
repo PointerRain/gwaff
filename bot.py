@@ -133,7 +133,7 @@ class GwaffBot(commands.Bot):
                 await self.tree.sync(guild=discord.Object(id=server.id))
                 logger.info("- " + server.name)
 
-            self.start_time = datetime.now().timestamp()
+            self.start_time = datetime.now()
 
             self.synced = True
         logger.info("Ready!")
@@ -146,9 +146,15 @@ class GwaffBot(commands.Bot):
             interaction (discord.Interaction): The interaction that triggered the command.
             command (discord.ApplicationCommand): The command that was completed.
         """
-        logger.info(f"User '{interaction.user.name}' "
-                    f"used command '{command.name}' "
-                    f"in guild '{interaction.guild.name}'")
+        message = ""
+        if interaction.user:
+            message += f"User '{interaction.user.name}' "
+        else:
+            message += "Unknown user "
+        message += f"used command '{command.name}'"
+        if interaction.guild:
+            message += f" in guild '{interaction.guild.name}'"
+        logger.info(message)
 
     def schedule_task(self, func: Callable, *args: Any, **kwargs: Any):
         """
