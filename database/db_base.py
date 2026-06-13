@@ -109,14 +109,17 @@ class DatabaseReader(BaseDatabase):
         Returns:
             list: A list of records for the specified ID.
         """
-        if id == 483515866319945728 and start_date < datetime(2024, 6, 2):
+        if id == 483515866319945728 and start_date and start_date < datetime(2024, 6, 2):
             if end_date is None or datetime(2024, 6, 1) < end_date:
                 return []
-        elif id == 457989277322838016 and start_date < datetime(2025, 1, 20):
+        elif id == 457989277322838016 and start_date and start_date < datetime(2025, 1, 20):
             if end_date is None or datetime(2025, 1, 19) < end_date:
                 return []
-        elif id == 930180605612810310 and start_date < datetime(2025, 11, 30):
+        elif id == 930180605612810310 and start_date and start_date < datetime(2025, 11, 30):
             if end_date is None or datetime(2025, 11, 29) < end_date:
+                return []
+        elif id == 1003453523578601472 and start_date and start_date < datetime(2026, 6, 11):
+            if end_date is None or datetime(2025, 11, 10) < end_date:
                 return []
         record_query = (self.session.query(Record)
                         .filter_by(id=id)

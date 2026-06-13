@@ -11,7 +11,7 @@ from gwaff.database.db_base import DatabaseReader
 
 logger = Logger('gwaff.utils')
 
-MAX_RETRIES = 5
+MAX_RETRIES = 3
 
 
 def retry_request(request_func, url, **kwargs):
