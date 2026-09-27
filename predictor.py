@@ -1,6 +1,9 @@
 import os
 from datetime import datetime, timedelta
 from math import floor
+from typing import assert_type, Any
+
+from sqlalchemy import ColumnElement
 
 from gwaff.database.db_base import DatabaseReader
 
@@ -114,7 +117,7 @@ class Predictor:
 
     def __init__(self, member: int,
                  period: int = PREDICTOR_DEFAULT_DAYS,
-                 growth: int = None) -> None:
+                 growth: int | None = None) -> None:
         self.member = member
         self.period = period
         self.start_date = datetime.now() - timedelta(days=period)
@@ -134,8 +137,8 @@ class Predictor:
         start_xp, start_date = row[0].value, row[0].timestamp
         final_xp, final_date = row[-1].value, row[-1].timestamp
 
-        final_growth = final_xp - start_xp
-
+        # UNSAFE CAST
+        final_growth: Any = final_xp - start_xp
         if final_growth <= 0:
             raise ZeroGrowthError('The user has no activity during this period')
 
@@ -153,7 +156,7 @@ class TargetPrediction(Predictor):
     def __init__(self, member: int,
                  target: str,
                  period: int = PREDICTOR_DEFAULT_DAYS,
-                 growth: int = None):
+                 growth: int | None = None):
         super().__init__(member, period, growth)
 
         # Validate and process the target
@@ -204,7 +207,7 @@ class TargetPrediction(Predictor):
 class Forecast(Predictor):
     def __init__(self, member: int, days: int,
                  period: int = PREDICTOR_DEFAULT_DAYS,
-                 growth: int = None):
+                 growth: int | None = None):
         super().__init__(member, period, growth)
         self.days = days
 

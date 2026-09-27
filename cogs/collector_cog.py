@@ -1,4 +1,5 @@
 import os
+from typing import Final
 from datetime import datetime, timedelta
 
 import discord
@@ -14,12 +15,12 @@ from gwaff.database.db_reducer import DatabaseReducer
 
 logger = Logger('gwaff.bot.collector')
 
-COLLECTION_MAX_TIME: int = int(os.environ.get("MAX_SEPARATION", 120))
-REDUCER_TIMEOUT: int = 60  # Time in seconds before the reducer process times out and is halted.
+COLLECTION_MAX_TIME: Final[int] = int(os.environ.get("MAX_SEPARATION", 120))
+REDUCER_TIMEOUT: Final[int] = 60  # Time in seconds before the reducer process times out and is halted.
 
-COLLECTION_SMALL: int = int(os.environ.get("COLLECTION_SMALL", 2))
-COLLECTION_LARGE: int = int(os.environ.get("COLLECTION_LARGE", 6))
-COLLECTION_LARGEST: int = int(os.environ.get("COLLECTION_LARGEST", 10))
+COLLECTION_SMALL: Final[int] = int(os.environ.get("COLLECTION_SMALL", 2))
+COLLECTION_LARGE: Final[int] = int(os.environ.get("COLLECTION_LARGE", 6))
+COLLECTION_LARGEST: Final[int] = int(os.environ.get("COLLECTION_LARGEST", 10))
 
 
 class ReducerView(discord.ui.View):
@@ -29,7 +30,7 @@ class ReducerView(discord.ui.View):
         self.started = False
         self.interaction = interaction
 
-    async def on_timeout(self):
+    async def on_timeout(self) -> None:
         """
         Called when the view times out. This will deactivate the buttons.
         """

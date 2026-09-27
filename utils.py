@@ -40,6 +40,7 @@ def retry_request(request_func, url, **kwargs):
             else:
                 logger.error("Max retries reached, skipping.")
                 return None
+    return None
 
 
 def request_api(url: str, **kwargs) -> dict:
@@ -63,8 +64,8 @@ def request_api(url: str, **kwargs) -> dict:
             return response.json()  # Parse JSON response
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON: {str(e)}")
-            return None
-    return None
+            return {}
+    return {}
 
 
 def request_img(url: str, **kwargs):
@@ -105,7 +106,7 @@ def url_constructor(base: str, **kwargs: dict) -> str:
 
 
 def resolve_member(interaction: discord.Interaction,
-                   user: discord.User) -> discord.User:
+                   user: discord.User | None) -> discord.User:
     """
     Chooses the member between a specified member and the triggering member.
 
@@ -120,10 +121,12 @@ def resolve_member(interaction: discord.Interaction,
     if user is not None:
         if dbr.get_profile_data(user.id):
             return user
-    if interaction is not None:
-        if dbr.get_profile_data(interaction.user.id):
+    match interaction.user:
+        case discord.User():
             return interaction.user
-    return None
+        case discord.Member():
+            print("This is a member, not a user. dummy.")
+            return interaction.user
 
 
 def ordinal(n: int) -> str:

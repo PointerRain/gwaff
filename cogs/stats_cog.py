@@ -37,17 +37,12 @@ class StatsCog(commands.Cog):
                                      f"(default {RANK_DEFAULT_THRESHOLD})",
                            hidden='Hide from others in this server (default False)')
     async def rank_true(self, interaction: discord.Interaction,
-                        member: discord.User = None,
+                        member: discord.User | None = None,
                         threshold: int = RANK_DEFAULT_THRESHOLD,
                         hidden: bool = False):
         await interaction.response.defer(ephemeral=hidden)
 
         member = resolve_member(interaction, member)
-        if member is False:
-            await interaction.followup.send(":bust_in_silhouette: "
-                                            "That person in not in the server "
-                                            "or hasn't reached level 15")
-            return
         try:
             truerank = Truerank(threshold=threshold)
             result = truerank.find_index(member.id)
@@ -183,15 +178,10 @@ class StatsCog(commands.Cog):
                                             f"<@{str(other_id)}> ({other_name})")
 
     async def user_ctx(self, interaction: discord.Interaction,
-                       member: discord.Member):
+                       member: discord.User | None):
         await interaction.response.defer(ephemeral=True)
 
         member = resolve_member(interaction, member)
-        if member is False:
-            await interaction.followup.send(":bust_in_silhouette: "
-                                            "That person in not in the server "
-                                            "or hasn't reached level 15")
-            return
         try:
             truerank = Truerank(threshold=RANK_DEFAULT_THRESHOLD)
             result = truerank.find_index(member.id)

@@ -97,7 +97,7 @@ class DatabaseReader(BaseDatabase):
         return [i.timestamp for i in query_result.order_by(Record.timestamp).all()]
 
     def get_row(self, id: int,
-                start_date: datetime = None, end_date: datetime = None) -> list[Record]:
+                start_date: datetime | None = None, end_date: datetime | None = None) -> list[Record]:
         """
         Retrieves records for a specific ID, optionally filtering by start date.
 
@@ -132,8 +132,8 @@ class DatabaseReader(BaseDatabase):
         # Execute the query for records
         return record_query.all()
 
-    def get_data_in_range(self, start_date: datetime = None, end_date: datetime = None,
-                          limit: int = 15, include: set[int] = None) -> list[tuple]:
+    def get_data_in_range(self, start_date: datetime | None = None, end_date: datetime | None = None,
+                          limit: int = 15, include: set[int] | None = None) -> list[tuple]:
         """
         Retrieves profile data and associated records within a specified date range.
 
@@ -170,7 +170,7 @@ class DatabaseReader(BaseDatabase):
 
         return result
 
-    def get_growth_in_range(self, start_date: datetime = None, end_date: datetime = None,
+    def get_growth_in_range(self, start_date: datetime | None = None, end_date: datetime | None = None,
                             limit: int = 15, include: set[int] = None) -> list[tuple]:
         """
         Retrieves profile data and growth within a specified date range.
@@ -211,14 +211,15 @@ class DatabaseReader(BaseDatabase):
 
         return result
 
-    def get_last_timestamp(self):
+    def get_last_timestamp(self) -> datetime | None:
         """
         Retrieves the most recent timestamp from the records.
 
         Returns:
             datetime: The most recent timestamp.
         """
-        return self.session.query(func.max(Record.timestamp)).first()[0]
+        last_record = self.session.query(func.max(Record.timestamp)).first()
+        return last_record[0] if last_record else None
 
     def get_last_record(self):
         """
@@ -254,8 +255,8 @@ class DatabaseSaver(BaseDatabase):
     Class for saving data to the database.
     """
 
-    def update_profile(self, id, name: str = None, colour: str = None, avatar: str = None,
-                       colours: list[str] = None) -> None:
+    def update_profile(self, id, name: str | None = None, colour: str | None = None, avatar: str | None = None,
+                       colours: list[str] | None = None) -> None:
         """
         Updates or creates a profile in the database.
 

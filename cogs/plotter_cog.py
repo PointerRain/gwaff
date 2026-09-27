@@ -1,29 +1,31 @@
 import os
 from datetime import datetime, timedelta
+from typing import Final
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
+from gwaff.bot import GwaffBot
 from gwaff.custom_logger import Logger
 from gwaff.plotter.growth import Growth
 from gwaff.utils import resolve_member
 
 logger = Logger('gwaff.bot.plot')
 
-GRAPH_MAX_DAYS: int = int(os.environ.get("GRAPH_MAX_DAYS", 365))
-GRAPH_DEFAULT_DAYS: int = int(os.environ.get("GRAPH_DEFAULT_DAYS", 7))
-GRAPH_MAX_USERS: int = int(os.environ.get("GRAPH_MAX_USERS", 30))
-GRAPH_DEFAULT_USERS: int = int(os.environ.get("GRAPH_DEFAULT_USERS", 15))
+GRAPH_MAX_DAYS: Final[int] = int(os.environ.get("GRAPH_MAX_DAYS", 365))
+GRAPH_DEFAULT_DAYS: Final[int] = int(os.environ.get("GRAPH_DEFAULT_DAYS", 7))
+GRAPH_MAX_USERS: Final[int] = int(os.environ.get("GRAPH_MAX_USERS", 30))
+GRAPH_DEFAULT_USERS: Final[int] = int(os.environ.get("GRAPH_DEFAULT_USERS", 15))
 
 
 def growth(days: int = GRAPH_DEFAULT_DAYS,
            count: int = GRAPH_DEFAULT_USERS,
-           member: discord.User = None,
+           member: discord.User | None = None,
            title: str = "Top chatters XP growth",
            special: bool = False,
-           compare: discord.User = None,
-           name='out.png') -> str:
+           compare: discord.User | None = None,
+           name: str = 'out.png') -> str:
     """
     Plots and saves a growth plot (aka gwaff)
     
@@ -46,11 +48,11 @@ def growth(days: int = GRAPH_DEFAULT_DAYS,
     plot = Growth(start_date=datetime.now() - timedelta(days=days),
                   special=special,
                   title=title)
-    if member is None:
+    if not member:
         include = None
     else:
         include = {member.id}
-    if compare is not None:
+    if compare and member:
         include = {member.id, compare.id}
         plot.title = f"Comparing growth over the last {round(days)} days"
 
@@ -66,7 +68,7 @@ def growth(days: int = GRAPH_DEFAULT_DAYS,
 
 
 class PlotterCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: GwaffBot):
         self.bot = bot
 
         self.growth_ctxmenu = app_commands.ContextMenu(
@@ -89,7 +91,7 @@ class PlotterCog(commands.Cog):
         count=f'How many users to plot (default {GRAPH_DEFAULT_USERS})',
         hidden='Hide from others in this server (default False)')
     async def plot_gwaff(self, interaction: discord.Interaction,
-                         days: app_commands.Range[float, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
+                         days: app_commands.Range[int, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
                          count: app_commands.Range[int, 1, GRAPH_MAX_USERS] = GRAPH_DEFAULT_USERS,
                          hidden: bool = False):
         await interaction.response.defer(ephemeral=hidden)
@@ -109,27 +111,16 @@ class PlotterCog(commands.Cog):
                            compare="A second user to show",
                            hidden="Hide from others in this server (default False)")
     async def plot_growth(self, interaction: discord.Interaction,
-                          member: discord.User = None,
+                          member: discord.User | None = None,
                           days: app_commands.Range[int, 1, GRAPH_MAX_DAYS] = GRAPH_DEFAULT_DAYS,
-                          compare: discord.User = None,
+                          compare: discord.User | None = None,
                           hidden: bool = False):
         await interaction.response.defer(ephemeral=hidden)
         member = resolve_member(interaction, member)
-        if member is False:
-            await interaction.followup.send(":bust_in_silhouette: "
-                                            "That person in not in the server "
-                                            "or hasn't reached level 15")
-            return
 
         co_member: discord.User | None = None
         if compare:
-            co_member = resolve_member(None, compare)
-            if co_member is False:
-                await interaction.followup.send(":bust_in_silhouette: "
-                                                "The compared person is not in "
-                                                "the server or hasn't reached "
-                                                "level 15")
-                return
+            co_member = compare
 
         try:
             path = growth(days=days, member=member, count=1,
@@ -143,14 +134,9 @@ class PlotterCog(commands.Cog):
         await interaction.followup.send(file=discord.File(path))
 
     async def growth_ctx(self, interaction: discord.Interaction,
-                         member: discord.Member):
+                         member: discord.User):
         await interaction.response.defer(ephemeral=True)
         member = resolve_member(interaction, member)
-        if member is False:
-            await interaction.followup.send(":bust_in_silhouette: "
-                                            "That person in not in the server "
-                                            "or hasn't reached level 15")
-            return
         try:
             path = growth(days=GRAPH_DEFAULT_DAYS, member=member, count=1,
                           title=f"{member.name}'s growth over the last {round(GRAPH_DEFAULT_DAYS)} days")
@@ -162,7 +148,7 @@ class PlotterCog(commands.Cog):
         await interaction.followup.send(file=discord.File(path))
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: GwaffBot):
     """
     Sets up the PlotterCog and adds it to the bot.
     

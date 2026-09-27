@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import discord
 from discord import app_commands
 from discord.ext import commands
+from discord.utils import format_dt
 
 from gwaff.bot import GwaffBot
 from gwaff.custom_logger import Logger
@@ -32,10 +33,14 @@ class CoreCog(commands.Cog):
 
     @app_commands.command(name="uptime", description="Get the bot's uptime")
     async def uptime(self, interaction: discord.Interaction):
-        await interaction.response.send_message(
-            f"Last rebooted: <t:{round(self.bot.reboot_time)}>"
-            f" (<t:{round(self.bot.reboot_time)}:R>)",
-            ephemeral=True)
+        match self.bot.reboot_time:
+            case None:
+                await interaction.response.send_message("Unknown last reboot time!", ephemeral=True)
+            case datetime():
+                await interaction.response.send_message(
+                    f"Last rebooted: {format_dt(self.bot.reboot_time)}"
+                    f" ({format_dt(self.bot.reboot_time, style='R')})",
+                    ephemeral=True)
 
     @app_commands.command(name="gaff", description="You made an error")
     async def gaff(self, interaction: discord.Interaction):

@@ -20,7 +20,7 @@ class DatabaseEvents(BaseDatabase):
         """
         return self.session.query(Event).filter_by(end_time=None).first()
 
-    def create_event(self, start_time, end_time=None, multiplier: float = None) -> None:
+    def create_event(self, multiplier: float, start_time, end_time=None) -> None:
         """
         Creates a new event with the given start_time, end_time, and multiplier.
         """

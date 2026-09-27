@@ -121,7 +121,7 @@ class DatabaseMinecraft(BaseDatabase):
         self.commit()
         return success, total
 
-    def to_json(self) -> list[dict]:
+    def to_json(self) -> list[dict[str, Any]]:
         """
         Exports Minecraft user data to a JSON object. Series of objects with keys
         'mc_name' and 'mc_uuid', and optional keys 'discord_nick' and 'colour'.
@@ -133,8 +133,6 @@ class DatabaseMinecraft(BaseDatabase):
         data: list[dict] = []
 
         for user in self.get_users():
-            if user.mc_name is None:
-                continue
 
             uuid = user.mc_uuid
             uuid = f'{uuid[0:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:32]}'
@@ -175,8 +173,6 @@ class DatabaseMinecraft(BaseDatabase):
         data = {}
 
         for user in self.get_users():
-            if user.mc_name is None:
-                continue
 
             uuid = user.mc_uuid
             uuid = f'{uuid[0:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:32]}'

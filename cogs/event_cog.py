@@ -44,7 +44,7 @@ class EventCog(commands.GroupCog, group_name='event'):
             return
 
         try:
-            DatabaseEvents().create_event(start_datetime, end_datetime, multiplier)
+            DatabaseEvents().create_event(multiplier, start_datetime, end_datetime)
         except EventExistsError:
             await interaction.followup.send(
                 f"An event already exists. Please end the current event before creating a new one.")
@@ -94,7 +94,7 @@ class EventCog(commands.GroupCog, group_name='event'):
         event_lines = []
         for event in events:
             start_str = format_dt(event.start_time)
-            end_str = format_dt(event.end_time) if event.end_time else "Ongoing"
+            end_str = format_dt(event.end_time) if event.end_time is not None else "Ongoing"
             event_lines.append(
                 f"ID: {event.id:02} | Start: {start_str} | End: {end_str} | Multiplier: {event.multiplier}")
 

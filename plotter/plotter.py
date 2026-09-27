@@ -1,5 +1,6 @@
 import os.path
 from datetime import datetime, timedelta
+from typing import Final
 
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter
@@ -13,9 +14,9 @@ from gwaff.utils import request_img
 
 logger = Logger('gwaff.plotter')
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PRIMARY_FONT_PATH = os.path.join(BASE_DIR, 'assets/gg sans Semibold.ttf')
-EMOJI_FONT_PATH = os.path.join(BASE_DIR, 'assets/NotoEmoji-Regular.ttf')
+BASE_DIR: Final[str] = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PRIMARY_FONT_PATH: Final[str] = os.path.join(BASE_DIR, 'assets/gg sans Semibold.ttf')
+EMOJI_FONT_PATH: Final[str] = os.path.join(BASE_DIR, 'assets/NotoEmoji-Regular.ttf')
 fontManager.addfont(PRIMARY_FONT_PATH)  # gg sans
 fontManager.addfont(EMOJI_FONT_PATH)  # Noto Emoji
 
@@ -113,8 +114,8 @@ class Plotter:
     """
 
     def __init__(self,
-                 start_date: datetime = None,
-                 end_date: datetime = None,
+                 start_date: datetime | None = None,
+                 end_date: datetime | None = None,
                  active_threshold: int = RANK_DEFAULT_THRESHOLD,
                  special: bool = False,
                  title: str = "XP Over Time"):
@@ -143,7 +144,7 @@ class Plotter:
         self.max_xp = 0
         self.min_xp = 0
 
-    def get_data(self, limit: int, include: set[int] = None) -> list:
+    def get_data(self, limit: int, include: set[int] | None = None) -> list:
         """
         Retrieves data from the database within the specified range.
 
@@ -158,7 +159,7 @@ class Plotter:
         return dbr.get_data_in_range(self.start_date, self.end_date, limit=limit, include=include)
 
     def draw(self, limit: int = GRAPH_DEFAULT_USERS,
-             include: set[int] = None) -> None:
+             include: set[int] | None = None) -> None:
         """
         Draws the plot with the specified parameters.
 
@@ -227,6 +228,9 @@ class Plotter:
 
             def axes_to_data(h):
                 return h * (self.max_xp - self.min_xp) + self.min_xp
+        else:
+            xp_to_axes = lambda xp: xp
+            axes_to_data = lambda h: h
 
         # Each point defaults to next to line.
         # Moves up to avoid lower labels.
@@ -235,14 +239,11 @@ class Plotter:
             height = item[0]
             position = 1.001 + GRAPH_IMAGE_WIDTH
 
-            if len(self.annotations) > 1:
-                label_height = xp_to_axes(height)
-                if label_height - heights[-1] < GRAPH_SEPERATOR:
-                    label_height = heights[-1] + GRAPH_SEPERATOR
-                heights.append(label_height)
-                label_height = axes_to_data(label_height)
-            else:
-                label_height = height
+            label_height = xp_to_axes(height)
+            if len(heights) >= 1 and label_height - heights[-1] < GRAPH_SEPERATOR:
+                label_height = heights[-1] + GRAPH_SEPERATOR
+            heights.append(label_height)
+            label_height = axes_to_data(label_height)
 
             did_img = self.annotate_image(item[3], label_height)
 
@@ -283,7 +284,7 @@ class Plotter:
         Configures the plot with labels, colors, and other settings.
         """
         end = self.end_date or datetime.now()
-        self.ax.set_xlim([self.start_date, end])
+        self.ax.set_xlim((self.start_date, end))
 
         dateformat = ResponsiveDateFormat(self.start_date, end)
         self.ax.xaxis.set_major_formatter(dateformat.formatter)

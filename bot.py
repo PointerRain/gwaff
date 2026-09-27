@@ -48,8 +48,8 @@ class GwaffBot(commands.Bot):
         self.channel: discord.TextChannel | None = None
         self.logging_channel: discord.TextChannel | None = None
 
-        self.reboot_time = None
-        self.start_time = None
+        self.reboot_time: datetime | None = None
+        self.start_time: datetime | None = None
 
         self.synced = False
 

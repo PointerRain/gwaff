@@ -64,14 +64,6 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
         dbm = DatabaseMinecraft()
         logger.info("Starting upload")
 
-        data = dbm.to_json()
-        result = update_data("https://gwaff.uqcloud.net/api/spooncraft", data)
-        if result:
-            logger.info("Upload completed successfully!")
-        else:
-            logger.warning(f"Upload failed!")
-            await self.bot.send_message("SC data upload failed", log=True)
-
         data = {
             'version': 2,
             'mappings': dbm.to_json_dict(),
@@ -143,7 +135,7 @@ class SpooncraftCog(commands.GroupCog, group_name='spooncraft'):
     async def command_add(self, interaction: discord.Interaction,
                           member: discord.User,
                           uuid: str,
-                          name: str = None) -> None:
+                          name: str | None = None) -> None:
         """
         Command to add a Spooncraft player to the database.
 

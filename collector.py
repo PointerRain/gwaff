@@ -58,7 +58,7 @@ def record_data(pages: Iterable[int] = range(1, COLLECTION_LARGE),
     # Check if enough time has passed since the last collection
     lasttime = DatabaseReader().get_last_timestamp()
     now = datetime.now()
-    if (now - lasttime).total_seconds() < min_time * 60:
+    if lasttime and (now - lasttime).total_seconds() < min_time * 60:
         logger.info(f"Too soon - {int((now - lasttime).total_seconds() / 60)}/{min_time} minutes required")
         raise TooSoonException(f"Too soon - {int((now - lasttime).total_seconds() / 60)}/{min_time} minutes required")
 

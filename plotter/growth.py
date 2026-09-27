@@ -10,7 +10,7 @@ class Growth(Plotter):
 
         self.title = kwargs.get("title", "Top Chatters XP Growth")
 
-    def get_data(self, limit: int, include: set[int] = None) -> list[tuple]:
+    def get_data(self, limit: int, include: set[int] | None = None) -> list[tuple]:
         dbr = DatabaseReader()
         return dbr.get_growth_in_range(self.start_date, self.end_date, limit=limit, include=include)
 
@@ -18,7 +18,7 @@ class Growth(Plotter):
         super().configure()
 
         self.ax.set_ylabel("XP Growth")
-        self.ax.set_ylim([0, self.max_xp * 1.05])
+        self.ax.set_ylim((0, self.max_xp * 1.05))
 
 
 if __name__ == '__main__':
